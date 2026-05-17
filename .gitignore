@@ -4,8 +4,9 @@
 # ============================================================
 
 # ──────────────────────────────────────────────
-# 🐍  Python / FastAPI Backend
+# 🐍  Entire Backend (kept local only)
 # ──────────────────────────────────────────────
+backend/
 
 # Virtual environment
 backend/venv/
