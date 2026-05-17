@@ -1,0 +1,202 @@
+# ============================================================
+#  AniMind .gitignore
+#  Stack: Python / FastAPI (backend) + Next.js / TypeScript (frontend)
+# ============================================================
+
+# ──────────────────────────────────────────────
+# 🐍  Python / FastAPI Backend
+# ──────────────────────────────────────────────
+
+# Virtual environment
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# MyPy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment variables (NEVER commit secrets)
+.env
+.env.*
+!.env.example
+
+# ──────────────────────────────────────────────
+# 📁  AniMind Runtime / Generated Files
+# ──────────────────────────────────────────────
+
+# User uploads
+backend/uploads/
+
+# AI-generated animations and videos (large binary assets)
+backend/saved_animations/
+backend/saved_videos/
+
+# Genzet library user data
+backend/genzet_library/
+
+# SQLite database files (use migrations/dumps instead)
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+logs/
+backend/logs/
+
+# ──────────────────────────────────────────────
+# ⚛️  Next.js / Node.js Frontend
+# ──────────────────────────────────────────────
+
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Next.js build output
+frontend/.next/
+.next/
+frontend/out/
+out/
+
+# Production build
+frontend/build/
+build/
+
+# Next.js cache
+.swc/
+
+# Vercel deployment
+.vercel
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts
+
+# ──────────────────────────────────────────────
+# 🛠️  IDEs & Editors
+# ──────────────────────────────────────────────
+
+# VSCode
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ──────────────────────────────────────────────
+# 🖥️  Operating System
+# ──────────────────────────────────────────────
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ──────────────────────────────────────────────
+# 🔑  Secrets & API Keys
+# ──────────────────────────────────────────────
+
+# Environment files with secrets
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API key files
+secrets.json
+credentials.json
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ──────────────────────────────────────────────
+# 📦  Misc
+# ──────────────────────────────────────────────
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Compiled output
+*.out
+*.class
+*.dll
+*.so
+*.dylib
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/

@@ -1,0 +1,8 @@
+{
+  "main_topic": "optical fibre",
+  "all_subtopics": ["Fundamentals of Fibre Optics", "Features of Optical Fibres", "Losses Associated with Optical Fibers"],
+  "subtopics_by_query": {
+    "losses in fibre": ["Absorption Losses", "Scattering Losses", "Bending Losses"],
+    "fundamental of optical fibre": ["Principle and Propagation of Light"]
+  }
+}
