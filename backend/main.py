@@ -88,8 +88,10 @@ async def lifespan(app: FastAPI):
         init_db()
         print("[STARTUP]  ✅ GenZet v4.1 ready")
     except Exception as e:
-        print(f"[STARTUP]  ❌ DB init failed: {e}")
-        raise
+        # Non-fatal: log the error but keep the server alive.
+        # Users can still reach the health endpoint; DB-backed routes
+        # will return 500 until the DB is fixed, but the server won't crash.
+        print(f"[STARTUP]  ⚠  DB init warning (server still running): {e}")
     yield
     print("[SHUTDOWN] GenZet shutting down.")
 
@@ -104,6 +106,21 @@ app = FastAPI(
 # ── CORS ───────────────────────────────────────────────────────────────
 # If DEBUG_CORS=true (local dev), allow everything.
 # In production, we list explicit origins + a regex for Vercel previews.
+#
+# To add a new Vercel URL without redeploying, set EXTRA_ORIGINS env var:
+#   EXTRA_ORIGINS=https://your-app-abc123.vercel.app,https://other.vercel.app
+EXTRA_ORIGINS = [
+    o.strip() for o in os.getenv("EXTRA_ORIGINS", "").split(",") if o.strip()
+]
+
+BASE_ORIGINS = [
+    "https://genzet-app.vercel.app",       # ✅ genzet frontend
+    "https://animind-gold.vercel.app",     # ✅ animind frontend
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+] + EXTRA_ORIGINS
+
 if DEBUG_CORS:
     print("[CORS] ⚠ DEBUG_CORS=true — allowing ALL origins (dev only)")
     app.add_middleware(
@@ -114,20 +131,15 @@ if DEBUG_CORS:
         allow_headers=["*"],
     )
 else:
-  app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://genzet-app.vercel.app",       # ✅ genzet frontend
-        "https://animind-gold.vercel.app",     # ✅ animind frontend
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8000",
-    ],
-    allow_origin_regex=r"https://(genzet|animind)[\w-]*\.vercel\.app",  # all preview URLs
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    print(f"[CORS] Active origins: {BASE_ORIGINS}")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=BASE_ORIGINS,
+        allow_origin_regex=r"https://(genzet|animind)[\w-]*\.vercel\.app",  # all preview URLs
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 # ── Register routers ───────────────────────────────────────────────────
 app.include_router(auth_router)   # /auth/...
 app.include_router(sync_router)   # /sync/...
