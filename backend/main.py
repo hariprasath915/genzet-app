@@ -40,6 +40,19 @@ import sys, io, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
+# ── Load Env Variables (.env) ──────────────────────────────────────────
+try:
+    from dotenv import load_dotenv
+    from pathlib import Path
+    _current_dir = Path(__file__).resolve().parent
+    # Attempt to load from script directory
+    load_dotenv(dotenv_path=_current_dir / ".env")
+    # Also load from parent directory in case of repo-root running environment
+    load_dotenv(dotenv_path=_current_dir.parent / ".env")
+    print(f"[STARTUP] ✅ Loaded environment variables from {_current_dir / '.env'} or parent")
+except Exception as env_err:
+    print(f"[STARTUP] ⚠ Could not run load_dotenv: {env_err}")
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
@@ -322,7 +335,8 @@ async def create_topic_content(request: SkillContentRequest):
 
 if __name__ == "__main__":
     import uvicorn
+    _port = int(os.getenv("PORT", "8000"))
     print("=" * 65)
-    print("  SmartBoard AI API v4.1 — with Auth + Cloud Sync")
+    print(f"  SmartBoard AI API v4.1 — with Auth + Cloud Sync on port {_port}")
     print("=" * 65)
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=_port)
