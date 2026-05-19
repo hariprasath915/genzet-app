@@ -5,3 +5,13 @@ services:
     pythonVersion: "3.11.0"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # ── Set these in Render Dashboard → Environment ──────────────────
+      # ANTHROPIC_API_KEY  — your sk-ant-... key  (required for AI features)
+      # JWT_SECRET_KEY     — long random string    (required for auth)
+      # JWT_EXPIRE_DAYS    — e.g. 900              (optional)
+      # DATABASE_URL       — leave UNSET to use SQLite (simplest for Render)
+      #                      OR set to a Neon/Supabase PostgreSQL URL
+      # DEBUG_CORS         — set to "true" while debugging, then remove
+      - key: JWT_EXPIRE_DAYS
+        value: "900"
