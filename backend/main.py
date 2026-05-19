@@ -1,166 +1,316 @@
-from fastapi import FastAPI, HTTPException
+"""
+main.py  —  SmartBoard AI Backend v4.1
+=======================================
+UPDATED: Fixed CORS + HEAD support + better error handling
+
+New in v4.1:
+  - CORS now covers all Vercel preview URLs via regex
+  - Root route handles HEAD (fixes Render health-check 405)
+  - /health returns 200 on GET and HEAD
+  - Startup errors are caught and logged cleanly
+  - Optional DEBUG_CORS env var to allow all origins during dev
+
+Preserved from v4.0 (UNCHANGED):
+  POST /auth/register
+  POST /auth/login
+  GET  /auth/verify
+  GET  /auth/me
+  POST /sync/animations
+  POST /sync/animations/batch
+  GET  /sync/animations
+  DELETE /sync/animations/{id}
+  GET  /health
+  POST /generate-animation
+  POST /generate-from-book
+  POST /generate-topic-content
+  POST /generate-question-animation
+
+Run:
+    uvicorn main:app --host 0.0.0.0 --port 8000
+
+Environment variables (in .env):
+    ANTHROPIC_API_KEY=sk-ant-...
+    JWT_SECRET_KEY=<long random string>
+    JWT_EXPIRE_DAYS=30
+    DATABASE_URL=sqlite:///./genzet.db   (optional — default is SQLite)
+    DEBUG_CORS=true                       (optional — allows ALL origins, dev only)
+"""
+
+import sys, io, os
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, validator
-from claude_client import generate_animation
-import os
-import time
-import uuid
-from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Optional
 
-load_dotenv()
+# ── NEW: Auth + Sync ──────────────────────────────────────────────────
+from database import init_db
+from auth_routes import router as auth_router
+from sync_routes import router as sync_router
 
+# ── Existing AI modules (unchanged) ───────────────────────────────────
+from claude_client import (
+    generate_animation,
+    generate_genzet_book_content,
+    subtopics_json_to_genzet_args,
+)
+from pdf_handler import (
+    extract_pdf_text,
+    find_subtopics_in_pdf,
+    build_subtopics_json,
+)
+from q_animation import generate_question_animation
+
+try:
+    from sub_topics import process_subtopics_json
+    SUB_TOPICS_AVAILABLE = True
+    print("[INFO]  sub_topics.py loaded OK")
+except ImportError:
+    SUB_TOPICS_AVAILABLE = False
+    print("[WARNING] sub_topics.py not found — falling back to pdf_handler output")
+
+import json
+
+# ── Env flags ─────────────────────────────────────────────────────────
+DEBUG_CORS = os.getenv("DEBUG_CORS", "false").lower() == "true"
+
+# ── Startup / Shutdown lifecycle ───────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs once at startup: creates DB tables."""
+    print("[STARTUP]  Initializing database…")
+    try:
+        init_db()
+        print("[STARTUP]  ✅ GenZet v4.1 ready")
+    except Exception as e:
+        print(f"[STARTUP]  ❌ DB init failed: {e}")
+        raise
+    yield
+    print("[SHUTDOWN] GenZet shutting down.")
+
+
+# ── App ────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="AniMind API",
-    description="AI-powered educational animation generator using Claude",
-    version="1.0.0"
+    title="SmartBoard AI API",
+    version="4.1.0",
+    lifespan=lifespan,
 )
 
-# CORS middleware
-CORS_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "*",
-]
-
-app.add_middleware(
+# ── CORS ───────────────────────────────────────────────────────────────
+# If DEBUG_CORS=true (local dev), allow everything.
+# In production, we list explicit origins + a regex for Vercel previews.
+if DEBUG_CORS:
+    print("[CORS] ⚠ DEBUG_CORS=true — allowing ALL origins (dev only)")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,   # credentials + wildcard is not allowed by spec
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+  app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=[
+        "https://genzet-app.vercel.app",       # ✅ genzet frontend
+        "https://animind-gold.vercel.app",     # ✅ animind frontend
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8000",
+    ],
+    allow_origin_regex=r"https://(genzet|animind)[\w-]*\.vercel\.app",  # all preview URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Ensure runtime directories exist
-os.makedirs("saved_animations", exist_ok=True)
-os.makedirs("saved_videos", exist_ok=True)
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("genzet_library", exist_ok=True)
+# ── Register routers ───────────────────────────────────────────────────
+app.include_router(auth_router)   # /auth/...
+app.include_router(sync_router)   # /sync/...
 
 
-# ─── Request/Response Models ───────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════
+# HEALTH + ROOT
+# ══════════════════════════════════════════════════════════════════════
+
+@app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health(request: Request):
+    """
+    GET  → full JSON status
+    HEAD → 200 OK with no body (used by Render health checks)
+    """
+    if request.method == "HEAD":
+        return JSONResponse(content=None, status_code=200)
+    return {
+        "status":  "ok",
+        "version": "4.1.0",
+        "debug_cors": DEBUG_CORS,
+        "sub_topics_module": SUB_TOPICS_AVAILABLE,
+        "endpoints": {
+            # ── Auth endpoints ──
+            "register":            "POST /auth/register",
+            "login":               "POST /auth/login",
+            "verify":              "GET  /auth/verify",
+            "me":                  "GET  /auth/me",
+            # ── Sync endpoints ──
+            "sync_save":           "POST /sync/animations",
+            "sync_batch":          "POST /sync/animations/batch",
+            "sync_fetch":          "GET  /sync/animations",
+            "sync_delete":         "DELETE /sync/animations/{anim_id}",
+            # ── AI endpoints ──
+            "animation":           "POST /generate-animation",
+            "question_animation":  "POST /generate-question-animation",
+            "book_mode":           "POST /generate-from-book",
+            "skill_workflow":      "POST /generate-topic-content",
+        },
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════
+# EXISTING ENDPOINTS — UNCHANGED FROM v3.7 / v4.0
+# ══════════════════════════════════════════════════════════════════════
 
 class AnimationRequest(BaseModel):
     prompt: str
-    chat_id: str = None
-
-    @validator("prompt")
-    def prompt_must_not_be_empty(cls, v):
-        v = v.strip()
-        if not v:
-            raise ValueError("Prompt cannot be empty")
-        if len(v) > 1000:
-            raise ValueError("Prompt must be under 1000 characters")
-        return v
 
 
-class AnimationResponse(BaseModel):
-    id: str
-    title: str
-    explanation: str
-    animation_code: str
-    timestamp: float
-    prompt: str
+class QuestionAnimRequest(BaseModel):
+    question: str
 
 
-class HealthResponse(BaseModel):
-    status: str
-    timestamp: float
+class SkillContentRequest(BaseModel):
+    topic:        str
+    subject:      Optional[str] = "Engineering"
+    retry_failed: Optional[bool] = True
 
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
-
-@app.get("/", tags=["Health"])
-def root():
-    return {"message": "AniMind API is running 🚀", "docs": "/docs"}
-
-
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
-def health_check():
-    return HealthResponse(
-        status="healthy",
-        timestamp=time.time()
-    )
-
-
-@app.post("/generate-animation", response_model=AnimationResponse, tags=["Animation"])
+@app.post("/generate-animation")
 async def create_animation(request: AnimationRequest):
-    """
-    Generate an HTML/CSS/JS animation for the given concept using Claude.
+    if not request.prompt or not request.prompt.strip():
+        raise HTTPException(status_code=400, detail="Prompt cannot be empty")
+    try:
+        result = await generate_animation(request.prompt.strip())
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    - **prompt**: The concept or question to animate (e.g., "gravity", "neural network")
-    - **chat_id**: Optional chat session ID for grouping related animations
-    """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="ANTHROPIC_API_KEY is not configured. Please set it in your .env file."
-        )
+
+@app.post("/generate-question-animation")
+async def create_question_animation(request: QuestionAnimRequest):
+    question = (request.question or "").strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="'question' field cannot be empty")
+    try:
+        result = await generate_question_animation(question)
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Question animation generation failed: {e}")
+
+
+@app.post("/generate-from-book")
+async def create_from_book(
+    topic:    str            = Form(...),
+    file:     UploadFile     = File(...),
+    subtopic: Optional[str]  = Form(default=None),
+):
+    topic    = (topic or "").strip()
+    subtopic = (subtopic or "").strip() or topic
+
+    if not topic:
+        raise HTTPException(status_code=400, detail="'topic' field cannot be empty")
+
+    filename = (file.filename or "").strip()
+    if not filename:
+        raise HTTPException(status_code=400, detail="No file uploaded")
+    if not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail=f"Only PDF files accepted. Got: '{filename}'")
 
     try:
-        result = generate_animation(request.prompt)
-
-        animation_id = str(uuid.uuid4())
-
-        # Save the animation HTML to disk
-        filepath = os.path.join("saved_animations", f"{animation_id}.html")
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(result["animation_code"])
-
-        return AnimationResponse(
-            id=animation_id,
-            title=result.get("title", request.prompt),
-            explanation=result.get("explanation", ""),
-            animation_code=result["animation_code"],
-            timestamp=time.time(),
-            prompt=request.prompt
-        )
-
+        pdf_bytes = await file.read()
     except Exception as e:
-        error_message = str(e)
+        raise HTTPException(status_code=400, detail=f"Could not read file: {e}")
 
-        if "authentication" in error_message.lower() or "api_key" in error_message.lower():
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid Anthropic API key. Please check your ANTHROPIC_API_KEY."
-            )
-        elif "rate_limit" in error_message.lower():
-            raise HTTPException(
-                status_code=429,
-                detail="Rate limit exceeded. Please try again in a moment."
-            )
-        else:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Animation generation failed: {error_message}"
-            )
+    if len(pdf_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded PDF is empty")
+
+    print(f"[BOOK]  topic='{topic}'  file='{filename}'  ({len(pdf_bytes):,} bytes)")
+
+    pdf_data = extract_pdf_text(pdf_bytes)
+    if not pdf_data["success"]:
+        raise HTTPException(status_code=400, detail=f"Could not read PDF: {pdf_data.get('error', 'Unknown')}")
+
+    full_text  = pdf_data["full_text"]
+    word_count = pdf_data["word_count"]
+
+    if word_count < 50:
+        raise HTTPException(status_code=400, detail="PDF has no readable text.")
+
+    topic_data = find_subtopics_in_pdf(full_text, topic)
+    pdf_context_json = build_subtopics_json(topic, topic_data)
+
+    pdf_context = (
+        f"Main topic: {topic}\nSubtopic focus: {subtopic}\n"
+        f"Section headings: {'; '.join(topic_data.get('main_headings', []))}\n"
+        f"Subtopics found: {', '.join(topic_data.get('all_subtopics', [])[:10])}\n\n"
+        f"--- PDF Content (first 6000 chars) ---\n{full_text[:6000]}"
+    )
+
+    subtopics_list = None
+    if SUB_TOPICS_AVAILABLE:
+        try:
+            formatted      = process_subtopics_json(pdf_context_json)
+            gz_args        = subtopics_json_to_genzet_args(json.dumps(formatted), subtopic)
+            subtopics_list = gz_args.get("subtopics_list") or None
+        except Exception as e:
+            print(f"[BOOK] ⚠ sub_topics failed: {e}")
+
+    if not subtopics_list:
+        grouped = topic_data.get("subtopics_by_query", {})
+        for qk, sl in grouped.items():
+            if subtopic.lower() in qk.lower():
+                subtopics_list = sl or None
+                break
+
+    if not subtopics_list:
+        subtopics_list = topic_data.get("all_subtopics") or None
+
+    try:
+        result = await generate_genzet_book_content(
+            topic=topic, subtopic=subtopic,
+            pdf_context=pdf_context, subtopics_list=subtopics_list,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
 
 
-@app.get("/example-prompts", tags=["Examples"])
-def get_example_prompts():
-    """Return a list of example animation prompts."""
-    return {
-        "prompts": [
-            "gravity and planetary orbits",
-            "neural network firing patterns",
-            "DNA double helix structure",
-            "Fourier transform visualization",
-            "photosynthesis process",
-            "sorting algorithms comparison",
-            "wave interference patterns",
-            "human heart blood circulation",
-            "quantum superposition",
-            "Newton's laws of motion",
-            "electric circuit with electrons",
-            "solar system model",
-            "acid-base neutralization reaction",
-            "electromagnetic field lines",
-        ]
-    }
+@app.post("/generate-topic-content")
+async def create_topic_content(request: SkillContentRequest):
+    topic = (request.topic or "").strip()
+    if not topic:
+        raise HTTPException(status_code=400, detail="'topic' field cannot be empty")
+    try:
+        from claude_client import generate_skill_content
+        result = await generate_skill_content(
+            topic=topic,
+            subject=request.subject or "Engineering",
+            retry_failed=request.retry_failed if request.retry_failed is not None else True,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SKILL.md generation failed: {e}")
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    print("=" * 65)
+    print("  SmartBoard AI API v4.1 — with Auth + Cloud Sync")
+    print("=" * 65)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
