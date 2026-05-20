@@ -7501,7 +7501,7 @@
       const pt = setInterval(() => { pct = Math.min(pct + Math.random() * 3.5, 88); document.getElementById('amProgFill').style.width = pct + '%'; document.getElementById('amProgPct').textContent = Math.round(pct) + '%'; }, 400);
       const mt = setInterval(() => { mi = (mi + 1) % msgs.length; document.getElementById('amLoadMsg').textContent = msgs[mi]; }, 3000);
       try {
-        const res = await fetch('http://localhost:8000/generate-animation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+        const res = await fetch('https://animind-backend-1.onrender.com/generate-animation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
         if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
         const data = await res.json();
         const patchedCode = patchAnimHTML(data.animation_code);
@@ -7674,7 +7674,7 @@
         formData.append('topic', topic);
         formData.append('file', uploadedPdfFile, uploadedPdfFile.name);
 
-        const res = await fetch('http://localhost:8000/generate-from-book', {
+        const res = await fetch('https://animind-backend-1.onrender.com/generate-from-book', {
           method: 'POST',
           body: formData
           // NOTE: Do NOT set Content-Type manually — browser sets it with boundary
@@ -8718,7 +8718,7 @@ async function generateQuestionAnim() {
  
   try {
     
-    const res = await fetch('http://localhost:8000/generate-question-animation', {
+    const res = await fetch('https://animind-backend-1.onrender.com/generate-question-animation', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ question: rawQ })
@@ -9131,7 +9131,7 @@ window.saveCOFinish = async function() {
 
 // ── Configuration ─────────────────────────────────────────────────────
 // Change this to your deployed backend URL in production.
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = 'https://animind-backend-1.onrender.com';
 
 // localStorage keys
 const TOKEN_KEY   = 'genzet_jwt';
