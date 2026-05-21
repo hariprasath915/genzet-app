@@ -1,1 +1,0 @@
-# genzet-app
