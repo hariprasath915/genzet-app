@@ -5307,106 +5307,183 @@
       width: 100%; height: 100%;
       overflow: hidden;
     }
-    /* ── LEFT HERO PANEL ── */
+
+    /* ── LEFT HERO PANEL — Apple-style Premium Educational UI ── */
     .ag-left {
       flex: 1.15;
       position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      padding: 56px 52px;
-      background: linear-gradient(145deg, #0D9488 0%, #6366F1 100%);
+      justify-content: space-between;
+      padding: 48px 56px 44px;
+      background: #F7F8FC;
       overflow: hidden;
     }
+    /* Soft glow orbs — light background version */
     .ag-left-bg {
       position: absolute; inset: 0;
-      background: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(99,102,241,.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 75%, rgba(13,148,136,.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 35% at 70% 10%, rgba(139,92,246,.06) 0%, transparent 70%);
       pointer-events: none;
     }
-    .ag-left-orb1 {
-      position: absolute; width: 380px; height: 380px; top: -80px; left: -80px;
-      border-radius: 50%; filter: blur(80px); opacity: .12;
-      background: rgba(255,255,255,.5);
-      animation: orbFloat1 18s ease-in-out infinite alternate;
-    }
-    .ag-left-orb2 {
-      position: absolute; width: 300px; height: 300px; bottom: -60px; right: -40px;
-      border-radius: 50%; filter: blur(70px); opacity: .12;
-      background: rgba(255,255,255,.5);
-      animation: orbFloat2 22s ease-in-out infinite alternate;
-    }
-    .ag-left-content {
-      position: relative; z-index: 2;
-    }
+    /* Hide old orb divs — background now handles glow */
+    .ag-left-orb1, .ag-left-orb2 { display: none; }
+
+    /* ── BRAND ROW ── */
     .ag-brand-row {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 32px;
+      display: flex; align-items: center; gap: 10px;
+      animation: agFadeUp .5s ease both;
     }
     .ag-brand-icon {
-      width: 42px; height: 42px; border-radius: 12px;
-      background: linear-gradient(135deg, #0d9488, #38bdf8, #6366f1);
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
       display: flex; align-items: center; justify-content: center;
-      font-size: 21px; box-shadow: 0 4px 20px rgba(13,148,136,.5);
+      font-size: 19px; box-shadow: 0 4px 16px rgba(99,102,241,.25);
     }
     .ag-brand-name {
-      font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.4px;
+      font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -.3px;
       font-family: 'Sora',sans-serif;
     }
     .ag-brand-name em {
-      background: linear-gradient(135deg,#5eead4,#38bdf8);
+      background: linear-gradient(135deg, #0d9488, #6366f1);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; font-style: normal;
     }
-    .ag-left-tag {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
-      border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600;
-      color: #fff; letter-spacing: .5px; text-transform: uppercase;
-      margin-bottom: 28px; width: fit-content;
+
+    /* ── HERO CONTENT BLOCK ── */
+    .ag-left-content {
+      position: relative; z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 0 16px;
     }
-    .ag-left-tag::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%;
-      background: #fff; box-shadow: 0 0 8px rgba(255,255,255,.6);
-      animation: dotPulse 2s infinite;
+
+    /* Small doodle accent line before heading */
+    .ag-doodle-accent {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 18px;
+      animation: agFadeUp .5s ease .1s both;
     }
+    .ag-doodle-line {
+      width: 28px; height: 3px; border-radius: 2px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+    .ag-doodle-squiggle {
+      font-size: 18px; color: #6366f1; line-height: 1;
+    }
+
+    /* ── HERO HEADING ── */
     .ag-hero-heading {
-      font-family: 'Sora',sans-serif;
-      font-size: clamp(30px,4.5vw,52px); font-weight: 800;
-      line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 18px;
+      font-family: 'Plus Jakarta Sans', 'Sora', sans-serif;
+      font-size: clamp(32px, 4vw, 54px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -1.8px;
+      color: #111827;
+      margin-bottom: 0;
+      animation: agFadeUp .55s ease .15s both;
     }
-    .ag-hero-heading .grad-teal {
-      background: linear-gradient(135deg,#5eead4,#38bdf8,#0d9488);
+    .ag-hero-heading .ag-grad-purple {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      text-decoration: underline;
+      text-decoration-color: rgba(139,92,246,.35);
+      text-underline-offset: 4px;
     }
-    .ag-hero-heading .grad-indigo {
-      background: linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1);
+    .ag-hero-heading .ag-grad-teal {
+      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 60%, #06b6d4 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      position: relative;
     }
-    .ag-hero-sub {
-      font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.7;
-      max-width: 440px; margin-bottom: 36px;
+    /* Underline decoration for teal word */
+    .ag-hero-heading .ag-grad-teal::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      bottom: -4px;
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #0d9488, #06b6d4);
+      opacity: .45;
     }
-    .ag-hero-sub strong { color: rgba(255,255,255,.8); font-weight: 600; }
-    /* Feature pills grid */
-    .ag-features {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px;
+
+    /* Lightbulb icon floating near heading */
+    .ag-bulb-icon {
+      position: absolute;
+      top: -8px;
+      right: 60px;
+      font-size: 42px;
+      line-height: 1;
+      animation: agBulbFloat 4s ease-in-out infinite;
+      filter: drop-shadow(0 4px 12px rgba(251,191,36,.4));
+      z-index: 3;
     }
-    .ag-feat {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
-      border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600;
-      color: #fff; backdrop-filter: blur(6px); transition: all .22s;
+    @keyframes agBulbFloat {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-8px) rotate(4deg); }
     }
-    .ag-feat:hover { background: rgba(255,255,255,.25); color: #fff; transform: translateY(-2px); }
-    .ag-feat-icon { font-size: 14px; }
-    /* Contact row */
+
+    /* ── CLASSROOM IMAGE ── */
+    .ag-classroom-wrap {
+      margin-top: 28px;
+      position: relative;
+      animation: agFadeUp .6s ease .25s both;
+      z-index: 2;
+    }
+    .ag-classroom-img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 20px;
+      box-shadow:
+        0 12px 40px rgba(99,102,241,.15),
+        0 4px 12px rgba(0,0,0,.08);
+      display: block;
+    }
+    /* Gradient fade at bottom of image to blend with background */
+    .ag-classroom-fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      border-radius: 0 0 20px 20px;
+      background: linear-gradient(to bottom, transparent, rgba(247,248,252,.85));
+      pointer-events: none;
+    }
+    /* Dot grid accent behind image */
+    .ag-dot-grid {
+      position: absolute;
+      bottom: -12px;
+      left: -12px;
+      width: 90px;
+      height: 90px;
+      background-image: radial-gradient(circle, rgba(99,102,241,.2) 1.5px, transparent 1.5px);
+      background-size: 14px 14px;
+      z-index: 1;
+      pointer-events: none;
+      border-radius: 4px;
+    }
+
+    /* ── BOTTOM CONTACT ROW ── */
     .ag-left-contact {
-      display: flex; gap: 20px; flex-wrap: wrap; margin-top: auto; padding-top: 20px;
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding-top: 0;
+      animation: agFadeUp .5s ease .4s both;
     }
     .ag-left-contact a {
-      display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.38);
-      font-size: 12px; font-weight: 600; text-decoration: none; transition: color .2s;
+      display: flex; align-items: center; gap: 6px; color: #9CA3AF;
+      font-size: 11.5px; font-weight: 600; text-decoration: none; transition: color .2s;
     }
-    .ag-left-contact a:hover { color: rgba(255,255,255,.75); }
+    .ag-left-contact a:hover { color: #0D9488; }
+
+    /* Shared fade-up entrance */
+    @keyframes agFadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── RIGHT AUTH PANEL ── */
     .ag-right {
@@ -5895,67 +5972,59 @@
 <div id="authGate" style="display:none; position:fixed; inset:0; z-index:9999;">
   <div class="ag-wrap">
 
-    <!-- ═══ LEFT HERO PANEL ═══ -->
+    <!-- ═══ LEFT HERO PANEL — Premium Apple-Style Educational UI ═══ -->
     <div class="ag-left">
+      <!-- Soft background glow -->
       <div class="ag-left-bg"></div>
       <div class="ag-left-orb1"></div>
       <div class="ag-left-orb2"></div>
 
-      <!-- Animated Education Visuals -->
-      <div class="ag-anim-scene">
-        <div class="ag-anim-atom">
-          <div class="ag-atom-nucleus"></div>
-          <div class="ag-atom-orbit ag-orbit-1"><div class="ag-atom-electron"></div></div>
-          <div class="ag-atom-orbit ag-orbit-2"><div class="ag-atom-electron"></div></div>
-          <div class="ag-atom-orbit ag-orbit-3"><div class="ag-atom-electron"></div></div>
-        </div>
-        <div class="ag-anim-float ag-float-book">📖</div>
-        <div class="ag-anim-float ag-float-bulb">💡</div>
-        <div class="ag-anim-float ag-float-rocket">🚀</div>
-        <div class="ag-anim-float ag-float-star">⭐</div>
-        <div class="ag-anim-float ag-float-gear">⚙️</div>
-        <div class="ag-anim-float ag-float-chart">📊</div>
+      <!-- Brand Logo Row -->
+      <div class="ag-brand-row">
+        <div class="ag-brand-icon">🎓</div>
+        <span class="ag-brand-name">Gen<em>Zet</em></span>
       </div>
 
+      <!-- Hero Content -->
       <div class="ag-left-content">
-        <!-- Brand -->
-        <div class="ag-brand-row">
-          <div class="ag-brand-icon">🎓</div>
-          <span class="ag-brand-name">Gen<em>Zet</em></span>
+
+        <!-- Doodle accent before heading -->
+        <div class="ag-doodle-accent">
+          <div class="ag-doodle-line"></div>
+          <span class="ag-doodle-squiggle">〰</span>
         </div>
 
-        <!-- Tag -->
-        <div class="ag-left-tag">AI-Powered · Cloud Synced · Always Growing</div>
+        <!-- Lightbulb floating icon -->
+        <div style="position:relative;">
+          <span class="ag-bulb-icon">💡</span>
 
-        <!-- Headline -->
-        <h2 class="ag-hero-heading">
-          <span class="grad-teal">Learn.</span>
-          <span class="grad-indigo"> Build.</span>
-          <span style="color:#fff;"> Innovate.</span>
-        </h2>
-
-        <!-- Subline -->
-        <p class="ag-hero-sub">
-          Transform complex concepts into <strong>interactive visual lessons</strong> powered by AI
-          — designed for deeper understanding and engagement.
-        </p>
-
-        <!-- Feature pills -->
-        <div class="ag-features">
-          <div class="ag-feat"><span class="ag-feat-icon">✨</span> AI Animation Creator</div>
-          <div class="ag-feat"><span class="ag-feat-icon">📚</span> Smart Library</div>
-          <div class="ag-feat"><span class="ag-feat-icon">📁</span> Engineering Courses</div>
-          <div class="ag-feat"><span class="ag-feat-icon">❓</span> QAnim Q&amp;A Mode</div>
-          <div class="ag-feat"><span class="ag-feat-icon">🎥</span> Video Vault</div>
-          <div class="ag-feat"><span class="ag-feat-icon">☁️</span> Cloud Sync</div>
+          <!-- Main Hero Heading -->
+          <h2 class="ag-hero-heading">
+            Smart students<br>
+            <span class="ag-grad-purple">don't memorize</span><br>
+            they <span class="ag-grad-teal">visualize</span>
+          </h2>
         </div>
 
-        <!-- Contact -->
-        <div class="ag-left-contact">
-          <a href="mailto:genzet@gmail.com"><span>📧</span> genzet@gmail.com</a>
-          <a href="tel:+919080202377"><span>📞</span> +91 90802 02377</a>
-          <a href="https://wa.me/919080202377" target="_blank" rel="noopener"><span>💬</span> WhatsApp Us</a>
+        <!-- Classroom image block -->
+        <div class="ag-classroom-wrap">
+          <div class="ag-dot-grid"></div>
+          <img
+            class="ag-classroom-img"
+            src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&q=85&auto=format&fit=crop"
+            alt="Students learning at an interactive smartboard in a modern classroom"
+            loading="lazy"
+          />
+          <div class="ag-classroom-fade"></div>
         </div>
+
+      </div>
+
+      <!-- Bottom Contact Row -->
+      <div class="ag-left-contact">
+        <a href="mailto:genzet@gmail.com"><span>📧</span> genzet@gmail.com</a>
+        <a href="tel:+919080202377"><span>📞</span> +91 90802 02377</a>
+        <a href="https://wa.me/919080202377" target="_blank" rel="noopener"><span>💬</span> WhatsApp Us</a>
       </div>
     </div>
 
