@@ -775,7 +775,7 @@
     .stream-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 24px;
+  padding: 20px 26px;
 }
 
 .panel {
@@ -9199,7 +9199,7 @@ window.saveCOFinish = async function() {
 
 // ── Configuration ─────────────────────────────────────────────────────
 // Change this to your deployed backend URL in production.
-const BACKEND_URL = 'https://animind-backend-2.onrender.com';
+const BACKEND_URL = 'https://animind-backend-2y07f.onrender.com';
 
 // localStorage keys
 const TOKEN_KEY   = 'genzet_jwt';
