@@ -3097,7 +3097,7 @@
 
     .notif.info {
       background: var(--blue-lt);
-      border: 2px solid var(--blue-md);
+      border: 4px solid var(--blue-md);
       color: var(--blue);
     }
 
