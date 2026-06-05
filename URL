@@ -9199,7 +9199,7 @@ window.saveCOFinish = async function() {
 
 // ── Configuration ─────────────────────────────────────────────────────
 // Change this to your deployed backend URL in production.
-const BACKEND_URL = 'https://animind-backend-1.onrender.com';
+const BACKEND_URL = 'https://animind-backend-2.onrender.com';
 
 // localStorage keys
 const TOKEN_KEY   = 'genzet_jwt';
