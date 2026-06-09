@@ -9840,6 +9840,8 @@ ${text.substring(0, 4500)}`
         const idx = animindLibrary.findIndex(a => a.id === currentQuestionAnim.id);
         if (idx >= 0) animindLibrary[idx] = { ...currentQuestionAnim }; else animindLibrary.unshift({ ...currentQuestionAnim });
         await saveLibraryIDB();
+        // ✅ FIX: push to Supabase cloud after IDB save
+        if (typeof syncPushToCloud === 'function') await syncPushToCloud(currentQuestionAnim);
         syncLibraryToFolders(); showFolders(); closeSaveModal();
         document.getElementById('qaSaveBtn').className = 'am-save-btn saved';
         document.getElementById('qaSaveBtn').textContent = '✅ Saved!';
@@ -10121,7 +10123,7 @@ ${text.substring(0, 4500)}`
 
     // ── Configuration ─────────────────────────────────────────────────────
     // Change this to your deployed backend URL in production.
-    const BACKEND_URL = 'https://animind-backend-y07f.onrender.com';
+    const BACKEND_URL = 'https://animind-backend-2.onrender.com';
 
     // ── Supabase client (frontend, anon key — safe to expose) ─────────────
     // Used ONLY for sb.auth.signOut() on logout to invalidate the Supabase
@@ -10595,21 +10597,26 @@ ${text.substring(0, 4500)}`
     // This runs after DOMContentLoaded so the original function already exists.
     document.addEventListener('DOMContentLoaded', () => {
       // Small delay to ensure all script blocks have run
+      // ✅ FIX: Removed _origSaveToLibrary guard — it was always truthy due to
+      // the Question Anim patch at line 9833, silently skipping cloud sync.
+      // We now always wrap the current saveToLibrary (whatever it is at this point)
+      // to add cloud push on top.
       setTimeout(() => {
-        if (typeof window._origSaveToLibrary === 'undefined' && typeof saveToLibrary === 'function') {
-          const _origSave = saveToLibrary;
+        if (typeof saveToLibrary === 'function') {
+          const _latestSave = saveToLibrary;
           window.saveToLibrary = async function () {
-            // Run the original save (IDB + UI update)
-            await _origSave.apply(this, arguments);
+            // Run the current save chain (IDB + Question Anim logic)
+            await _latestSave.apply(this, arguments);
 
             // Then push the just-saved animation to cloud automatically
-            if (typeof currentAnimation !== 'undefined' && currentAnimation) {
+            // Only for normal animations (Question Anim path pushes separately)
+            if (!window._qaOverrideSave && typeof currentAnimation !== 'undefined' && currentAnimation) {
               await syncPushToCloud(currentAnimation);
             }
           };
-          console.log('[SYNC] saveToLibrary() patched for auto cloud sync.');
+          console.log('[SYNC] ✅ saveToLibrary() patched for auto cloud sync.');
         }
-      }, 100);
+      }, 150);
     });
 
     // ══════════════════════════════════════════════════════════════════════
