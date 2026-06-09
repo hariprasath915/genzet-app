@@ -8748,7 +8748,13 @@
       currentAnimation.playlist = pl;
       const idx = animindLibrary.findIndex(a => a.id === currentAnimation.id);
       if (idx >= 0) animindLibrary[idx] = { ...currentAnimation }; else animindLibrary.unshift({ ...currentAnimation });
-      await saveLibraryIDB(); // ✅ IDB save — no 5MB limit!
+      await saveLibraryIDB(); // ✅ IDB save
+      // ✅ CLOUD SYNC — syncPushToCloud lives in Script Block 2 and checks window.authToken internally.
+      // We must call it via window to cross script-block boundaries safely.
+      if (typeof window.syncPushToCloud === 'function') {
+        window.syncPushToCloud(currentAnimation)
+          .catch(e => console.warn('[SYNC] cloud push error:', e.message));
+      }
       syncLibraryToFolders(); showFolders(); closeSaveModal();
       document.getElementById('amSaveBtn').className = 'am-save-btn saved';
       document.getElementById('amSaveBtn').textContent = '✅ Saved!';
@@ -8878,6 +8884,11 @@
       if (!confirm('Delete this animation?')) return;
       animindLibrary = animindLibrary.filter(a => String(a.id) !== String(id));
       await saveLibraryIDB();
+      // ✅ CLOUD SYNC — remove from Supabase too
+      if (typeof window.syncDeleteFromCloud === 'function') {
+        window.syncDeleteFromCloud(id)
+          .catch(e => console.warn('[SYNC] cloud delete error:', e.message));
+      }
       syncLibraryToFolders(); showFolders(); renderLibrary(); updateActiveCount();
       notify('🗑️ Animation deleted');
     }
@@ -10137,9 +10148,11 @@ ${text.substring(0, 4500)}`
     const TOKEN_KEY = 'genzet_jwt';
     const USER_KEY = 'genzet_user';
 
-    // ── Auth state ─────────────────────────────────────────────────────────
-    let authUser = null;   // { user_id, email, name }
-    let authToken = null;  // Supabase access_token (JWT)
+    // ── Auth state — on window so ALL script blocks can read/write them ────
+    window.authUser  = null;   // { user_id, email, name }
+    window.authToken = null;   // Supabase access_token (JWT)
+    // Local aliases for use within this script block
+    // (assigning to window props; references inside functions use window.authToken)
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 1: INITIALIZATION
@@ -10167,9 +10180,9 @@ ${text.substring(0, 4500)}`
 
         if (res.ok) {
           const profile = await res.json();
-          authToken = storedToken;
-          authUser = { user_id: profile.user_id, email: profile.email, name: profile.name };
-          localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+          window.authToken = storedToken;
+          window.authUser = { user_id: profile.user_id, email: profile.email, name: profile.name };
+          localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
 
           // Token valid — proceed to app
           authHideGate();
@@ -10190,8 +10203,8 @@ ${text.substring(0, 4500)}`
         console.warn('[AUTH] Cannot reach backend:', err.message);
         if (storedUser) {
           // Offline mode: use cached user data, don't show auth gate
-          authToken = storedToken;
-          authUser = storedUser;
+          window.authToken = storedToken;
+          window.authUser = storedUser;
           authHideGate();
           authUpdateStatusBar();
           authSetSyncStatus('Offline mode');
@@ -10403,15 +10416,15 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     function authStoreSession(data) {
-      authToken = data.token;
-      authUser = { user_id: data.user_id, email: data.email, name: data.name };
-      localStorage.setItem(TOKEN_KEY, authToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+      window.authToken = data.token;
+      window.authUser = { user_id: data.user_id, email: data.email, name: data.name };
+      localStorage.setItem(TOKEN_KEY, window.authToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
     }
 
     function authClearSession() {
-      authToken = null;
-      authUser = null;
+      window.authToken = null;
+      window.authUser = null;
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
     }
@@ -10590,34 +10603,8 @@ ${text.substring(0, 4500)}`
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 11: PATCH saveToLibrary() to auto-sync after save
-    // ══════════════════════════════════════════════════════════════════════
-
-    // Wait for the DOM + original saveToLibrary to be defined, then wrap it.
-    // This runs after DOMContentLoaded so the original function already exists.
-    document.addEventListener('DOMContentLoaded', () => {
-      // Small delay to ensure all script blocks have run
-      // ✅ FIX: Removed _origSaveToLibrary guard — it was always truthy due to
-      // the Question Anim patch at line 9833, silently skipping cloud sync.
-      // We now always wrap the current saveToLibrary (whatever it is at this point)
-      // to add cloud push on top.
-      setTimeout(() => {
-        if (typeof saveToLibrary === 'function') {
-          const _latestSave = saveToLibrary;
-          window.saveToLibrary = async function () {
-            // Run the current save chain (IDB + Question Anim logic)
-            await _latestSave.apply(this, arguments);
-
-            // Then push the just-saved animation to cloud automatically
-            // Only for normal animations (Question Anim path pushes separately)
-            if (!window._qaOverrideSave && typeof currentAnimation !== 'undefined' && currentAnimation) {
-              await syncPushToCloud(currentAnimation);
-            }
-          };
-          console.log('[SYNC] ✅ saveToLibrary() patched for auto cloud sync.');
-        }
-      }, 150);
-    });
+    // SECTION 11: Cloud sync is now baked directly into saveToLibrary() at line 8745.
+    // No runtime patching needed.
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 12: BOOTSTRAP
@@ -10638,5 +10625,4 @@ ${text.substring(0, 4500)}`
     });
   </script>
 </body>
-
 </html>
