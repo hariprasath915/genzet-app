@@ -8126,7 +8126,7 @@
       return null;
     }
 
-    // Save animind library to IDB
+    // Save animind library — Supabase is primary (via syncPushToCloud); IDB is offline cache
     async function saveLibraryIDB() {
       try {
         await idbSet('animind_library', animindLibrary);
@@ -8140,7 +8140,7 @@
       }
     }
 
-    // Load animind library
+    // Load animind library from IDB cache (cloud data merged in by syncPullFromCloud on login)
     async function loadLibraryIDB() {
       try {
         const fromIDB = await idbGet('animind_library');
@@ -9852,7 +9852,7 @@ ${text.substring(0, 4500)}`
         if (idx >= 0) animindLibrary[idx] = { ...currentQuestionAnim }; else animindLibrary.unshift({ ...currentQuestionAnim });
         await saveLibraryIDB();
         // ✅ FIX: push to Supabase cloud after IDB save
-        if (typeof syncPushToCloud === 'function') await syncPushToCloud(currentQuestionAnim);
+        if (typeof window.syncPushToCloud === 'function') await window.syncPushToCloud(currentQuestionAnim);
         syncLibraryToFolders(); showFolders(); closeSaveModal();
         document.getElementById('qaSaveBtn').className = 'am-save-btn saved';
         document.getElementById('qaSaveBtn').textContent = '✅ Saved!';
@@ -10139,8 +10139,10 @@ ${text.substring(0, 4500)}`
     // ── Supabase client (frontend, anon key — safe to expose) ─────────────
     // Used ONLY for sb.auth.signOut() on logout to invalidate the Supabase
     // session. All data ops go through the backend (service-role key).
-    const SUPABASE_URL      = 'https://fkincmzpteuibbegghti.supabase.co'; // ← replace
-    const SUPABASE_ANON_KEY = 'sb_publishable_9IRPmhzJbwX25VhmhY42zw_UB2i0h2b';                    // ← replace
+    // 🔍 TODO: Replace these with your actual Supabase project values
+    // Find them in: Supabase Dashboard → Settings → API
+    const SUPABASE_URL      = 'https://fkincmzpteuibbegghti.supabase.co';  // ← REPLACE
+    const SUPABASE_ANON_KEY = 'sb_publishable_9IRPmhzJbwX25VhmhY42zw_UB2i0h2b';               // ← REPLACE (anon/public key)
     const { createClient: _sbCreate } = supabase;
     const sb = _sbCreate(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -10445,6 +10447,7 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPullFromCloud() {
+      const authToken = window.authToken;
       if (!authToken) return;
 
       try {
@@ -10509,6 +10512,7 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPushToCloud(animation) {
+      const authToken = window.authToken;
       if (!authToken || !animation) return;
 
       authSetSyncStatus('Syncing…');
@@ -10553,6 +10557,7 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPushAllToCloud() {
+      const authToken = window.authToken;
       if (!authToken) return;
       const anims = typeof animindLibrary !== 'undefined' ? animindLibrary : [];
       if (anims.length === 0) return;
@@ -10590,6 +10595,7 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncDeleteFromCloud(animId) {
+      const authToken = window.authToken;
       if (!authToken || !animId) return;
       try {
         await fetch(`${BACKEND_URL}/sync/animations/${encodeURIComponent(animId)}`, {
@@ -10603,8 +10609,11 @@ ${text.substring(0, 4500)}`
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 11: Cloud sync is now baked directly into saveToLibrary() at line 8745.
-    // No runtime patching needed.
+    // SECTION 11: Expose sync functions on window so cross-script-block calls work.
+    window.syncPushToCloud     = syncPushToCloud;
+    window.syncPushAllToCloud  = syncPushAllToCloud;
+    window.syncPullFromCloud   = syncPullFromCloud;
+    window.syncDeleteFromCloud = syncDeleteFromCloud;
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 12: BOOTSTRAP
