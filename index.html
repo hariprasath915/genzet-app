@@ -9241,6 +9241,7 @@ function amShowSuccess() {
     }
 
     // Save engineering courses to IDB (massive storage capacity!)
+    // After IDB save, also push to Supabase cloud so courses sync across devices.
     async function saveECourses() {
       try {
         await idbSet('eng_courses', engineeringCourses);
@@ -9256,6 +9257,11 @@ function amShowSuccess() {
       } catch (e) {
         // Fallback to localStorage
         try { localStorage.setItem('genzet_eng_courses', JSON.stringify(engineeringCourses)); } catch (le) { }
+      }
+      // ☁ CLOUD SYNC — push courses to Supabase (debounced via the sync function)
+      if (typeof window.syncCoursesToCloud === 'function') {
+        window.syncCoursesToCloud()
+          .catch(e => console.warn('[SYNC] courses cloud push error:', e.message));
       }
     }
 
@@ -11739,6 +11745,9 @@ ${text.substring(0, 4500)}`
       } catch (err) {
         console.warn('[SYNC] Pull error:', err.message);
       }
+
+      // ☁ Also pull engineering courses from cloud
+      await syncPullCoursesFromCloud();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -11849,11 +11858,123 @@ ${text.substring(0, 4500)}`
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 11: Expose sync functions on window so cross-script-block calls work.
-    window.syncPushToCloud     = syncPushToCloud;
-    window.syncPushAllToCloud  = syncPushAllToCloud;
-    window.syncPullFromCloud   = syncPullFromCloud;
-    window.syncDeleteFromCloud = syncDeleteFromCloud;
+    // SECTION 11: ENGINEERING COURSES — CLOUD SYNC
+    // ══════════════════════════════════════════════════════════════════════
+
+    // Debounce timer — prevents rapid-fire cloud pushes when user is
+    // doing many edits in quick succession (create subject, rename, etc.)
+    let _coursesSyncTimer = null;
+
+    async function syncCoursesToCloud() {
+      const authToken = window.authToken;
+      if (!authToken) return;
+      if (!window.authUser || !window.authUser.user_id) {
+        console.warn('[SYNC] Skipping courses push — no user_id in session.');
+        return;
+      }
+
+      // Debounce: wait 1.5s of inactivity before pushing
+      if (_coursesSyncTimer) clearTimeout(_coursesSyncTimer);
+      return new Promise((resolve) => {
+        _coursesSyncTimer = setTimeout(async () => {
+          try {
+            // Strip large animCode fields to reduce payload size.
+            // The full HTML for each topic is already synced individually
+            // via syncPushToCloud / save-html.
+            const courses = (typeof engineeringCourses !== 'undefined' ? engineeringCourses : []).map(s => ({
+              ...s,
+              cos: s.cos.map(co => ({
+                ...co,
+                topics: co.topics.map(t => ({ ...t, animCode: (t.animCode || '').length > 200000 ? '[large_html_stripped]' : t.animCode }))
+              })),
+              syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
+            }));
+
+            const res = await fetch(`${BACKEND_URL}/sync/courses`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ courses }),
+            });
+
+            if (res.ok) {
+              console.log('[SYNC] ✅ Engineering courses synced to cloud.');
+            } else {
+              const err = await res.json().catch(() => ({}));
+              console.warn('[SYNC] ⚠ Courses push failed:', err.detail || res.status);
+            }
+          } catch (err) {
+            console.warn('[SYNC] ⚠ Courses push error:', err.message);
+          }
+          resolve();
+        }, 1500);
+      });
+    }
+
+    async function syncPullCoursesFromCloud() {
+      const authToken = window.authToken;
+      if (!authToken) return;
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/sync/courses`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!res.ok) {
+          console.warn('[SYNC] Courses pull failed:', res.status);
+          return;
+        }
+
+        const data = await res.json();
+        const cloudCourses = data.courses;
+
+        if (!cloudCourses || !Array.isArray(cloudCourses) || cloudCourses.length === 0) {
+          console.log('[SYNC] No cloud courses found — keeping local data.');
+          return;
+        }
+
+        // Merge strategy: cloud wins (same as animations).
+        // Local subjects not present in cloud are preserved.
+        const localCourses = typeof engineeringCourses !== 'undefined' ? [...engineeringCourses] : [];
+        const cloudById = Object.fromEntries(cloudCourses.map(s => [s.id, s]));
+        const localById = Object.fromEntries(localCourses.map(s => [s.id, s]));
+
+        // Cloud overwrites local for matching IDs; local-only items are kept
+        const mergedById = { ...localById, ...cloudById };
+        const merged = Object.values(mergedById);
+
+        if (typeof engineeringCourses !== 'undefined') {
+          engineeringCourses = merged;
+        }
+
+        // Persist merged result to IDB (without re-triggering cloud push)
+        if (typeof idbSet === 'function') {
+          await idbSet('eng_courses', engineeringCourses);
+        }
+
+        // Re-render File mode UI
+        if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
+        if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+        if (typeof showFolders === 'function') showFolders();
+        if (typeof updateActiveCount === 'function') updateActiveCount();
+
+        console.log(`[SYNC] ✅ Pulled ${cloudCourses.length} subjects from cloud. Total: ${merged.length}`);
+
+      } catch (err) {
+        console.warn('[SYNC] Courses pull error:', err.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SECTION 12: Expose sync functions on window so cross-script-block calls work.
+    window.syncPushToCloud          = syncPushToCloud;
+    window.syncPushAllToCloud       = syncPushAllToCloud;
+    window.syncPullFromCloud        = syncPullFromCloud;
+    window.syncDeleteFromCloud      = syncDeleteFromCloud;
+    window.syncCoursesToCloud       = syncCoursesToCloud;
+    window.syncPullCoursesFromCloud = syncPullCoursesFromCloud;
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 12: BOOTSTRAP
