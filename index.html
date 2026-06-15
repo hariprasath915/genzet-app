@@ -7819,7 +7819,7 @@ function amGetAccounts() {
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────────
-function amHandleLogin() {
+async function amHandleLogin() {
   amClearErrors(); amHideErr();
   const email = document.getElementById('lpam-login-email').value.trim().toLowerCase();
   const pw    = document.getElementById('lpam-login-pw').value;
@@ -7830,30 +7830,58 @@ function amHandleLogin() {
   if (!ok) return;
 
   amSetLoading('amLoginBtn', true);
-  setTimeout(() => {
-    const accounts = amGetAccounts();
-    const account  = accounts[email];
 
-    if (!account) {
+  // FIX (Bug #1): Use the real backend API instead of localStorage-only account lookup.
+  // The old code read from genzet_accounts (localStorage), which only existed on the
+  // device where the account was first created — causing "No account found" on any
+  // other device. Now we call POST /auth/login which validates via Supabase Auth,
+  // so the same credentials work on every device.
+  try {
+    const backendUrl = (typeof BACKEND_URL !== 'undefined')
+      ? BACKEND_URL
+      : 'https://animind-backend-2.onrender.com';
+
+    const res = await fetch(`${backendUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
       amSetLoading('amLoginBtn', false);
-      amShowErr('No account found with this email. Please create an account first.');
+      // Surface the backend error message directly (e.g. "Incorrect email or password.")
+      const msg = data.detail || 'Login failed. Please check your credentials.';
+      amFieldErr('lpam-login-pw', 'lpam-login-pw-err', msg);
+      amShowErr(msg);
       return;
     }
-    if (account.pwHash !== amHash(pw)) {
-      amSetLoading('amLoginBtn', false);
-      amFieldErr('lpam-login-pw', 'lpam-login-pw-err', 'Incorrect email or password');
-      amShowErr('Incorrect email or password. Please try again.');
-      return;
-    }
-    // Credentials match — go to dashboard
+
+    // Store the session so authInit (in Script Block 2) picks it up and
+    // the dashboard auth gate recognises the user as logged in.
+    const TOKEN_KEY = 'genzet_jwt';
+    const USER_KEY  = 'genzet_user';
+    window.authToken = data.token;
+    window.authUser  = { user_id: data.user_id, email: data.email, name: data.name };
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
+    // Legacy key — kept so older code paths don't break
     localStorage.setItem('genzet_authenticated', 'true');
-    localStorage.setItem('genzet_user', JSON.stringify({ name: account.name, email }));
+
     amShowSuccess();
-  }, 900);
+  } catch (err) {
+    amSetLoading('amLoginBtn', false);
+    amShowErr(err.message || 'Network error. Please check your connection and try again.');
+  }
 }
 
 // ── SIGNUP ────────────────────────────────────────────────────────
-function amHandleSignup() {
+// FEATURE: Auto-generate unique user IDs on account creation.
+// amHandleSignup now calls POST /auth/register on the backend (Supabase),
+// which assigns a stable UUID to the account. The UUID is the same on every
+// device — enabling true cross-device login. Legacy localStorage-only
+// account creation (genzet_accounts) is fully replaced.
+async function amHandleSignup() {
   amClearErrors(); amHideErr();
   const name    = document.getElementById('lpam-signup-name').value.trim();
   const email   = document.getElementById('lpam-signup-email').value.trim().toLowerCase();
@@ -7868,25 +7896,53 @@ function amHandleSignup() {
   else if (pw && confirm !== pw){ amFieldErr('lpam-signup-confirm','lpam-signup-confirm-err','Passwords do not match'); ok=false; }
   if (!ok) return;
 
-  // Check if email already registered
-  const accounts = amGetAccounts();
-  if (accounts[email]) {
-    amFieldErr('lpam-signup-email','lpam-signup-email-err','An account with this email already exists');
-    amShowErr('This email is already registered. Please sign in instead.');
-    return;
-  }
-
   amSetLoading('amSignupBtn', true);
-  setTimeout(() => {
-    // Save account with hashed password
-    accounts[email] = { name, pwHash: amHash(pw) };
-    localStorage.setItem('genzet_accounts', JSON.stringify(accounts));
+
+  try {
+    const backendUrl = (typeof BACKEND_URL !== 'undefined')
+      ? BACKEND_URL
+      : 'https://animind-backend-2.onrender.com';
+
+    const res = await fetch(`${backendUrl}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password: pw }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      amSetLoading('amSignupBtn', false);
+      // Common case: email already registered on Supabase
+      const msg = data.detail || 'Registration failed. This email may already be registered.';
+      amFieldErr('lpam-signup-email', 'lpam-signup-email-err', msg);
+      amShowErr(msg);
+      return;
+    }
+
+    // Store session — user_id is the Supabase UUID (permanent, cross-device)
+    const TOKEN_KEY = 'genzet_jwt';
+    const USER_KEY  = 'genzet_user';
+    window.authToken = data.token;
+    window.authUser  = { user_id: data.user_id, email: data.email, name: data.name };
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
+    // Legacy key — kept so older code paths recognise the logged-in state
+    localStorage.setItem('genzet_authenticated', 'true');
 
     amSetLoading('amSignupBtn', false);
 
-    // Show success message then switch to Sign In tab (NOT dashboard)
+    // Show success message then switch to Sign In tab
     amShowSignupSuccess(email);
-  }, 1100);
+
+    // Push any locally-stored animations to the new account's cloud library
+    if (typeof window.syncPushAllToCloud === 'function') {
+      window.syncPushAllToCloud().catch(e => console.warn('[SYNC] initial push error:', e.message));
+    }
+
+  } catch (err) {
+    amSetLoading('amSignupBtn', false);
+    amShowErr(err.message || 'Network error. Please check your connection and try again.');
+  }
 }
 
 // ── After signup: show confirmation then switch to Sign In ────────
@@ -8113,10 +8169,35 @@ function amShowSuccess() {
      z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px;
      background:var(--surface); border:1.5px solid var(--border);
      border-radius:40px; box-shadow:var(--shadow); font-size:13px;">
+    <!-- Live indicator dot -->
     <div style="width:8px; height:8px; border-radius:50%; background:var(--green);
-              box-shadow:0 0 6px var(--green);"></div>
+              box-shadow:0 0 6px var(--green); flex-shrink:0;"></div>
+    <!-- User name -->
     <span id="authUserName" style="font-weight:600; color:var(--text); max-width:140px;
         overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Teacher</span>
+    <!-- User ID chip — copyable UUID (first 8 chars shown, full UUID on click) -->
+    <span id="authUserIdChip"
+      title="Your unique User ID — click to copy full ID"
+      onclick="(function(){
+        const uid = window.authUser && window.authUser.user_id;
+        if (!uid) return;
+        navigator.clipboard.writeText(uid).then(() => {
+          const c = document.getElementById('authUserIdChip');
+          const prev = c.textContent;
+          c.textContent = '✅ Copied!';
+          c.style.background = 'var(--green-lt)';
+          c.style.color = 'var(--green)';
+          setTimeout(() => { c.textContent = prev; c.style.background = ''; c.style.color = ''; }, 1800);
+        }).catch(() => { alert('User ID: ' + uid); });
+      })()"
+      style="display:none; font-size:10px; font-family:'JetBrains Mono',monospace;
+             font-weight:700; letter-spacing:.03em; color:var(--blue); cursor:pointer;
+             padding:3px 8px; background:var(--blue-lt); border:1px solid var(--blue-md);
+             border-radius:20px; white-space:nowrap; transition:all .2s;
+             user-select:none;"
+      onmouseover="this.style.background='var(--blue-md)'"
+      onmouseout="this.style.background='var(--blue-lt)'">
+    </span>
     <span id="authSyncStatus" style="color:var(--text3); font-size:11px;"></span>
     <button onclick="authLogout()" title="Sign out" style="padding:4px 10px; border:1.5px solid var(--border); border-radius:20px;
            background:transparent; color:var(--text2); cursor:pointer; font-size:12px;
@@ -8125,7 +8206,6 @@ function amShowSuccess() {
       onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text2)'">
       Sign out
     </button>
-
   </div>
 
 
@@ -9817,9 +9897,15 @@ function amShowSuccess() {
       if (idx >= 0) animindLibrary[idx] = { ...currentAnimation }; else animindLibrary.unshift({ ...currentAnimation });
       await saveLibraryIDB(); // ✅ IDB save
       // ✅ CLOUD SYNC — syncPushToCloud lives in Script Block 2 and checks window.authToken internally.
-      // We must call it via window to cross script-block boundaries safely.
+      // FIX (Bug #2): Pass filename explicitly so the backend stores the user-chosen name
+      // in body.filename, and _resolve_title() on the backend returns the right card title
+      // when the library is fetched on another device.
       if (typeof window.syncPushToCloud === 'function') {
-        window.syncPushToCloud(currentAnimation)
+        const animPayload = {
+          ...currentAnimation,
+          filename: currentAnimation.title || 'Untitled',
+        };
+        window.syncPushToCloud(animPayload)
           .catch(e => console.warn('[SYNC] cloud push error:', e.message));
       }
       syncLibraryToFolders(); showFolders(); closeSaveModal();
@@ -10649,8 +10735,9 @@ ${text.substring(0, 4500)}`
       btn.disabled = true;
       btn.textContent = '⏳ Saving…';
 
+      const clientId = 't_' + Date.now().toString();
       const newTopic = {
-        id: 't_' + Date.now().toString(),
+        id: clientId,
         name,
         animCode: code,
         explanation: 'Uploaded HTML code',
@@ -10661,6 +10748,47 @@ ${text.substring(0, 4500)}`
 
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
       await saveECourses();
+
+      // FIX (Bug #2): Upload HTML to Supabase cloud DB via the dedicated save-html
+      // endpoint so the saved output is available on every device, not just this one.
+      // Previously saveUploadedHTML only wrote to engineeringCourses (local IDB) and
+      // never called any cloud sync — silently losing the upload on any other device.
+      const authToken = window.authToken || localStorage.getItem('genzet_jwt');
+      if (authToken) {
+        try {
+          const backendUrl = (typeof BACKEND_URL !== 'undefined')
+            ? BACKEND_URL
+            : 'https://animind-backend-2.onrender.com';
+
+          const syncRes = await fetch(`${backendUrl}/sync/animations/save-html`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              filename:    name,
+              html:        code,
+              prompt:      '[HTML Upload]',
+              explanation: 'Uploaded HTML code',
+              playlist:    'General',
+              client_id:   clientId,
+            }),
+          });
+
+          if (syncRes.ok) {
+            console.log('[SYNC] ✅ Uploaded HTML synced to cloud:', name);
+          } else {
+            const syncErr = await syncRes.json().catch(() => ({}));
+            console.warn('[SYNC] ⚠ save-html failed:', syncErr.detail || syncRes.status);
+          }
+        } catch (syncEx) {
+          // Non-fatal — the local IDB save above already succeeded.
+          console.warn('[SYNC] ⚠ save-html network error:', syncEx.message);
+        }
+      } else {
+        console.log('[SYNC] No auth token — HTML upload saved locally only (not synced to cloud).');
+      }
 
       closeUploadHTMLModal();
       renderTopicList();
@@ -11225,21 +11353,31 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function authInit() {
-      // ── Landing-page bridge ────────────────────────────────────────
-      // When user signs in on genzet-landing.html, it sets genzet_authenticated
-      // and genzet_user in localStorage, then redirects here.
-      // Detect this and go straight to dashboard — no gate, no overlay.
+      // ── Landing-page bridge (FIXED) ───────────────────────────────
+      // When amHandleLogin / amHandleSignup succeed on the landing page,
+      // they now store genzet_jwt AND set genzet_authenticated='true'.
+      // The fix: if genzet_jwt already exists, skip the old bridge entirely
+      // and let the normal token-verification path below handle it.
+      // This ensures user_id and authToken are always set correctly and
+      // cloud sync works immediately without a separate login step.
       const landingAuth = localStorage.getItem('genzet_authenticated');
       const landingUser = (() => {
         try { return JSON.parse(localStorage.getItem('genzet_user') || 'null'); } catch { return null; }
       })();
-      if (landingAuth === 'true' && landingUser) {
+      const hasJwt = !!localStorage.getItem(TOKEN_KEY);
+      if (landingAuth === 'true' && landingUser && !hasJwt) {
+        // Legacy path: old login flow that never stored a JWT.
+        // Set a minimal session without cloud sync (no token available).
         localStorage.removeItem('genzet_authenticated');
-        window.authUser  = { user_id: null, email: landingUser.email || '', name: landingUser.name || landingUser.email?.split('@')[0] || 'Student' };
+        window.authUser  = { user_id: landingUser.user_id || null, email: landingUser.email || '', name: landingUser.name || landingUser.email?.split('@')[0] || 'Student' };
         window.authToken = null;
         authHideGate();
         authUpdateStatusBar();
         return;
+      }
+      // If genzet_jwt exists, clean up the flag and fall through to token verification
+      if (landingAuth === 'true' && hasJwt) {
+        localStorage.removeItem('genzet_authenticated');
       }
       // ── End landing-page bridge ────────────────────────────────────
 
@@ -11515,8 +11653,22 @@ ${text.substring(0, 4500)}`
 
     function authUpdateStatusBar() {
       if (!authUser) return;
+      // Update name
       const nameEl = document.getElementById('authUserName');
       if (nameEl) nameEl.textContent = authUser.name;
+      // Update user_id chip — shows first 8 chars of Supabase UUID, full UUID on click
+      const chipEl = document.getElementById('authUserIdChip');
+      if (chipEl) {
+        const uid = authUser.user_id;
+        if (uid) {
+          chipEl.textContent = 'ID: ' + uid.slice(0, 8) + '…';
+          chipEl.style.display = 'inline-block';
+          chipEl.title = 'Your User ID: ' + uid + ' — click to copy (works on any device)';
+        } else {
+          // No UUID means old-path session (no JWT) — hide chip
+          chipEl.style.display = 'none';
+        }
+      }
     }
 
     function authSetSyncStatus(msg) {
@@ -11596,6 +11748,12 @@ ${text.substring(0, 4500)}`
     async function syncPushToCloud(animation) {
       const authToken = window.authToken;
       if (!authToken || !animation) return;
+      // Guard: if user_id is null (legacy bridge session without JWT),
+      // skip cloud push — we have no token to authorise the request anyway.
+      if (!window.authUser || !window.authUser.user_id) {
+        console.warn('[SYNC] Skipping cloud push — no user_id in session. User must log in via the backend.');
+        return;
+      }
 
       authSetSyncStatus('Syncing…');
 
