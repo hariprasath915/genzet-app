@@ -6103,6 +6103,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     ══════════════════════════════════════════ */
     #authGate {
       font-family: 'Plus Jakarta Sans', 'Sora', sans-serif;
+      display: none; /* Hidden by default — authInit() shows it only when needed */
     }
 
     .ag-wrap {
@@ -9996,9 +9997,28 @@ function amShowSuccess() {
       if (subjIndex === -1) { notify('Subject not found!', 'error'); return; }
       const coIndex = engineeringCourses[subjIndex].cos.findIndex(c => c.id === saveCOSelectedCOId);
       if (coIndex === -1) { notify('CO not found!', 'error'); return; }
-      const newTopic = { id: 't_' + Date.now().toString(), name, animCode: currentAnimation.animation_code, explanation: currentAnimation.explanation || '', prompt: currentAnimation.prompt || '', created_at: new Date().toISOString() };
+      const topicId = 't_' + Date.now().toString();
+      const newTopic = { id: topicId, name, animCode: currentAnimation.animation_code, explanation: currentAnimation.explanation || '', prompt: currentAnimation.prompt || '', created_at: new Date().toISOString() };
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
-      await saveECourses(); // ✅ IDB save!
+      await saveECourses(); // ✅ IDB + cloud courses sync
+
+      // ☁ CLOUD SYNC — also push the individual animation content to Supabase
+      // so the full HTML is stored in the contents table under this user_id.
+      if (typeof window.syncPushToCloud === 'function') {
+        const animPayload = {
+          id: topicId,
+          title: name,
+          prompt: currentAnimation.prompt || '',
+          explanation: currentAnimation.explanation || '',
+          animation_code: currentAnimation.animation_code || '',
+          playlist: engineeringCourses[subjIndex].name + ' › ' + engineeringCourses[subjIndex].cos[coIndex].coNum,
+          filename: name,
+          created_at: newTopic.created_at,
+        };
+        window.syncPushToCloud(animPayload)
+          .catch(e => console.warn('[SYNC] CO topic cloud push error:', e.message));
+      }
+
       const subjName = engineeringCourses[subjIndex].name;
       const coNum = engineeringCourses[subjIndex].cos[coIndex].coNum;
       closeSaveToCOModal();
@@ -11878,14 +11898,13 @@ ${text.substring(0, 4500)}`
       return new Promise((resolve) => {
         _coursesSyncTimer = setTimeout(async () => {
           try {
-            // Strip large animCode fields to reduce payload size.
-            // The full HTML for each topic is already synced individually
-            // via syncPushToCloud / save-html.
+            // Include full animCode in the courses sync so topics are
+            // fully available on other devices (no stripping).
             const courses = (typeof engineeringCourses !== 'undefined' ? engineeringCourses : []).map(s => ({
               ...s,
               cos: s.cos.map(co => ({
                 ...co,
-                topics: co.topics.map(t => ({ ...t, animCode: (t.animCode || '').length > 200000 ? '[large_html_stripped]' : t.animCode }))
+                topics: co.topics.map(t => ({ ...t }))
               })),
               syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
             }));
@@ -11990,8 +12009,9 @@ ${text.substring(0, 4500)}`
     // Run auth check after DOMContentLoaded (so IDB and library are initialized first)
     document.addEventListener('DOMContentLoaded', () => {
       // Wait for initDB() to complete (it runs in the existing DOMContentLoaded handler)
-      // We use a short delay so our handler runs AFTER the original DOMContentLoaded
-      setTimeout(authInit, 300);
+      // Reduced from 300ms → 50ms: authGate is hidden by default (display:none in CSS)
+      // so there is no visible flash even with this small delay.
+      setTimeout(authInit, 50);
     });
   </script>
 </body>
