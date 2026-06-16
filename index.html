@@ -11467,6 +11467,17 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     function authShowGate() {
+      // ── FIX: authGate lives inside #gz-dashboard which is display:none by default.
+      // A position:fixed child of a display:none parent never renders.
+      // We must make gz-dashboard visible FIRST, then show the gate.
+      const dash = document.getElementById('gz-dashboard');
+      if (dash) { dash.style.display = 'block'; dash.style.opacity = '1'; }
+
+      // Immediately hide the landing page (skip the 420ms fade-out)
+      // so it never bleeds through the authGate overlay.
+      const landing = document.getElementById('gz-landing');
+      if (landing) { landing.style.display = 'none'; }
+
       const gate = document.getElementById('authGate');
       if (gate) {
         gate.style.display = 'flex';
