@@ -290,7 +290,8 @@ async function _syncPushCourses() {
   return new Promise(res => {
     _cTimer = setTimeout(async () => {
       try {
-        const courses = (typeof engineeringCourses !== 'undefined' ? engineeringCourses : [])
+        const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
+        const courses = currentLocal
           .map(s => ({ ...s, cos: s.cos.map(co => ({ ...co, topics: [...co.topics] })), syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null }));
         await fetch(`${BACKEND_URL}/sync/courses`, {
           method: 'PUT',
@@ -320,8 +321,9 @@ async function _syncPullCourses() {
     const filtered = cloud.filter(s => !LEGACY_DEFAULT_IDS.has(s.id));
     if (!filtered.length) return;
 
+    const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
     const localById = Object.fromEntries(
-      (typeof engineeringCourses !== 'undefined' ? engineeringCourses : [])
+      currentLocal
         .filter(s => !LEGACY_DEFAULT_IDS.has(s.id))
         .map(s => [s.id, s])
     );
