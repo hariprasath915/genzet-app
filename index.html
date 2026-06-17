@@ -23,23 +23,20 @@
   // flash either way, because there's only ONE place left that decides
   // visibility (this script + authShowGate/authHideGate), not five.
   (function () {
+    // PRE-PAINT GATE v2 — only a real JWT grants instant dashboard access.
+    // The old genzet_local_session bypass is gone: it let users appear
+    // logged-in on the originating device only, breaking cross-device login.
     var hasToken = !!localStorage.getItem('genzet_jwt');
-    var bridge = localStorage.getItem('genzet_authenticated') === 'true' &&
-                 !!localStorage.getItem('genzet_user');
-    var localSession = localStorage.getItem('genzet_local_session') === 'true' &&
-                        !!localStorage.getItem('genzet_user');
-    var likelyLoggedIn = hasToken || bridge || localSession;
 
-    window.__genzetLikelyLoggedIn = likelyLoggedIn;
+    window.__genzetLikelyLoggedIn = hasToken;
 
-    var css = likelyLoggedIn
-      // Logged-in (or probably so): paint dashboard shell immediately,
-      // keep landing + legacy auth-gate hidden from frame zero.
+    var css = hasToken
+      // Real JWT found: show dashboard shell immediately (authInit will
+      // verify it with the backend and pull cloud data).
       ? '#gz-landing{display:none!important;}' +
         '#gz-dashboard{display:block!important;opacity:1!important;}' +
         '#authGate{display:none!important;}'
-      // No session at all: keep the marketing landing page exactly as
-      // before (unauthenticated visitors should still see it first).
+      // No JWT: show landing page; login modal will be triggered by user.
       : '#gz-dashboard{display:none!important;}' +
         '#authGate{display:none!important;}';
 
@@ -11260,14 +11257,10 @@ ${text.substring(0, 4500)}`
     // Change this to your deployed backend URL in production.
     const BACKEND_URL = 'https://animind-backend-2.onrender.com';
 
-    // ── Supabase client (frontend, anon key — safe to expose) ─────────────
-    // Used ONLY for sb.auth.signOut() on logout to invalidate the Supabase
-    // session. All data ops go through the backend (service-role key).
-    // 🔍 TODO: Replace these with your actual Supabase project values
-    // Find them in: Supabase Dashboard → Settings → API
-    const SUPABASE_URL      = 'https://fkincmzpteuibbegghti.supabase.co';  // ← REPLACE
-    const SUPABASE_ANON_KEY = 'sb_publishable_9IRPmhzJbwX25VhmhY42zw_UB2i0h2b';               // ← REPLACE (anon/public key)
-    // Supabase CDN not loaded in single-file mode — stub it out safely
+    // ── Supabase stub (frontend does NOT call Supabase directly) ──────────
+    // All DB operations go through the backend (which holds the service_role
+    // key). The frontend only speaks to BACKEND_URL via JWT-authenticated
+    // fetch() calls. sb.auth.signOut() is a no-op stub kept for compat.
     const sb = { auth: { signOut: () => Promise.resolve() } };
 
     // localStorage keys
@@ -11285,62 +11278,30 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function authInit() {
-      // ── Landing-page bridge ────────────────────────────────────────
-      // When a user signs in/registers via the marketing page's auth
-      // modal (amHandleLogin/amHandleSignup), that flow is LOCAL ONLY —
-      // it never talks to the real backend, so it never produces a
-      // genuine genzet_jwt. It used to set a one-shot 'genzet_authenticated'
-      // flag that got deleted the instant it was read, which meant every
-      // refresh afterward found no flag AND no token, fell through to
-      // Step 1 below, and landed on the old legacy split-screen gate —
-      // even though the user never actually logged out. That was the
-      // permanent "old UI comes back after refresh" bug.
-      //
-      // Fix: treat this as a real (if locally-scoped) session. We persist
-      // a durable 'genzet_local_session' marker — not one-shot — so every
-      // future load recognizes the user as still signed in, exactly like
-      // a real JWT would, until they explicitly sign out.
-      const landingAuth = localStorage.getItem('genzet_authenticated');
-      const landingUser = (() => {
-        try { return JSON.parse(localStorage.getItem('genzet_user') || 'null'); } catch { return null; }
-      })();
-      if (landingAuth === 'true' && landingUser) {
-        // Promote the one-shot flag into a durable local session.
-        localStorage.removeItem('genzet_authenticated');
-        localStorage.setItem('genzet_local_session', 'true');
-        window.authUser  = { user_id: null, email: landingUser.email || '', name: landingUser.name || landingUser.email?.split('@')[0] || 'Student' };
-        window.authToken = null;
-        authHideGate();
-        authUpdateStatusBar();
-        return;
-      }
-      // ── End landing-page bridge ────────────────────────────────────
+      // ── Clean up legacy local-only session flags ────────────────────
+      // The old 'genzet_local_session' and 'genzet_authenticated' flags
+      // allowed users to appear logged-in without a real JWT. These are
+      // removed now — a real JWT (verified by the backend) is the only
+      // valid session proof. Without this, cross-device login never works
+      // because the local flag only exists on the originating device.
+      localStorage.removeItem('genzet_authenticated');
+      localStorage.removeItem('genzet_local_session');
 
-      // Step 1: Try to restore session from localStorage
+      // Step 1: Check for a stored JWT
       const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = (() => {
         try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
       })();
-      const hasLocalSession = localStorage.getItem('genzet_local_session') === 'true' && storedUser;
 
       if (!storedToken) {
-        if (hasLocalSession) {
-          // No real backend JWT, but the user has a standing local-only
-          // session from the marketing-page login. Honor it — go straight
-          // to the dashboard instead of showing the legacy gate.
-          window.authToken = null;
-          window.authUser = storedUser;
-          authHideGate();
-          authUpdateStatusBar();
-          authSetSyncStatus('Local session');
-          return;
-        }
-        // No token and no local session at all — show login screen.
+        // No JWT at all — show landing/login page.
         authShowGate();
         return;
       }
 
-      // Step 2: Verify token with backend (catches expired tokens)
+      // Step 2: Verify JWT with backend — this is the cross-device check.
+      // The backend looks up the user_id in Supabase; if found, the same
+      // data is available regardless of which device is logging in.
       authSetSyncStatus('Verifying session…');
       try {
         const res = await fetch(`${BACKEND_URL}/auth/verify`, {
@@ -11353,30 +11314,29 @@ ${text.substring(0, 4500)}`
           window.authUser = { user_id: profile.user_id, email: profile.email, name: profile.name };
           localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
 
-          // Token valid — proceed to app
+          // Token valid — show dashboard
           authHideGate();
           authUpdateStatusBar();
           authSetSyncStatus('Syncing library…');
 
-          // Step 3: Pull cloud animations and restore library
+          // Step 3: Pull this user's cloud animations (cross-device sync)
           await syncPullFromCloud();
           authSetSyncStatus('');
 
         } else {
-          // Token expired or invalid — clear and show login
+          // Token expired or invalid — clear and send to login
           authClearSession();
           authShowGate();
         }
       } catch (err) {
-        // Network error — fall through with local data only
+        // Network error — use cached data so app works offline
         console.warn('[AUTH] Cannot reach backend:', err.message);
-        if (storedUser) {
-          // Offline mode: use cached user data, don't show auth gate
+        if (storedUser && storedToken) {
           window.authToken = storedToken;
           window.authUser = storedUser;
           authHideGate();
           authUpdateStatusBar();
-          authSetSyncStatus('Offline mode');
+          authSetSyncStatus('Offline mode — syncs when reconnected');
         } else {
           authShowGate();
         }
@@ -11614,18 +11574,28 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     function authStoreSession(data) {
+      // Store the JWT and full user profile (including user_id) so
+      // authInit() can restore the session and sync cloud data on reload.
       window.authToken = data.token;
-      window.authUser = { user_id: data.user_id, email: data.email, name: data.name };
+      window.authUser  = {
+        user_id: data.user_id || null,
+        email:   data.email   || '',
+        name:    data.name    || (data.email || '').split('@')[0] || 'Student',
+      };
       localStorage.setItem(TOKEN_KEY, window.authToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
+      localStorage.setItem(USER_KEY,  JSON.stringify(window.authUser));
+      // Clear any legacy local-session flags that might confuse authInit
+      localStorage.removeItem('genzet_local_session');
+      localStorage.removeItem('genzet_authenticated');
     }
 
     function authClearSession() {
       window.authToken = null;
-      window.authUser = null;
+      window.authUser  = null;
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem('genzet_local_session');
+      localStorage.removeItem('genzet_authenticated');
     }
 
     function authUpdateStatusBar() {
