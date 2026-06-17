@@ -9185,148 +9185,89 @@ function amShowSuccess() {
 
     const DEFAULT_ICONS = ['⚛️', '🧪', '📐', '🔥', '🤖', '💡', '⚙️', '🌊', '🧬', '📡', '🔬', '🌍', '💻', '📊', '🎯'];
     const DEFAULT_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f97316', '#ef4444', '#ec4899', '#06b6d4', '#0d9488', '#f59e0b', '#84cc16'];
-    const DEFAULT_COURSES = [
-      { id: 'ep', name: 'Engineering Physics', code: 'GEA1102 · Sem I / II', icon: '⚛️', color: '#3b82f6', cos: [], syllabus: null },
-      { id: 'ec', name: 'Engineering Chemistry', code: 'CHE1101 · Sem I / II', icon: '🧪', color: '#10b981', cos: [], syllabus: null },
-      { id: 'em', name: 'Engineering Mathematics', code: 'MAT1101 · Sem I / II', icon: '📐', color: '#8b5cf6', cos: [], syllabus: null },
-      { id: 'ht', name: 'Heat Transfer', code: 'ME2301 · Sem III', icon: '🔥', color: '#f97316', cos: [], syllabus: null },
-      { id: 'mc', name: 'Mechatronics', code: 'ME4201 · Sem IV', icon: '🤖', color: '#0d9488', cos: [], syllabus: null },
-    ];
+    // DEFAULT_COURSES is intentionally empty — users create their own subjects from scratch.
+    // (Pre-seeded Engineering Physics / Chemistry / etc. have been removed so the File tab
+    // starts clean for every new account.)
+    const DEFAULT_COURSES = [];
 
     // ═══════════════════════════════════════════════
-    // ✅ FEATURE 1: INDEXEDDB — LARGE STORAGE
-    // Stores: 'videos', 'app_data' (new — key/value for large JSON)
+    // STORAGE — Supabase Cloud (primary)
+    // IndexedDB removed: Supabase is now the single
+    // source of truth for all user data.
+    // initDB / idbSet / idbGet are stubs kept only so
+    // the authInit bootstrap chain doesn't crash.
     // ═══════════════════════════════════════════════
-    const DB_NAME = 'GenZetDB', DB_VER = 3, STORE = 'videos', APP_STORE = 'app_data';
-    let db = null;
 
+    // Stub — no longer opens IndexedDB
     function initDB() {
-      return new Promise((res, rej) => {
-        const r = indexedDB.open(DB_NAME, DB_VER);
-        r.onupgradeneeded = e => {
-          const d = e.target.result;
-          if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'id' });
-          // NEW: app_data store for large JSON (courses, library, etc.)
-          if (!d.objectStoreNames.contains(APP_STORE)) d.createObjectStore(APP_STORE, { keyPath: 'key' });
-        };
-        r.onsuccess = e => { db = e.target.result; res(db); };
-        r.onerror = e => rej(e);
-      });
+      return Promise.resolve(null);
     }
-    // Save any large data to IndexedDB (no 5MB limit!)
+
+    // Stub — no-op (IDB removed)
     async function idbSet(key, value) {
-      return new Promise((res, rej) => {
-        if (!db) { rej(new Error('DB not ready')); return; }
-        const tx = db.transaction(APP_STORE, 'readwrite');
-        tx.objectStore(APP_STORE).put({ key, value });
-        tx.oncomplete = () => res();
-        tx.onerror = () => rej(tx.error);
-      });
+      // no-op: Supabase is the store
     }
 
-    // Load from IndexedDB
+    // Stub — always returns null (IDB removed)
     async function idbGet(key) {
-      return new Promise((res, rej) => {
-        if (!db) { res(null); return; }
-        const tx = db.transaction(APP_STORE, 'readonly');
-        const req = tx.objectStore(APP_STORE).get(key);
-        req.onsuccess = () => res(req.result ? req.result.value : null);
-        req.onerror = () => res(null);
-      });
-    }
-
-    // Save engineering courses to IDB (massive storage capacity!)
-    async function saveECourses() {
-      try {
-        await idbSet('eng_courses', engineeringCourses);
-        // Lightweight backup to localStorage (no anim codes)
-        try {
-          const lite = engineeringCourses.map(s => ({
-            ...s,
-            cos: s.cos.map(co => ({ ...co, topics: co.topics.map(t => ({ ...t, animCode: null })) })),
-            syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
-          }));
-          localStorage.setItem('genzet_eng_courses_meta', JSON.stringify(lite));
-        } catch (e) { }
-      } catch (e) {
-        // Fallback to localStorage
-        try { localStorage.setItem('genzet_eng_courses', JSON.stringify(engineeringCourses)); } catch (le) { }
-      }
-    }
-
-    // Load engineering courses (from IDB first, then localStorage fallback)
-    async function loadECourses() {
-      try {
-        const fromIDB = await idbGet('eng_courses');
-        if (fromIDB) return fromIDB;
-      } catch (e) { }
-      // Fallback to localStorage
-      try {
-        const raw = localStorage.getItem('genzet_eng_courses');
-        if (raw) return JSON.parse(raw);
-      } catch (e) { }
       return null;
     }
 
-    // Save animind library — Supabase is primary (via syncPushToCloud); IDB is offline cache
-    async function saveLibraryIDB() {
-      try {
-        await idbSet('animind_library', animindLibrary);
-        // Lightweight backup
-        try {
-          const lite = animindLibrary.map(a => ({ ...a, animation_code: null }));
-          localStorage.setItem('animind_library_meta', JSON.stringify(lite));
-        } catch (e) { }
-      } catch (e) {
-        try { localStorage.setItem('animind_library', JSON.stringify(animindLibrary)); } catch (le) { }
+    // Save engineering courses → Supabase PUT /sync/courses (debounced 1500 ms)
+    async function saveECourses() {
+      // Cloud sync (debounced) — Supabase is authoritative
+      if (typeof window.syncCoursesToCloud === 'function') {
+        window.syncCoursesToCloud().catch(e => console.warn('[STORAGE] saveECourses cloud error:', e.message));
       }
     }
 
-    // Load animind library from IDB cache (cloud data merged in by syncPullFromCloud on login)
+    // Load engineering courses — returns the in-memory state already pulled from cloud on login
+    async function loadECourses() {
+      return (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : null;
+    }
+
+    // saveLibraryIDB — stub: individual animations are pushed to Supabase
+    // via syncPushToCloud() at save time; no local IDB write needed.
+    async function saveLibraryIDB() {
+      // no-op: library writes go through syncPushToCloud (called at each save/delete)
+      console.debug('[STORAGE] saveLibraryIDB() → no-op (Supabase handles persistence)');
+    }
+
+    // loadLibraryIDB — returns the in-memory array already populated from cloud on login
     async function loadLibraryIDB() {
-      try {
-        const fromIDB = await idbGet('animind_library');
-        if (fromIDB) return fromIDB;
-      } catch (e) { }
-      try {
-        const raw = localStorage.getItem('animind_library');
-        if (raw) return JSON.parse(raw);
-      } catch (e) { }
-      return [];
+      return (typeof animindLibrary !== 'undefined') ? animindLibrary : [];
     }
 
     async function updateStorageBadge() {
-      if (!navigator.storage?.estimate) return;
       try {
-        const e = await navigator.storage.estimate();
-        const used = e.usage || 0, quota = e.quota || 0;
-        const pct = quota > 0 ? Math.round((used / quota) * 100) : 0;
-        const usedStr = fmtBytes(used), quotaStr = fmtBytes(quota);
-        document.getElementById('storageText').textContent = usedStr + ' / ' + quotaStr;
-        document.getElementById('storageBarFill').style.width = Math.min(pct, 100) + '%';
+        const animCount = (typeof animindLibrary !== 'undefined') ? animindLibrary.length : 0;
+        const coCount   = getTotalCOTopics ? getTotalCOTopics() : 0;
+        const syncEl    = document.getElementById('storageText');
+        if (syncEl) syncEl.textContent = '☁ Cloud';
+        const fill = document.getElementById('storageBarFill');
+        if (fill) fill.style.width = '100%';
         // Update banner in file mode
         const banner = document.getElementById('storageInfoText');
         if (banner) {
-          banner.textContent = `IndexedDB Storage: ${usedStr} used of ${quotaStr} (${pct}%) — Large animations saved here!`;
+          banner.textContent = `☁ Cloud Storage (Supabase): ${animCount} animation${animCount !== 1 ? 's' : ''}, ${coCount} CO topic${coCount !== 1 ? 's' : ''} — synced to your account`;
         }
       } catch (e) { }
     }
 
     // ═══════════════════════════════════════════════
-    // INIT — UPDATED: Teacher mode removed
+    // INIT — Supabase cloud-first (IndexedDB removed)
     // ═══════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', async () => {
       initTheme();
-      window.__dbReadyPromise = initDB();
-      await window.__dbReadyPromise;
+      // Keep __dbReadyPromise as a resolved promise so authInit() downstream
+      // can still do: await (window.__dbReadyPromise || initDB())
+      window.__dbReadyPromise = Promise.resolve(null);
 
-      // Load from IDB (big storage)
-      animindLibrary = await loadLibraryIDB();
-      engineeringCourses = await loadECourses();
-      if (!engineeringCourses) {
-        engineeringCourses = JSON.parse(JSON.stringify(DEFAULT_COURSES));
-        await saveECourses();
-      }
+      // Start with empty library and empty courses.
+      // The real cloud data is loaded by syncPullFromCloud() inside authInit()
+      // (triggered automatically after token verification on login/page load).
+      animindLibrary    = [];
+      engineeringCourses = [];   // empty — cloud courses (or user-created) fill this
       // Ensure syllabus field exists on all subjects
       engineeringCourses.forEach(s => { if (!s.hasOwnProperty('syllabus')) s.syllabus = null; });
 
@@ -9339,7 +9280,6 @@ function amShowSuccess() {
       ta.addEventListener('input', () => document.getElementById('amCharCount').textContent = ta.value.length + '/500');
       ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateAnimation(); } });
       document.addEventListener('keydown', globalKeyHandler);
-      // REMOVED: initBB() — Teacher mode and blackboard removed
       // UPDATED: Set animind as default active panel (teacher mode removed)
       switchMode('animind');
 
@@ -9891,9 +9831,7 @@ function amShowSuccess() {
       currentAnimation.playlist = pl;
       const idx = animindLibrary.findIndex(a => a.id === currentAnimation.id);
       if (idx >= 0) animindLibrary[idx] = { ...currentAnimation }; else animindLibrary.unshift({ ...currentAnimation });
-      await saveLibraryIDB(); // ✅ IDB save
-      // ✅ CLOUD SYNC — syncPushToCloud lives in Script Block 2 and checks window.authToken internally.
-      // We must call it via window to cross script-block boundaries safely.
+      // ✅ CLOUD SYNC — push to Supabase (source of truth)
       if (typeof window.syncPushToCloud === 'function') {
         window.syncPushToCloud(currentAnimation)
           .catch(e => console.warn('[SYNC] cloud push error:', e.message));
@@ -9994,7 +9932,7 @@ function amShowSuccess() {
     // LIBRARY
     // ═══════════════════════════════════════════════
     async function renderLibrary() {
-      animindLibrary = await loadLibraryIDB();
+      // animindLibrary is already in-memory from cloud pull — no IDB read needed
       const aP = animindLibrary.map(a => a.playlist || 'General');
       const allPl = ['all', ...new Set(aP)];
       document.getElementById('playlistFilters').innerHTML = allPl.map(p => {
@@ -10026,8 +9964,7 @@ function amShowSuccess() {
     async function deleteAI(id) {
       if (!confirm('Delete this animation?')) return;
       animindLibrary = animindLibrary.filter(a => String(a.id) !== String(id));
-      await saveLibraryIDB();
-      // ✅ CLOUD SYNC — remove from Supabase too
+      // ✅ CLOUD SYNC — remove from Supabase (source of truth)
       if (typeof window.syncDeleteFromCloud === 'function') {
         window.syncDeleteFromCloud(id)
           .catch(e => console.warn('[SYNC] cloud delete error:', e.message));
@@ -10993,8 +10930,7 @@ ${text.substring(0, 4500)}`
         currentQuestionAnim.playlist = pl;
         const idx = animindLibrary.findIndex(a => a.id === currentQuestionAnim.id);
         if (idx >= 0) animindLibrary[idx] = { ...currentQuestionAnim }; else animindLibrary.unshift({ ...currentQuestionAnim });
-        await saveLibraryIDB();
-        // ✅ FIX: push to Supabase cloud after IDB save
+        // ✅ CLOUD SYNC — push to Supabase (source of truth)
         if (typeof window.syncPushToCloud === 'function') await window.syncPushToCloud(currentQuestionAnim);
         syncLibraryToFolders(); showFolders(); closeSaveModal();
         document.getElementById('qaSaveBtn').className = 'am-save-btn saved';
@@ -11578,10 +11514,11 @@ ${text.substring(0, 4500)}`
       authClearSession();
       // Invalidate the Supabase session so the JWT can't be reused
       sb.auth.signOut().catch(e => console.warn('[AUTH] Supabase signOut error:', e.message));
-      // Reset local library state
+      // Reset in-memory state — cloud data is already persisted in Supabase
       if (typeof animindLibrary !== 'undefined') animindLibrary = [];
-      if (typeof saveLibraryIDB === 'function') saveLibraryIDB();
+      if (typeof engineeringCourses !== 'undefined') engineeringCourses = JSON.parse(JSON.stringify(DEFAULT_COURSES));
       if (typeof showFolders === 'function') showFolders();
+      if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
       authShowGate(); // sends the user back to the landing page
       // Offer the real, current sign-in modal right away so logging back
       // in is a single click rather than hunting for the button.
@@ -11670,14 +11607,9 @@ ${text.substring(0, 4500)}`
           return tb - ta;
         });
 
-        // Update global state
+        // Update global in-memory state (Supabase is the persistent store)
         if (typeof animindLibrary !== 'undefined') {
           animindLibrary = merged;
-        }
-
-        // Persist to IndexedDB
-        if (typeof saveLibraryIDB === 'function') {
-          await saveLibraryIDB();
         }
 
         // Re-render library UI
@@ -11821,14 +11753,9 @@ ${text.substring(0, 4500)}`
     // already shows the right shell instantly; this just confirms/
     // corrects it as soon as we genuinely know the answer.
     document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        // window.__dbReadyPromise is created synchronously by the INIT
-        // handler above; falling back to initDB() directly covers the
-        // (rare) case where this handler somehow runs first.
-        await (window.__dbReadyPromise || initDB());
-      } catch (e) {
-        console.warn('[BOOTSTRAP] IndexedDB init failed, continuing anyway:', e);
-      }
+      // __dbReadyPromise is now a resolved Promise (IDB removed, Supabase is the store).
+      // We still await it so the bootstrap order is deterministic.
+      await (window.__dbReadyPromise || Promise.resolve(null));
       authInit();
     });
   </script>
