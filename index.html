@@ -11590,34 +11590,31 @@ ${text.substring(0, 4500)}`
         const data = await res.json();
         const cloudAnims = data.animations || [];
 
-        if (cloudAnims.length === 0) {
-          console.log('[SYNC] Cloud library empty — nothing to restore.');
-          return;
+        if (cloudAnims.length > 0) {
+          // Merge cloud animations with local IndexedDB
+          // Strategy: cloud wins for same anim_id (latest source of truth)
+          const localAnims = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
+          const localById = Object.fromEntries(localAnims.map(a => [a.id, a]));
+
+          for (const cloudAnim of cloudAnims) {
+            localById[cloudAnim.id] = cloudAnim;  // cloud overwrites local
+          }
+
+          // Sort by created_at descending
+          const merged = Object.values(localById).sort((a, b) => {
+            const ta = new Date(a.created_at || 0).getTime();
+            const tb = new Date(b.created_at || 0).getTime();
+            return tb - ta;
+          });
+
+          // Update global in-memory state (Supabase is the persistent store)
+          if (typeof animindLibrary !== 'undefined') {
+            animindLibrary = merged;
+          }
+
+          // Re-render library UI
+          if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
         }
-
-        // Merge cloud animations with local IndexedDB
-        // Strategy: cloud wins for same anim_id (latest source of truth)
-        const localAnims = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
-        const localById = Object.fromEntries(localAnims.map(a => [a.id, a]));
-
-        for (const cloudAnim of cloudAnims) {
-          localById[cloudAnim.id] = cloudAnim;  // cloud overwrites local
-        }
-
-        // Sort by created_at descending
-        const merged = Object.values(localById).sort((a, b) => {
-          const ta = new Date(a.created_at || 0).getTime();
-          const tb = new Date(b.created_at || 0).getTime();
-          return tb - ta;
-        });
-
-        // Update global in-memory state (Supabase is the persistent store)
-        if (typeof animindLibrary !== 'undefined') {
-          animindLibrary = merged;
-        }
-
-        // Re-render library UI
-        if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
         if (typeof showFolders === 'function') showFolders();
         if (typeof updateActiveCount === 'function') updateActiveCount();
 
