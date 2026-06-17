@@ -11274,8 +11274,12 @@ ${text.substring(0, 4500)}`
           authUpdateStatusBar();
           authSetSyncStatus('Syncing library…');
 
-          // Step 3: Pull this user's cloud animations (cross-device sync)
+          // Step 3: Pull animations + courses from Supabase (cross-device sync)
           await syncPullFromCloud();
+          // Pull engineering courses from cloud
+          if (typeof window.syncPullCoursesFromCloud === 'function') {
+            await window.syncPullCoursesFromCloud();
+          }
           authSetSyncStatus('');
 
         } else {
@@ -11732,6 +11736,68 @@ ${text.substring(0, 4500)}`
     window.syncPushAllToCloud  = syncPushAllToCloud;
     window.syncPullFromCloud   = syncPullFromCloud;
     window.syncDeleteFromCloud = syncDeleteFromCloud;
+
+    // ── Courses Sync (fallback if genzet_auth_override.js fails to load) ──
+    // genzet_auth_override.js overrides this with a debounced version.
+    // This inline version ensures courses are always saved to Supabase.
+    let _coursesSyncTimer = null;
+    async function syncCoursesToCloud() {
+      const authToken = window.authToken;
+      if (!authToken) return;
+      const courses = (typeof engineeringCourses !== 'undefined') ? engineeringCourses : [];
+      clearTimeout(_coursesSyncTimer);
+      _coursesSyncTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`${BACKEND_URL}/sync/courses`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ courses }),
+          });
+          if (res.ok) {
+            console.log('[SYNC] ✅ Courses pushed to Supabase:', courses.length, 'subjects');
+            authSetSyncStatus('☁ Courses Synced');
+            setTimeout(() => authSetSyncStatus(''), 3000);
+          } else {
+            console.warn('[SYNC] Courses push failed:', res.status);
+          }
+        } catch (err) {
+          console.warn('[SYNC] Courses push error:', err.message);
+        }
+      }, 1500);
+    }
+    // Only set on window if genzet_auth_override.js hasn't already set it
+    if (!window.syncCoursesToCloud) window.syncCoursesToCloud = syncCoursesToCloud;
+
+    // ── Courses Pull (fallback inline version) ────────────────────────────
+    async function syncPullCoursesFromCloud() {
+      const authToken = window.authToken;
+      if (!authToken) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/sync/courses`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) return;
+        const { courses: cloud = [] } = await res.json();
+        if (!cloud || !cloud.length) return;
+        // Strip legacy pre-seeded IDs
+        const LEGACY = new Set(['ep','ec','em','ht','mc']);
+        const filtered = cloud.filter(s => !LEGACY.has(s.id));
+        if (!filtered.length) return;
+        if (typeof engineeringCourses !== 'undefined') engineeringCourses = filtered;
+        if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
+        if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+        if (typeof showFolders === 'function') showFolders();
+        if (typeof updateActiveCount === 'function') updateActiveCount();
+        console.log('[SYNC] ✅ Courses pulled from Supabase:', filtered.length, 'subjects');
+      } catch (err) {
+        console.warn('[SYNC] Courses pull error:', err.message);
+      }
+    }
+    // Only set on window if genzet_auth_override.js hasn't already set it
+    if (!window.syncPullCoursesFromCloud) window.syncPullCoursesFromCloud = syncPullCoursesFromCloud;
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 12: BOOTSTRAP
