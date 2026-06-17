@@ -291,8 +291,18 @@ async function _syncPushCourses() {
     _cTimer = setTimeout(async () => {
       try {
         const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
-        const courses = currentLocal
-          .map(s => ({ ...s, cos: s.cos.map(co => ({ ...co, topics: [...co.topics] })), syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null }));
+        const courses = currentLocal.map(s => {
+          if (!s) return null;
+          const safeCos = Array.isArray(s.cos) ? s.cos.map(co => ({
+            ...co,
+            topics: Array.isArray(co.topics) ? [...co.topics] : []
+          })) : [];
+          return {
+            ...s,
+            cos: safeCos,
+            syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
+          };
+        }).filter(Boolean);
         await fetch(`${BACKEND_URL}/sync/courses`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
