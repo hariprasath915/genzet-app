@@ -11741,7 +11741,19 @@ ${text.substring(0, 4500)}`
     async function syncCoursesToCloud() {
       const authToken = window.authToken;
       if (!authToken) return;
-      const courses = (typeof engineeringCourses !== 'undefined') ? engineeringCourses : [];
+      const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
+      const courses = currentLocal.map(s => {
+        if (!s) return null;
+        const safeCos = Array.isArray(s.cos) ? s.cos.map(co => ({
+          ...co,
+          topics: Array.isArray(co.topics) ? [...co.topics] : []
+        })) : [];
+        return {
+          ...s,
+          cos: safeCos,
+          syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
+        };
+      }).filter(Boolean);
       clearTimeout(_coursesSyncTimer);
       _coursesSyncTimer = setTimeout(async () => {
         try {
