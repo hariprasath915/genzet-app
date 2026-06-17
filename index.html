@@ -7870,13 +7870,9 @@ function amHash(str) {
   return 'gz_' + Math.abs(hash).toString(36);
 }
 
-// ── Get all registered accounts ──────────────────────────────────
-function amGetAccounts() {
-  try { return JSON.parse(localStorage.getItem('genzet_accounts') || '{}'); } catch(e) { return {}; }
-}
-
+// ── Get all registered accounts (LEGACY - removed) ────────────────
 // ── LOGIN ─────────────────────────────────────────────────────────
-function amHandleLogin() {
+async function amHandleLogin() {
   amClearErrors(); amHideErr();
   const email = document.getElementById('lpam-login-email').value.trim().toLowerCase();
   const pw    = document.getElementById('lpam-login-pw').value;
@@ -7887,30 +7883,43 @@ function amHandleLogin() {
   if (!ok) return;
 
   amSetLoading('amLoginBtn', true);
-  setTimeout(() => {
-    const accounts = amGetAccounts();
-    const account  = accounts[email];
+  
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pw }),
+    });
+    const data = await res.json();
 
-    if (!account) {
-      amSetLoading('amLoginBtn', false);
-      amShowErr('No account found with this email. Please create an account first.');
-      return;
+    if (!res.ok) {
+      throw new Error(data.detail || 'Login failed.');
     }
-    if (account.pwHash !== amHash(pw)) {
-      amSetLoading('amLoginBtn', false);
-      amFieldErr('lpam-login-pw', 'lpam-login-pw-err', 'Incorrect email or password');
-      amShowErr('Incorrect email or password. Please try again.');
-      return;
-    }
-    // Credentials match — go to dashboard
-    localStorage.setItem('genzet_authenticated', 'true');
-    localStorage.setItem('genzet_user', JSON.stringify({ name: account.name, email }));
-    amShowSuccess();
-  }, 900);
+
+    // Success
+    authStoreSession(data);
+    amShowSuccess(); // shows success animation
+    
+    // After animation, go to dashboard via authHideGate instead of legacy showDashboard
+    setTimeout(async () => {
+      closeAuthModal();
+      authHideGate();
+      authUpdateStatusBar();
+      authSetSyncStatus('Restoring library…');
+      await syncPullFromCloud();
+      authSetSyncStatus('');
+    }, 1400);
+
+  } catch (err) {
+    amFieldErr('lpam-login-pw', 'lpam-login-pw-err', err.message);
+    amShowErr(err.message || 'Incorrect email or password. Please try again.');
+  } finally {
+    amSetLoading('amLoginBtn', false);
+  }
 }
 
 // ── SIGNUP ────────────────────────────────────────────────────────
-function amHandleSignup() {
+async function amHandleSignup() {
   amClearErrors(); amHideErr();
   const name    = document.getElementById('lpam-signup-name').value.trim();
   const email   = document.getElementById('lpam-signup-email').value.trim().toLowerCase();
@@ -7925,41 +7934,51 @@ function amHandleSignup() {
   else if (pw && confirm !== pw){ amFieldErr('lpam-signup-confirm','lpam-signup-confirm-err','Passwords do not match'); ok=false; }
   if (!ok) return;
 
-  // Check if email already registered
-  const accounts = amGetAccounts();
-  if (accounts[email]) {
-    amFieldErr('lpam-signup-email','lpam-signup-email-err','An account with this email already exists');
-    amShowErr('This email is already registered. Please sign in instead.');
-    return;
-  }
-
   amSetLoading('amSignupBtn', true);
-  setTimeout(() => {
-    // Save account with hashed password
-    accounts[email] = { name, pwHash: amHash(pw) };
-    localStorage.setItem('genzet_accounts', JSON.stringify(accounts));
 
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, password: pw }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.detail || 'Registration failed.');
+    }
+
+    // Since v5.2, registration returns a full session token immediately.
+    // We can directly store the session and log them in!
+    authStoreSession(data);
+    
+    // Show success UI
+    const btn = document.getElementById('amSignupBtn');
+    if (btn) { btn.textContent = '✅ Account Created!'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
+    amShowErr(`Welcome, ${data.name}! Taking you to your dashboard...`, 'success');
+    
+    setTimeout(async () => {
+      closeAuthModal();
+      authHideGate();
+      authUpdateStatusBar();
+      await syncPushAllToCloud(); // sync any local work they did before signing up
+      if (btn) { btn.textContent = 'Create Account'; btn.style.background = ''; }
+    }, 1500);
+
+  } catch (err) {
+    if (err.message.includes('already registered')) {
+      amFieldErr('lpam-signup-email','lpam-signup-email-err','An account with this email already exists');
+      amShowErr('This email is already registered. Please sign in instead.');
+    } else {
+      amShowErr(err.message || 'Something went wrong. Please try again.');
+    }
+  } finally {
     amSetLoading('amSignupBtn', false);
-
-    // Show success message then switch to Sign In tab (NOT dashboard)
-    amShowSignupSuccess(email);
-  }, 1100);
+  }
 }
 
-// ── After signup: show confirmation then switch to Sign In ────────
-function amShowSignupSuccess(email) {
-  const btn = document.getElementById('amSignupBtn');
-  if (btn) { btn.textContent = '✅ Account Created!'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
-  amShowErr('Account created! Please sign in with your email and password.', 'success');
-  setTimeout(() => {
-    // Switch to Sign In tab and pre-fill email
-    amSwitchTab('login');
-    const emailInput = document.getElementById('lpam-login-email');
-    if (emailInput) { emailInput.value = email; }
-    if (btn) { btn.textContent = 'Create Account'; btn.style.background = ''; }
-    amHideErr();
-  }, 1800);
-}
+// ── After signup (LEGACY - no longer used) ────────────────────────
+function amShowSignupSuccess(email) {}
 
 // ── Social / Forgot (UI-only) ────────────────────────────────────
 function amSocial(p)  { amShowErr(`${p} login is not yet connected. Use email/password.`); }
@@ -7973,7 +7992,7 @@ function amShowSuccess() {
   if (signupSec) signupSec.classList.remove('active');
   const s = document.getElementById('amSuccess');
   if (s) s.style.display = 'flex';
-  setTimeout(() => { showDashboard(); }, 1400);
+  // Dashboard routing is now handled by the async timeout in amHandleLogin
 }
 </script>
 
