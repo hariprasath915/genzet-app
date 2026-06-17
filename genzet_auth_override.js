@@ -209,23 +209,23 @@ async function _syncPull() {
     });
     if (!res.ok) return;
     const { animations: cloud = [] } = await res.json();
-    if (cloud.length === 0) return;
+    if (cloud.length > 0) {
+      // Merge with local
+      const local = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
+      const byId  = Object.fromEntries(local.map(a => [a.id, a]));
+      for (const c of cloud) byId[c.id] = c;
+      const merged = Object.values(byId).sort((a, b) =>
+        new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      );
+      // Update global in-memory state (Supabase is the persistent store)
+      if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
+      if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+      if (typeof showFolders === 'function') showFolders();
+      if (typeof updateActiveCount === 'function') updateActiveCount();
+      if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
+    }
 
-    // Merge with local
-    const local = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
-    const byId  = Object.fromEntries(local.map(a => [a.id, a]));
-    for (const c of cloud) byId[c.id] = c;
-    const merged = Object.values(byId).sort((a, b) =>
-      new Date(b.created_at || 0) - new Date(a.created_at || 0)
-    );
-    // Update global in-memory state (Supabase is the persistent store)
-    if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
-    if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
-    if (typeof showFolders === 'function') showFolders();
-    if (typeof updateActiveCount === 'function') updateActiveCount();
-    if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
-
-    // Pull courses too
+    // Pull courses too (always do this, even if animations are empty)
     await _syncPullCourses();
   } catch (e) { console.warn('[SYNC] Pull error:', e.message); }
 }
