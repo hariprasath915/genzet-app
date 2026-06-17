@@ -11759,6 +11759,9 @@ ${text.substring(0, 4500)}`
       authInit();
     });
   </script>
+
+  <!-- ✅ Auth + Cloud Sync override — must be the LAST script (overrides authInit, syncPush, etc.) -->
+  <script src="genzet_auth_override.js"></script>
 </body>
 
 </div>
