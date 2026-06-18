@@ -49,7 +49,7 @@ function removeOldAuthGate() {
 }
 
 // ─── 2. CONFIGURATION ────────────────────────────────────────────────────
-const BACKEND_URL = 'https://animind-backend-2.onrender.com';
+const BACKEND_URL = 'https://animind-backend-production.up.railway.app';
 const TOKEN_KEY   = 'genzet_jwt';
 const USER_KEY    = 'genzet_user';
 const sb          = { auth: { signOut: () => Promise.resolve() } };
