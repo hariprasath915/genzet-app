@@ -7961,7 +7961,7 @@ async function amHandleSignup() {
       closeAuthModal();
       authHideGate();
       authUpdateStatusBar();
-      await syncPushAllToCloud(); // sync any local work they did before signing up
+      await syncPullFromCloud(); // pull any existing cloud data to the new device
       if (btn) { btn.textContent = 'Create Account'; btn.style.background = ''; }
     }, 1500);
 
@@ -9453,6 +9453,7 @@ function amShowSuccess() {
     function syncLibraryToFolders() {
       questions = questions.filter(q => !q.isAI && !q.isCO);
       animindLibrary.forEach(a => {
+        if (a.playlist === '__co_topic__') return;
         questions.push({
           id: 'ai_' + a.id, title: a.title, text: a.explanation || a.prompt,
           subject: 'AI Generated', classNum: '', lessonNum: '',
@@ -10158,20 +10159,31 @@ function amShowSuccess() {
       }).join('');
     }
 
+    function _getTopicAnimCode(topicId, fallbackCode) {
+      if (fallbackCode) return fallbackCode;
+      const found = typeof animindLibrary !== 'undefined' ? animindLibrary.find(a => a.id === topicId) : null;
+      return found ? found.animation_code : null;
+    }
+
     function presentCOTopic(topicId) {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId);
       const t = co?.topics.find(x => x.id === topicId);
-      if (!t || !t.animCode) { notify('No animation for this topic!', 'error'); return; }
-      openPresentMode(t.animCode, t.name, (s?.name || '') + ' › ' + (co?.coNum || ''));
+      const code = t ? _getTopicAnimCode(t.id, t.animCode) : null;
+      if (!t || !code) { notify('No animation for this topic!', 'error'); return; }
+      openPresentMode(code, t.name, (s?.name || '') + ' › ' + (co?.coNum || ''));
     }
     function viewCOTopic(topicId) {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId);
       const t = co?.topics.find(x => x.id === topicId); if (!t) return;
-      // UPDATED: Teacher mode removed — open topic animation directly in Present Mode
-      if (t.animCode) {
-        openPresentMode(t.animCode, t.name, (s?.name || '') + ' › ' + (co?.coNum || ''));
+      const code = _getTopicAnimCode(t.id, t.animCode);
+      if (code) {
+        if (t.type === 'html_upload' && typeof _openHTMLPreviewOverlay === 'function') {
+           _openHTMLPreviewOverlay(code, t.name, (s?.name || '') + ' › ' + (co?.coNum || ''));
+        } else {
+           openPresentMode(code, t.name, (s?.name || '') + ' › ' + (co?.coNum || ''));
+        }
       } else {
         notify('📘 ' + t.name + ' — no animation available', 'success');
       }
@@ -10181,6 +10193,9 @@ function amShowSuccess() {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId); if (!co) return;
       co.topics = co.topics.filter(t => t.id !== topicId);
+      if (typeof window.syncDeleteFromCloud === 'function') {
+        await window.syncDeleteFromCloud(topicId);
+      }
       await saveECourses(); renderTopicList();
       syncLibraryToFolders(); showFolders(); updateActiveCount();
       notify('🗑️ Topic deleted');
@@ -10661,15 +10676,33 @@ ${text.substring(0, 4500)}`
       btn.disabled = true;
       btn.textContent = '⏳ Saving…';
 
+      const newTopicId = 't_' + Date.now().toString();
       const newTopic = {
-        id: 't_' + Date.now().toString(),
+        id: newTopicId,
         name,
-        animCode: code,
+        animCode: null, // Omitted to keep JSON tiny
         explanation: 'Uploaded HTML code',
         prompt: '[HTML Upload]',
         type: 'html_upload',
         created_at: new Date().toISOString()
       };
+
+      const topicAnim = {
+        id: newTopicId,
+        title: name,
+        prompt: `Course: ${engineeringCourses[subjIndex].name} | CO: ${engineeringCourses[subjIndex].cos[coIndex].coNum}`,
+        explanation: 'Uploaded HTML code',
+        animation_code: code,
+        playlist: '__co_topic__',
+        created_at: newTopic.created_at
+      };
+
+      if (typeof window.syncPushToCloud === 'function') {
+        await window.syncPushToCloud(topicAnim);
+      }
+      if (typeof animindLibrary !== 'undefined') {
+        animindLibrary.unshift(topicAnim);
+      }
 
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
       await saveECourses();
