@@ -9213,11 +9213,12 @@ function amShowSuccess() {
       return null;
     }
 
-    // Save engineering courses → Supabase PUT /sync/courses (debounced 1500 ms)
+    // Save engineering courses → Supabase PUT /sync/courses (IMMEDIATE — no debounce)
     async function saveECourses() {
-      // Cloud sync (debounced) — Supabase is authoritative
       if (typeof window.syncCoursesToCloud === 'function') {
-        window.syncCoursesToCloud().catch(e => console.warn('[STORAGE] saveECourses cloud error:', e.message));
+        try {
+          await window.syncCoursesToCloud();
+        } catch (e) { console.warn('[STORAGE] saveECourses cloud error:', e.message); }
       }
     }
 
@@ -9831,10 +9832,10 @@ function amShowSuccess() {
       currentAnimation.playlist = pl;
       const idx = animindLibrary.findIndex(a => a.id === currentAnimation.id);
       if (idx >= 0) animindLibrary[idx] = { ...currentAnimation }; else animindLibrary.unshift({ ...currentAnimation });
-      // ✅ CLOUD SYNC — push to Supabase (source of truth)
+      // ✅ CLOUD SYNC — push to Supabase immediately (awaited, no fire-and-forget)
       if (typeof window.syncPushToCloud === 'function') {
-        window.syncPushToCloud(currentAnimation)
-          .catch(e => console.warn('[SYNC] cloud push error:', e.message));
+        try { await window.syncPushToCloud(currentAnimation); }
+        catch (e) { console.warn('[SYNC] cloud push error:', e.message); }
       }
       syncLibraryToFolders(); showFolders(); closeSaveModal();
       document.getElementById('amSaveBtn').className = 'am-save-btn saved';
@@ -10961,9 +10962,24 @@ ${text.substring(0, 4500)}`
     };
 
     // ═══════════════════════════════════════════════
-    // VIDEO VAULT
+    // VIDEO VAULT — Cloud-synced (no localStorage)
     // ═══════════════════════════════════════════════
-    let vaultVideos = JSON.parse(localStorage.getItem('genzet_vault') || '[]');
+    // vaultVideos is populated from cloud on login via syncPullVaultFromCloud.
+    // localStorage is NOT used as a store (only as a temp migration source on first load).
+    let vaultVideos = [];
+    // One-time migration: if old localStorage data exists, adopt it then wipe it.
+    (function _migrateVaultFromLocalStorage() {
+      try {
+        const legacy = localStorage.getItem('genzet_vault');
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            vaultVideos = parsed;
+          }
+          localStorage.removeItem('genzet_vault');
+        }
+      } catch (_) {}
+    })();
     let vaultPendingFile = null;
 
     function vaultTriggerPick() {
@@ -10996,7 +11012,7 @@ ${text.substring(0, 4500)}`
       setTimeout(() => nameInput.focus(), 100);
     }
 
-    function vaultUpload() {
+    async function vaultUpload() {
       const name = (document.getElementById('vaultVideoName').value || '').trim();
       if (!vaultPendingFile) {
         notify('⚠️ No file selected!', 'error'); return;
@@ -11005,7 +11021,7 @@ ${text.substring(0, 4500)}`
         document.getElementById('vaultVideoName').focus();
         notify('⚠️ Please enter a video name!', 'error'); return;
       }
-      // Store metadata (file reference is in-memory only; no blob stored in localStorage)
+      // Store metadata entry (file binary is never stored — only metadata)
       const entry = {
         id: 'v_' + Date.now(),
         name,
@@ -11014,7 +11030,11 @@ ${text.substring(0, 4500)}`
         created_at: new Date().toISOString()
       };
       vaultVideos.unshift(entry);
-      try { localStorage.setItem('genzet_vault', JSON.stringify(vaultVideos)); } catch (e) { /* storage full */ }
+      // ✅ CLOUD SYNC — push to Supabase immediately
+      if (typeof window.syncPushVaultToCloud === 'function') {
+        try { await window.syncPushVaultToCloud(); }
+        catch (e) { console.warn('[VAULT] cloud push error:', e.message); }
+      }
       vaultReset();
       vaultRenderGrid();
       notify('✅ "' + name + '" added to Video Vault!');
@@ -11032,10 +11052,14 @@ ${text.substring(0, 4500)}`
       document.getElementById('vaultFormSection').classList.remove('show');
     }
 
-    function vaultDeleteVideo(id) {
+    async function vaultDeleteVideo(id) {
       if (!confirm('Remove this video from the vault?')) return;
       vaultVideos = vaultVideos.filter(v => v.id !== id);
-      try { localStorage.setItem('genzet_vault', JSON.stringify(vaultVideos)); } catch (e) { }
+      // ✅ CLOUD SYNC — push updated list to Supabase immediately
+      if (typeof window.syncPushVaultToCloud === 'function') {
+        try { await window.syncPushVaultToCloud(); }
+        catch (e) { console.warn('[VAULT] cloud delete error:', e.message); }
+      }
       vaultRenderGrid();
       notify('🗑️ Video removed from vault');
     }
