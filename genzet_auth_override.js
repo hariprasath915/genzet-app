@@ -225,8 +225,11 @@ async function _syncPull() {
       if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
     }
 
-    // Pull courses too (always do this, even if animations are empty)
-    await _syncPullCourses();
+    // Pull courses and vault in parallel (always, even if animations are empty)
+    await Promise.all([
+      _syncPullCourses(),
+      _syncPullVault(),
+    ]);
   } catch (e) { console.warn('[SYNC] Pull error:', e.message); }
 }
 
@@ -282,36 +285,30 @@ async function _syncDelete(id) {
   } catch (e) { console.warn('[SYNC] Delete error:', e.message); }
 }
 
-let _cTimer = null;
 async function _syncPushCourses() {
   const token = window.authToken;
   if (!token || !window.authUser?.user_id) return;
-  if (_cTimer) clearTimeout(_cTimer);
-  return new Promise(res => {
-    _cTimer = setTimeout(async () => {
-      try {
-        const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
-        const courses = currentLocal.map(s => {
-          if (!s) return null;
-          const safeCos = Array.isArray(s.cos) ? s.cos.map(co => ({
-            ...co,
-            topics: Array.isArray(co.topics) ? [...co.topics] : []
-          })) : [];
-          return {
-            ...s,
-            cos: safeCos,
-            syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
-          };
-        }).filter(Boolean);
-        await fetch(`${BACKEND_URL}/sync/courses`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ courses }),
-        });
-      } catch (e) { console.warn('[SYNC] Courses push error:', e.message); }
-      res();
-    }, 1500);
-  });
+  try {
+    const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
+    const courses = currentLocal.map(s => {
+      if (!s) return null;
+      const safeCos = Array.isArray(s.cos) ? s.cos.map(co => ({
+        ...co,
+        topics: Array.isArray(co.topics) ? [...co.topics] : []
+      })) : [];
+      return {
+        ...s,
+        cos: safeCos,
+        syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
+      };
+    }).filter(Boolean);
+    const res = await fetch(`${BACKEND_URL}/sync/courses`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ courses }),
+    });
+    if (!res.ok) console.warn('[SYNC] Courses push HTTP error:', res.status);
+  } catch (e) { console.warn('[SYNC] Courses push error:', e.message); }
 }
 
 async function _syncPullCourses() {
@@ -345,6 +342,42 @@ async function _syncPullCourses() {
     if (typeof showFolders === 'function') showFolders();
     if (typeof updateActiveCount === 'function') updateActiveCount();
   } catch (e) { console.warn('[SYNC] Courses pull error:', e.message); }
+}
+
+// ── Vault cloud sync ────────────────────────────────────────────────────────
+async function _syncPullVault() {
+  const token = window.authToken;
+  if (!token) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/sync/vault`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+    const { entries = [] } = await res.json();
+    // Update in-memory vaultVideos in the main script block
+    if (typeof vaultVideos !== 'undefined') {
+      vaultVideos = entries;
+      if (typeof vaultRenderGrid === 'function') vaultRenderGrid();
+    }
+    // Remove the now-redundant localStorage copy to avoid stale data
+    try { localStorage.removeItem('genzet_vault'); } catch (_) {}
+  } catch (e) { console.warn('[SYNC] Vault pull error:', e.message); }
+}
+
+async function _syncPushVault() {
+  const token = window.authToken;
+  if (!token || !window.authUser?.user_id) return;
+  const entries = (typeof vaultVideos !== 'undefined') ? vaultVideos : [];
+  try {
+    const res = await fetch(`${BACKEND_URL}/sync/vault`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ entries }),
+    });
+    if (!res.ok) console.warn('[SYNC] Vault push HTTP error:', res.status);
+    // Mirror removal from localStorage
+    try { localStorage.removeItem('genzet_vault'); } catch (_) {}
+  } catch (e) { console.warn('[SYNC] Vault push error:', e.message); }
 }
 
 // ─── 8. LOGOUT ────────────────────────────────────────────────────────────
@@ -398,6 +431,9 @@ window.syncPullFromCloud        = _syncPull;
 window.syncDeleteFromCloud      = _syncDelete;
 window.syncCoursesToCloud       = _syncPushCourses;
 window.syncPullCoursesFromCloud = _syncPullCourses;
+// Vault sync API
+window.syncPushVaultToCloud     = _syncPushVault;
+window.syncPullVaultFromCloud   = _syncPullVault;
 
 // Stub out old auth gate functions so they don't crash if called
 window.authDoLogin    = () => console.warn('[AUTH] authDoLogin() replaced — use landing modal');
