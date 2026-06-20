@@ -225,11 +225,10 @@ async function _syncPull() {
       if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
     }
 
-    // Pull courses and vault in parallel (always, even if animations are empty)
-    await Promise.all([
-      _syncPullCourses(),
-      _syncPullVault(),
-    ]);
+    // Pull courses and vault sequentially AFTER animations —
+    // _syncPullCourses needs animindLibrary populated to backfill animCode
+    await _syncPullCourses();
+    await _syncPullVault();
   } catch (e) { console.warn('[SYNC] Pull error:', e.message); }
 }
 
@@ -320,23 +319,39 @@ async function _syncPullCourses() {
     });
     if (!res.ok) return;
     const { courses: cloud = [] } = await res.json();
-    if (!cloud.length) return;
+    
+    if (!cloud || !cloud.length) return;
 
-    // Strip old pre-seeded default course IDs that were auto-pushed
-    // before users created their own subjects.
-    const LEGACY_DEFAULT_IDS = new Set(['ep', 'ec', 'em', 'ht', 'mc']);
-    const filtered = cloud.filter(s => !LEGACY_DEFAULT_IDS.has(s.id));
-    if (!filtered.length) return;
+    // Pull courses from cloud — merge with any local state
+    // Ensure engineeringCourses is an array (may be null on very first load)
+    const currentLocal = (typeof engineeringCourses !== 'undefined' && Array.isArray(engineeringCourses))
+      ? engineeringCourses : [];
+    const localById = Object.fromEntries(currentLocal.map(s => [s.id, s]));
+    for (const s of cloud) localById[s.id] = s;
+    if (typeof engineeringCourses !== 'undefined') {
+      engineeringCourses = Object.values(localById);
+    }
 
-    const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
-    const localById = Object.fromEntries(
-      currentLocal
-        .filter(s => !LEGACY_DEFAULT_IDS.has(s.id))
-        .map(s => [s.id, s])
-    );
-    for (const s of filtered) localById[s.id] = s;
-    // Update global in-memory state (Supabase is the persistent store)
-    if (typeof engineeringCourses !== 'undefined') engineeringCourses = Object.values(localById);
+    // ✅ FIX Bug 3: Backfill animCode for topics where it is null.
+    // Topics saved before the Bug 2 fix have animCode=null in the courses snapshot,
+    // but their HTML was saved separately to /sync/animations (playlist='__co_topic__').
+    // Cross-reference animindLibrary (already pulled by _syncPull) to restore the code.
+    const animById = {};
+    if (typeof animindLibrary !== 'undefined' && Array.isArray(animindLibrary)) {
+      for (const a of animindLibrary) animById[a.id] = a;
+    }
+    if (typeof engineeringCourses !== 'undefined' && Array.isArray(engineeringCourses)) {
+      engineeringCourses.forEach(s => {
+        s.cos.forEach(co => {
+          co.topics.forEach(t => {
+            if (!t.animCode && animById[t.id]) {
+              t.animCode = animById[t.id].animation_code || null;
+            }
+          });
+        });
+      });
+    }
+
     if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
     if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
     if (typeof showFolders === 'function') showFolders();
