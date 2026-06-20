@@ -11331,10 +11331,9 @@ ${text.substring(0, 4500)}`
           authSetSyncStatus('Syncing library…');
 
           // Step 3: Pull animations + courses from Supabase (cross-device sync)
-          await syncPullFromCloud();
-          // Pull engineering courses from cloud
-          if (typeof window.syncPullCoursesFromCloud === 'function') {
-            await window.syncPullCoursesFromCloud();
+          // Always call via window so genzet_auth_override.js override is used
+          if (typeof window.syncPullFromCloud === 'function') {
+            await window.syncPullFromCloud();
           }
           authSetSyncStatus('');
 
@@ -11485,7 +11484,7 @@ ${text.substring(0, 4500)}`
           authHideGate();
           authUpdateStatusBar();
           // New account — pull cloud data for consistency with login
-          await syncPullFromCloud();
+          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
         }, 800);
 
       } catch (err) {
@@ -11551,8 +11550,9 @@ ${text.substring(0, 4500)}`
           authHideGate();
           authUpdateStatusBar();
           authSetSyncStatus('Restoring library…');
-          // Pull cloud animations on login — restores cross-device library
-          await syncPullFromCloud();
+          // Always call via window so genzet_auth_override.js override is used
+          // This pulls animations + courses + vault in the correct order
+          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
           authSetSyncStatus('');
         }, 1200);
 
@@ -11630,55 +11630,43 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPullFromCloud() {
+      // ⚠️ FALLBACK ONLY — genzet_auth_override.js overrides window.syncPullFromCloud
+      // This function is only used if override script fails to load.
+      // All call sites now use window.syncPullFromCloud() to pick up the override.
       const authToken = window.authToken;
       if (!authToken) return;
 
+      // Step 1: Pull animations (non-blocking)
       try {
         const res = await fetch(`${BACKEND_URL}/sync/animations`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
-
-        if (!res.ok) {
-          console.warn('[SYNC] Pull failed:', res.status);
-          return;
-        }
-
-        const data = await res.json();
-        const cloudAnims = data.animations || [];
-
-        if (cloudAnims.length > 0) {
-          // Merge cloud animations with local IndexedDB
-          // Strategy: cloud wins for same anim_id (latest source of truth)
-          const localAnims = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
-          const localById = Object.fromEntries(localAnims.map(a => [a.id, a]));
-
-          for (const cloudAnim of cloudAnims) {
-            localById[cloudAnim.id] = cloudAnim;  // cloud overwrites local
+        if (res.ok) {
+          const data = await res.json();
+          const cloudAnims = data.animations || [];
+          if (cloudAnims.length > 0) {
+            const localAnims = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
+            const localById = Object.fromEntries(localAnims.map(a => [a.id, a]));
+            for (const cloudAnim of cloudAnims) { localById[cloudAnim.id] = cloudAnim; }
+            const merged = Object.values(localById).sort((a, b) =>
+              new Date(b.created_at || 0) - new Date(a.created_at || 0)
+            );
+            if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
+            if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+            if (typeof showFolders === 'function') showFolders();
+            if (typeof updateActiveCount === 'function') updateActiveCount();
+            console.log(`[SYNC-FALLBACK] Pulled ${cloudAnims.length} animations from cloud.`);
           }
-
-          // Sort by created_at descending
-          const merged = Object.values(localById).sort((a, b) => {
-            const ta = new Date(a.created_at || 0).getTime();
-            const tb = new Date(b.created_at || 0).getTime();
-            return tb - ta;
-          });
-
-          // Update global in-memory state (Supabase is the persistent store)
-          if (typeof animindLibrary !== 'undefined') {
-            animindLibrary = merged;
-          }
-
-          // Re-render library UI
-          if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+        } else {
+          console.warn('[SYNC-FALLBACK] Animations pull non-ok:', res.status, '— continuing with courses');
         }
-        if (typeof showFolders === 'function') showFolders();
-        if (typeof updateActiveCount === 'function') updateActiveCount();
-
-        console.log(`[SYNC] ✅ Pulled ${cloudAnims.length} animations from cloud. Total: ${merged.length}`);
-        notify(`✅ Library restored — ${cloudAnims.length} animations synced from cloud.`);
-
       } catch (err) {
-        console.warn('[SYNC] Pull error:', err.message);
+        console.warn('[SYNC-FALLBACK] Animations pull error:', err.message, '— continuing with courses');
+      }
+
+      // Step 2: Always pull courses — regardless of animations result
+      if (typeof window.syncPullCoursesFromCloud === 'function') {
+        await window.syncPullCoursesFromCloud();
       }
     }
 
@@ -11844,9 +11832,17 @@ ${text.substring(0, 4500)}`
         const res = await fetch(`${BACKEND_URL}/sync/courses`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        if (!res.ok) return;
-        const { courses: cloud = [] } = await res.json();
-        if (!cloud || !cloud.length) return;
+        if (!res.ok) {
+          console.warn('[SYNC-FALLBACK] Courses pull non-ok:', res.status);
+          return;
+        }
+        const data = await res.json();
+        // Explicitly coerce null → [] (backend may return {courses:null} on old deploys)
+        const cloud = Array.isArray(data.courses) ? data.courses : [];
+        if (!cloud.length) {
+          console.log('[SYNC-FALLBACK] No courses found in cloud.');
+          return;
+        }
         // Strip legacy pre-seeded IDs
         const LEGACY = new Set(['ep','ec','em','ht','mc']);
         const filtered = cloud.filter(s => !LEGACY.has(s.id));
@@ -11856,9 +11852,10 @@ ${text.substring(0, 4500)}`
         if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
         if (typeof showFolders === 'function') showFolders();
         if (typeof updateActiveCount === 'function') updateActiveCount();
-        console.log('[SYNC] ✅ Courses pulled from Supabase:', filtered.length, 'subjects');
+        if (typeof updateStorageBadge === 'function') updateStorageBadge();
+        console.log('[SYNC-FALLBACK] ✅ Courses pulled from Supabase:', filtered.length, 'subjects');
       } catch (err) {
-        console.warn('[SYNC] Courses pull error:', err.message);
+        console.warn('[SYNC-FALLBACK] Courses pull error:', err.message);
       }
     }
     // Only set on window if genzet_auth_override.js hasn't already set it
