@@ -203,34 +203,39 @@ async function _authInit() {
 async function _syncPull() {
   const token = window.authToken;
   if (!token) return;
+
+  // ── Step 1: Pull animations (non-blocking — failure must NOT stop courses/vault) ──
   try {
     const res = await fetch(`${BACKEND_URL}/sync/animations`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) return;
-    const { animations: cloud = [] } = await res.json();
-    if (cloud.length > 0) {
-      // Merge with local
-      const local = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
-      const byId  = Object.fromEntries(local.map(a => [a.id, a]));
-      for (const c of cloud) byId[c.id] = c;
-      const merged = Object.values(byId).sort((a, b) =>
-        new Date(b.created_at || 0) - new Date(a.created_at || 0)
-      );
-      // Update global in-memory state (Supabase is the persistent store)
-      if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
-      if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
-      if (typeof showFolders === 'function') showFolders();
-      if (typeof updateActiveCount === 'function') updateActiveCount();
-      if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
+    if (res.ok) {
+      const { animations: cloud = [] } = await res.json();
+      if (cloud.length > 0) {
+        const local = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
+        const byId  = Object.fromEntries(local.map(a => [a.id, a]));
+        for (const c of cloud) byId[c.id] = c;
+        const merged = Object.values(byId).sort((a, b) =>
+          new Date(b.created_at || 0) - new Date(a.created_at || 0)
+        );
+        if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
+        if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
+        if (typeof showFolders === 'function') showFolders();
+        if (typeof updateActiveCount === 'function') updateActiveCount();
+        if (typeof notify === 'function') notify(`✅ ${cloud.length} animations synced.`);
+      }
+    } else {
+      console.warn('[SYNC] Animations fetch non-ok:', res.status, '— continuing with courses/vault pull');
     }
+  } catch (e) {
+    console.warn('[SYNC] Animations pull error:', e.message, '— continuing with courses/vault pull');
+  }
 
-    // Pull courses and vault sequentially AFTER animations —
-    // _syncPullCourses needs animindLibrary populated to backfill animCode
-    await _syncPullCourses();
-    await _syncPullVault();
-  } catch (e) { console.warn('[SYNC] Pull error:', e.message); }
+  // ── Step 2: Always pull courses then vault — independent of animation result ──
+  await _syncPullCourses();
+  await _syncPullVault();
 }
+
 
 async function _syncPushOne(anim) {
   const token = window.authToken;
@@ -306,7 +311,11 @@ async function _syncPushCourses() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ courses }),
     });
-    if (!res.ok) console.warn('[SYNC] Courses push HTTP error:', res.status);
+    if (!res.ok) {
+      console.warn('[SYNC] Courses push HTTP error:', res.status);
+      // Show user-visible warning so they know data may not have saved
+      if (typeof notify === 'function') notify('⚠️ Courses sync failed — check connection', 'error');
+    }
   } catch (e) { console.warn('[SYNC] Courses push error:', e.message); }
 }
 
@@ -317,10 +326,15 @@ async function _syncPullCourses() {
     const res = await fetch(`${BACKEND_URL}/sync/courses`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) return;
-    const { courses: cloud = [] } = await res.json();
+    if (!res.ok) {
+      console.warn('[SYNC] Courses fetch non-ok:', res.status);
+      return;
+    }
+    const data = await res.json();
+    // Explicitly coerce null → [] (old backend returns {courses:null}, new returns {courses:[]})
+    const cloud = Array.isArray(data.courses) ? data.courses : [];
     
-    if (!cloud || !cloud.length) return;
+    if (!cloud.length) return;
 
     // Pull courses from cloud — merge with any local state
     // Ensure engineeringCourses is an array (may be null on very first load)
