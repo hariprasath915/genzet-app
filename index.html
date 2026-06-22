@@ -9920,13 +9920,28 @@ function amShowSuccess() {
       if (coIndex === -1) { notify('CO not found!', 'error'); return; }
       const newTopic = { id: 't_' + Date.now().toString(), name, animCode: currentAnimation.animation_code, explanation: currentAnimation.explanation || '', prompt: currentAnimation.prompt || '', created_at: new Date().toISOString() };
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
-      await saveECourses(); // ✅ IDB save!
+
+      // ✅ Push animation to /sync/animations so it appears in Library on all devices
+      if (typeof window.syncPushToCloud === 'function') {
+        await window.syncPushToCloud({
+          id: newTopic.id,
+          title: name,
+          prompt: currentAnimation.prompt || '',
+          explanation: currentAnimation.explanation || '',
+          animation_code: currentAnimation.animation_code || '',
+          playlist: '__co_topic__',
+          created_at: newTopic.created_at
+        });
+      }
+
+      await saveECourses(); // ✅ Saves full courses tree (with animCode) to cloud
       const subjName = engineeringCourses[subjIndex].name;
       const coNum = engineeringCourses[subjIndex].cos[coIndex].coNum;
       closeSaveToCOModal();
       syncLibraryToFolders(); showFolders(); updateActiveCount(); updateStorageBadge();
       notify('✅ "' + name + '" saved in ' + subjName + ' › ' + coNum + '!');
     }
+
 
     // ═══════════════════════════════════════════════
     // LIBRARY
@@ -11331,7 +11346,7 @@ ${text.substring(0, 4500)}`
           authSetSyncStatus('Syncing library…');
 
           // Step 3: Pull animations + courses from Supabase (cross-device sync)
-          // Always call via window so genzet_auth_override.js override is used
+          // Always call via window so cloud_sync_v3.js override is used
           if (typeof window.syncPullFromCloud === 'function') {
             await window.syncPullFromCloud();
           }
@@ -11550,7 +11565,7 @@ ${text.substring(0, 4500)}`
           authHideGate();
           authUpdateStatusBar();
           authSetSyncStatus('Restoring library…');
-          // Always call via window so genzet_auth_override.js override is used
+          // Always call via window so cloud_sync_v3.js override is used
           // This pulls animations + courses + vault in the correct order
           if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
           authSetSyncStatus('');
@@ -11630,7 +11645,7 @@ ${text.substring(0, 4500)}`
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPullFromCloud() {
-      // ⚠️ FALLBACK ONLY — genzet_auth_override.js overrides window.syncPullFromCloud
+      // ⚠️ FALLBACK ONLY — cloud_sync_v3.js overrides window.syncPullFromCloud
       // This function is only used if override script fails to load.
       // All call sites now use window.syncPullFromCloud() to pick up the override.
       const authToken = window.authToken;
@@ -11778,8 +11793,8 @@ ${text.substring(0, 4500)}`
     window.syncPullFromCloud   = syncPullFromCloud;
     window.syncDeleteFromCloud = syncDeleteFromCloud;
 
-    // ── Courses Sync (fallback if genzet_auth_override.js fails to load) ──
-    // genzet_auth_override.js overrides this with a debounced version.
+    // ── Courses Sync (fallback if cloud_sync_v3.js fails to load) ──
+    // cloud_sync_v3.js overrides this with a debounced version.
     // This inline version ensures courses are always saved to Supabase.
     let _coursesSyncTimer = null;
     async function syncCoursesToCloud() {
@@ -11821,7 +11836,7 @@ ${text.substring(0, 4500)}`
         }
       }, 1500);
     }
-    // Only set on window if genzet_auth_override.js hasn't already set it
+    // Only set on window if cloud_sync_v3.js hasn't already set it
     if (!window.syncCoursesToCloud) window.syncCoursesToCloud = syncCoursesToCloud;
 
     // ── Courses Pull (fallback inline version) ────────────────────────────
@@ -11858,7 +11873,7 @@ ${text.substring(0, 4500)}`
         console.warn('[SYNC-FALLBACK] Courses pull error:', err.message);
       }
     }
-    // Only set on window if genzet_auth_override.js hasn't already set it
+    // Only set on window if cloud_sync_v3.js hasn't already set it
     if (!window.syncPullCoursesFromCloud) window.syncPullCoursesFromCloud = syncPullCoursesFromCloud;
 
     // ══════════════════════════════════════════════════════════════════════
@@ -11884,12 +11899,17 @@ ${text.substring(0, 4500)}`
       // __dbReadyPromise is now a resolved Promise (IDB removed, Supabase is the store).
       // We still await it so the bootstrap order is deterministic.
       await (window.__dbReadyPromise || Promise.resolve(null));
-      authInit();
+      // Call via window.authInit so cloud_sync_v3.js can override it.
+      // cloud_sync_v3.js sets window.authInit = _authInit (the correct version).
+      // This ensures there is ONE single auth entry point — no race conditions.
+      const initFn = window.authInit || authInit;
+      await initFn();
+      window.__authInitDone = true;  // signal to override's safety-net: don't double-run
     });
   </script>
 
   <!-- ✅ Auth + Cloud Sync override — must be the LAST script (overrides authInit, syncPush, etc.) -->
-  <script src="genzet_auth_override.js"></script>
+  <script src="cloud_sync_v3.js"></script>
 </body>
 
 </div>
