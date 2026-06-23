@@ -5,41 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>GenZet — Learn. Teach. Grow.</title>
 <script>
-  // ══════════════════════════════════════════════════════════════════════
-  // PRE-PAINT AUTH DECISION — runs synchronously before any CSS/HTML paints,
-  // so the browser never has a chance to render the "wrong" screen on
-  // refresh. This replaces the old race between 5 separate
-  // DOMContentLoaded handlers (landing fade, dashboard reveal, legacy
-  // auth-gate, async token verify) that used to fight over which screen
-  // to show, causing the old light "Welcome back" auth-gate and the dark
-  // marketing landing page to flash before the dashboard settled.
-  //
-  // Logic: if we have *any* sign of a logged-in user in localStorage
-  // (JWT or the post-login bridge flag), assume "logged in" immediately
-  // and inject CSS that hides the landing page / shows the dashboard
-  // shell from the very first paint. The real authInit() below still
-  // runs afterward to verify the token with the backend — if it turns
-  // out to be invalid, it cleanly swaps to the login screen with no
-  // flash either way, because there's only ONE place left that decides
-  // visibility (this script + authShowGate/authHideGate), not five.
+  // PRE-PAINT GATE v3 — App is Auth-Free. Directly show dashboard.
   (function () {
-    // PRE-PAINT GATE v2 — only a real JWT grants instant dashboard access.
-    // The old genzet_local_session bypass is gone: it let users appear
-    // logged-in on the originating device only, breaking cross-device login.
-    var hasToken = !!localStorage.getItem('genzet_jwt');
-
-    window.__genzetLikelyLoggedIn = hasToken;
-
-    var css = hasToken
-      // Real JWT found: show dashboard shell immediately (authInit will
-      // verify it with the backend and pull cloud data).
-      ? '#gz-landing{display:none!important;}' +
-        '#gz-dashboard{display:block!important;opacity:1!important;}' +
-        '#authGate{display:none!important;}'
-      // No JWT: show landing page; login modal will be triggered by user.
-      : '#gz-dashboard{display:none!important;}' +
-        '#authGate{display:none!important;}';
-
+    var css = '#gz-landing{display:none!important;}' +
+              '#gz-dashboard{display:block!important;opacity:1!important;}';
     var style = document.createElement('style');
     style.id = 'genzet-pre-paint-gate';
     style.textContent = css;
@@ -7058,35 +7027,7 @@ function showDashboard() {
     dp.style.display='block';
     setTimeout(function(){ dp.style.opacity='1'; dp.classList.add('active'); }, 30);
   }
-  try {
-    var u = JSON.parse(localStorage.getItem('genzet_user')||'null');
-    if (u) { window.authUser={user_id:null,email:u.email||'',name:u.name||(u.email||'').split('@')[0]||'Student'}; window.authToken=null; }
-  } catch(e){}
-  // Promote the one-shot post-login flag into a durable local session so
-  // a refresh later doesn't log the user back out (this used to be the
-  // root cause of refresh bouncing to a login screen — see authInit()).
-  if (localStorage.getItem('genzet_authenticated') === 'true') {
-    localStorage.setItem('genzet_local_session', 'true');
-  }
-  localStorage.removeItem('genzet_authenticated');
-  var gate=document.getElementById('authGate'); if(gate) gate.style.display='none';
-  if(typeof authUpdateStatusBar==='function') authUpdateStatusBar();
-  if(typeof authSetSyncStatus==='function') authSetSyncStatus('');
 }
-document.addEventListener('DOMContentLoaded', function() {
-  // NOTE: authInit() (defined later in this file) is now the single source
-  // of truth for deciding landing vs. dashboard vs. login-gate, and the
-  // pre-paint <script> in <head> already set the correct initial CSS
-  // before this point. This listener only needs to run showDashboard()'s
-  // visual transition for the one-shot post-login bridge flag case
-  // (genzet_authenticated === 'true'), which authInit() also detects and
-  // will call authHideGate() for — but showDashboard() additionally
-  // handles the landing-page fade-out, which matters when a user just
-  // signed in on the marketing page and got redirected here.
-  var lauth=localStorage.getItem('genzet_authenticated');
-  var luser=null; try{luser=JSON.parse(localStorage.getItem('genzet_user')||'null');}catch(e){}
-  if(lauth==='true'&&luser){showDashboard();}
-});
 </script>
 <div id="gz-landing">
 
@@ -7099,7 +7040,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <li><a href="#testimonials">Reviews</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <button class="nav-cta" onclick="openAuthModal()">Start Free Trial</button>
+  <button class="nav-cta" onclick="enterDashboard()">Start Free Trial</button>
   <button class="nav-menu-btn">☰</button>
 </nav>
 
@@ -7116,7 +7057,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </h1>
   <p class="hero-sub">Genzet turns your curriculum into stunning animated lessons. Less slide-making, more learning — powered by AI built for educators.</p>
   <div class="hero-actions">
-    <button class="btn-primary" onclick="openAuthModal()">Start Learning</button>
+    <button class="btn-primary" onclick="enterDashboard()">Start Learning</button>
     <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
   </div>
   <div class="hero-stats">
@@ -7388,7 +7329,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <h2 class="cta-title">Ready to teach<br>without limits?</h2>
     <p class="cta-sub">Join thousands of educators transforming their classrooms with Genzet. Free for your first 30 lessons — no credit card needed.</p>
     <div class="cta-input-row">
-      <button class="btn-primary" onclick="openAuthModal()">Start Learning →</button>
+      <button class="btn-primary" onclick="enterDashboard()">Start Learning →</button>
     </div>
     <p class="cta-note">✦ Free 30-day trial &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Cancel anytime</p>
   </div>
@@ -7524,7 +7465,8 @@ document.querySelectorAll('.feature-card').forEach(card=>{
 });
 
 // ── Page transition to auth ──────────────────────────────────────
-function navigateToAuth() { openAuthModal(); }
+function navigateToAuth() { enterDashboard(); }
+function openAuthModal() { enterDashboard(); }
 </script>
 
 <!-- Page transition overlay -->
@@ -7666,337 +7608,7 @@ function navigateToAuth() { openAuthModal(); }
 }
 </style>
 
-<!-- Modal HTML -->
-<div id="authModal" role="dialog" aria-modal="true" aria-label="Sign in to Genzet" onclick="amBackdropClose(event)">
-  <div class="lpam-card">
-    <button class="lpam-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
-
-    <div class="lpam-brand">Genzet</div>
-    <p class="lpam-tagline">// your AI classroom awaits</p>
-
-    <!-- Tabs -->
-    <div class="lpam-tabs" role="tablist">
-      <button class="lpam-tab active" id="amTab-login" onclick="amSwitchTab('login')" role="tab">Sign In</button>
-      <button class="lpam-tab" id="amTab-signup" onclick="amSwitchTab('signup')" role="tab">Create Account</button>
-    </div>
-
-    <!-- Error banner -->
-    <div class="lpam-err-banner" id="amErrBanner"></div>
-
-    <!-- LOGIN -->
-    <div class="lpam-section active" id="amSec-login">
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-login-email">Email</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-login-email" type="email" placeholder="you@example.com" autocomplete="email"/>
-        </div>
-        <span class="lpam-field-err" id="lpam-login-email-err"></span>
-      </div>
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-login-pw">Password</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-login-pw" type="password" placeholder="Your password" autocomplete="current-password"/>
-          <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-login-pw',this)">👁</button>
-        </div>
-        <span class="lpam-field-err" id="lpam-login-pw-err"></span>
-      </div>
-      <div class="lpam-forgot"><a href="#" onclick="amForgot(event)">Forgot password?</a></div>
-      <button class="lpam-btn" id="amLoginBtn" onclick="amHandleLogin()">
-        <span class="lpam-btn-txt">Sign In</span>
-        <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
-      </button>
-      <div class="lpam-divider"><span>or continue with</span></div>
-      <div class="lpam-social">
-        <button class="lpam-social-btn" onclick="amSocial('Google')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          Google
-        </button>
-        <button class="lpam-social-btn" onclick="amSocial('GitHub')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          GitHub
-        </button>
-      </div>
-    </div>
-
-    <!-- SIGNUP -->
-    <div class="lpam-section" id="amSec-signup">
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-signup-name">Full Name</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-signup-name" type="text" placeholder="Your full name" autocomplete="name"/>
-        </div>
-        <span class="lpam-field-err" id="lpam-signup-name-err"></span>
-      </div>
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-signup-email">Email</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-signup-email" type="email" placeholder="you@example.com" autocomplete="email"/>
-        </div>
-        <span class="lpam-field-err" id="lpam-signup-email-err"></span>
-      </div>
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-signup-pw">Password</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-signup-pw" type="password" placeholder="Min 6 characters" autocomplete="new-password"/>
-          <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-signup-pw',this)">👁</button>
-        </div>
-        <span class="lpam-field-err" id="lpam-signup-pw-err"></span>
-      </div>
-      <div class="lpam-field">
-        <label class="lpam-label" for="lpam-signup-confirm">Confirm Password</label>
-        <div class="lpam-input-wrap">
-          <input class="lpam-input" id="lpam-signup-confirm" type="password" placeholder="Repeat password" autocomplete="new-password"/>
-          <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-signup-confirm',this)">👁</button>
-        </div>
-        <span class="lpam-field-err" id="lpam-signup-confirm-err"></span>
-      </div>
-      <button class="lpam-btn" id="amSignupBtn" onclick="amHandleSignup()">
-        <span class="lpam-btn-txt">Create Account</span>
-        <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
-      </button>
-      <div class="lpam-divider"><span>or continue with</span></div>
-      <div class="lpam-social">
-        <button class="lpam-social-btn" onclick="amSocial('Google')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          Google
-        </button>
-        <button class="lpam-social-btn" onclick="amSocial('GitHub')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          GitHub
-        </button>
-      </div>
-    </div>
-
-    <!-- SUCCESS -->
-    <div class="lpam-success" id="amSuccess">
-      <div class="lpam-success-icon">✓</div>
-      <h3>You're in!</h3>
-      <p>Redirecting to your dashboard…</p>
-    </div>
-
-  </div>
-</div>
-
-<script>
-// ── Modal open/close ─────────────────────────────────────────────
-function openAuthModal() {
-  document.getElementById('authModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('lpam-login-email').focus(), 350);
-}
-function closeAuthModal() {
-  document.getElementById('authModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function amBackdropClose(e) {
-  if (e.target === document.getElementById('authModal')) closeAuthModal();
-}
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeAuthModal();
-  if (e.key === 'Enter' && document.getElementById('authModal').classList.contains('open')) {
-    const loginActive = document.getElementById('amSec-login').classList.contains('active');
-    if (loginActive) amHandleLogin(); else amHandleSignup();
-  }
-});
-
-// ── Tab switch ───────────────────────────────────────────────────
-function amSwitchTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('amTab-login').classList.toggle('active', isLogin);
-  document.getElementById('amTab-signup').classList.toggle('active', !isLogin);
-  document.getElementById('amSec-login').classList.toggle('active', isLogin);
-  document.getElementById('amSec-signup').classList.toggle('active', !isLogin);
-  amClearErrors(); amHideErr();
-}
-
-// ── Password toggle ──────────────────────────────────────────────
-function amTogglePw(id, btn) {
-  const inp = document.getElementById(id);
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁';
-}
-
-// ── Validation helpers ───────────────────────────────────────────
-function amFieldErr(inputId, errId, msg) {
-  document.getElementById(inputId).classList.add('err');
-  const e = document.getElementById(errId);
-  e.textContent = msg; e.classList.add('show');
-  return false;
-}
-function amClearErrors() {
-  ['lpam-login-email','lpam-login-pw','lpam-signup-name','lpam-signup-email','lpam-signup-pw','lpam-signup-confirm']
-    .forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('err'); });
-  ['lpam-login-email-err','lpam-login-pw-err','lpam-signup-name-err','lpam-signup-email-err','lpam-signup-pw-err','lpam-signup-confirm-err']
-    .forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('show'); });
-}
-function amShowErr(msg, type) {
-  const b = document.getElementById('amErrBanner');
-  if (!b) return;
-  b.textContent = msg;
-  b.classList.add('show');
-  if (type === 'success') {
-    b.style.background = 'rgba(16,185,129,0.15)';
-    b.style.border = '1px solid rgba(16,185,129,0.4)';
-    b.style.color = '#6ee7b7';
-  } else {
-    b.style.background = '';
-    b.style.border = '';
-    b.style.color = '';
-  }
-}
-function amHideErr() {
-  const b = document.getElementById('amErrBanner');
-  if (!b) return;
-  b.classList.remove('show');
-  b.style.background = ''; b.style.border = ''; b.style.color = '';
-}
-function amValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()); }
-
-function amSetLoading(btnId, on) {
-  const b = document.getElementById(btnId);
-  b.disabled = on; b.classList.toggle('loading', on);
-}
-
-// ── LOGIN ────────────────────────────────────────────────────────
-// ── Simple hash (not cryptographic, but hides plain text in storage) ──
-function amHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + ch;
-    hash |= 0;
-  }
-  return 'gz_' + Math.abs(hash).toString(36);
-}
-
-// ── Get all registered accounts (LEGACY - removed) ────────────────
-// ── LOGIN ─────────────────────────────────────────────────────────
-async function amHandleLogin() {
-  amClearErrors(); amHideErr();
-  const email = document.getElementById('lpam-login-email').value.trim().toLowerCase();
-  const pw    = document.getElementById('lpam-login-pw').value;
-  let ok = true;
-  if (!email)               { amFieldErr('lpam-login-email','lpam-login-email-err','Email is required'); ok=false; }
-  else if (!amValidEmail(email)) { amFieldErr('lpam-login-email','lpam-login-email-err','Enter a valid email'); ok=false; }
-  if (!pw)                  { amFieldErr('lpam-login-pw','lpam-login-pw-err','Password is required'); ok=false; }
-  if (!ok) return;
-
-  amSetLoading('amLoginBtn', true);
-  
-  try {
-    const res = await fetch(`${BACKEND_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw }),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.detail || 'Login failed.');
-    }
-
-    // Success
-    authStoreSession(data);
-    amShowSuccess(); // shows success animation
-    
-    // After animation, go to dashboard via authHideGate instead of legacy showDashboard
-    setTimeout(async () => {
-      closeAuthModal();
-      authHideGate();
-      authUpdateStatusBar();
-      authSetSyncStatus('Restoring library…');
-      await syncPullFromCloud();
-      authSetSyncStatus('');
-    }, 1400);
-
-  } catch (err) {
-    amFieldErr('lpam-login-pw', 'lpam-login-pw-err', err.message);
-    amShowErr(err.message || 'Incorrect email or password. Please try again.');
-  } finally {
-    amSetLoading('amLoginBtn', false);
-  }
-}
-
-// ── SIGNUP ────────────────────────────────────────────────────────
-async function amHandleSignup() {
-  amClearErrors(); amHideErr();
-  const name    = document.getElementById('lpam-signup-name').value.trim();
-  const email   = document.getElementById('lpam-signup-email').value.trim().toLowerCase();
-  const pw      = document.getElementById('lpam-signup-pw').value;
-  const confirm = document.getElementById('lpam-signup-confirm').value;
-  let ok = true;
-  if (!name || name.length < 2) { amFieldErr('lpam-signup-name','lpam-signup-name-err','Enter your full name'); ok=false; }
-  if (!email)                   { amFieldErr('lpam-signup-email','lpam-signup-email-err','Email is required'); ok=false; }
-  else if (!amValidEmail(email)){ amFieldErr('lpam-signup-email','lpam-signup-email-err','Enter a valid email'); ok=false; }
-  if (!pw || pw.length < 6)     { amFieldErr('lpam-signup-pw','lpam-signup-pw-err','Min 6 characters'); ok=false; }
-  if (!confirm)                 { amFieldErr('lpam-signup-confirm','lpam-signup-confirm-err','Confirm your password'); ok=false; }
-  else if (pw && confirm !== pw){ amFieldErr('lpam-signup-confirm','lpam-signup-confirm-err','Passwords do not match'); ok=false; }
-  if (!ok) return;
-
-  amSetLoading('amSignupBtn', true);
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, password: pw }),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.detail || 'Registration failed.');
-    }
-
-    // Since v5.2, registration returns a full session token immediately.
-    // We can directly store the session and log them in!
-    authStoreSession(data);
-    
-    // Show success UI
-    const btn = document.getElementById('amSignupBtn');
-    if (btn) { btn.textContent = '✅ Account Created!'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
-    amShowErr(`Welcome, ${data.name}! Taking you to your dashboard...`, 'success');
-    
-    setTimeout(async () => {
-      closeAuthModal();
-      authHideGate();
-      authUpdateStatusBar();
-      await syncPullFromCloud(); // pull any existing cloud data to the new device
-      if (btn) { btn.textContent = 'Create Account'; btn.style.background = ''; }
-    }, 1500);
-
-  } catch (err) {
-    if (err.message.includes('already registered')) {
-      amFieldErr('lpam-signup-email','lpam-signup-email-err','An account with this email already exists');
-      amShowErr('This email is already registered. Please sign in instead.');
-    } else {
-      amShowErr(err.message || 'Something went wrong. Please try again.');
-    }
-  } finally {
-    amSetLoading('amSignupBtn', false);
-  }
-}
-
-// ── After signup (LEGACY - no longer used) ────────────────────────
-function amShowSignupSuccess(email) {}
-
-// ── Social / Forgot (UI-only) ────────────────────────────────────
-function amSocial(p)  { amShowErr(`${p} login is not yet connected. Use email/password.`); }
-function amForgot(e)  { e.preventDefault(); amShowErr('Password reset is not yet available.'); }
-
-// ── Login success → go to dashboard ──────────────────────────────
-function amShowSuccess() {
-  const loginSec = document.getElementById('amSec-login');
-  const signupSec = document.getElementById('amSec-signup');
-  if (loginSec) loginSec.classList.remove('active');
-  if (signupSec) signupSec.classList.remove('active');
-  const s = document.getElementById('amSuccess');
-  if (s) s.style.display = 'flex';
-  // Dashboard routing is now handled by the async timeout in amHandleLogin
-}
-</script>
-
-</body>
+<!-- Auth modal removed (Auth-Free App) -->
 
 </div>
 <div id="gz-dashboard">
@@ -8009,203 +7621,7 @@ function amShowSuccess() {
      File: frontend/public/teaching_smartboard.html
      ════════════════════════════════════════════════════════════════════ -->
 
-  <!-- ── Auth Gate — Premium Split Layout ──── -->
-  <div id="authGate" style="display:none; position:fixed; inset:0; z-index:9999;">
-    <div class="ag-wrap">
-
-      <!-- ═══ LEFT HERO PANEL — Premium Apple-Style Educational UI ═══ -->
-      <div class="ag-left">
-        <!-- Soft background glow -->
-        <div class="ag-left-bg"></div>
-        <div class="ag-left-orb1"></div>
-        <div class="ag-left-orb2"></div>
-
-        <!-- Brand Logo Row -->
-        <div class="ag-brand-row">
-          <div class="ag-brand-icon">🎓</div>
-          <span class="ag-brand-name">Gen<em>Zet</em></span>
-        </div>
-
-        <!-- Hero Content -->
-        <div class="ag-left-content">
-
-          <!-- Doodle accent before heading -->
-          <div class="ag-doodle-accent">
-            <div class="ag-doodle-line"></div>
-            <span class="ag-doodle-squiggle">〰</span>
-          </div>
-
-          <!-- Lightbulb floating icon -->
-          <div style="position:relative;">
-            <span class="ag-bulb-icon">💡</span>
-
-            <!-- Main Hero Heading -->
-            <h2 class="ag-hero-heading">
-              Smart students<br>
-              <span class="ag-grad-purple">don't memorize</span><br>
-              they <span class="ag-grad-teal">visualize</span>
-            </h2>
-          </div>
-
-          <!-- Classroom image block -->
-          <div class="ag-classroom-wrap">
-            <div class="ag-dot-grid"></div>
-            <img class="ag-classroom-img"
-              src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&q=85&auto=format&fit=crop"
-              alt="Students learning at an interactive smartboard in a modern classroom" loading="lazy" />
-            <div class="ag-classroom-fade"></div>
-          </div>
-
-        </div>
-
-        <!-- Bottom Contact Row -->
-        <div class="ag-left-contact">
-          <a href="mailto:genzet@gmail.com"><span>📧</span> genzet@gmail.com</a>
-          <a href="tel:+919080202377"><span>📞</span> +91 90802 02377</a>
-          <a href="https://wa.me/919080202377" target="_blank" rel="noopener"><span>💬</span> WhatsApp Us</a>
-        </div>
-      </div>
-
-      <!-- ═══ RIGHT AUTH PANEL ═══ -->
-      <div class="ag-right">
-        <div class="ag-card">
-
-          <!-- Card brand -->
-          <div class="ag-card-brand">
-            <div class="ag-card-brand-icon">🎓</div>
-            <span class="ag-card-brand-text">Gen<em>Zet</em></span>
-          </div>
-
-          <!-- LOGIN VIEW -->
-          <div id="loginForm">
-            <div class="ag-card-title" id="authCardTitle">Welcome back</div>
-            <div class="ag-card-sub">Sign in to continue your learning workspace.</div>
-
-            <!-- Email -->
-            <div class="ag-field">
-              <span class="ag-field-icon">📧</span>
-              <input id="loginEmail" type="email" class="ag-input" placeholder="Email address"
-                onkeydown="if(event.key==='Enter')authDoLogin()" />
-            </div>
-
-            <!-- Password -->
-            <div class="ag-field">
-              <span class="ag-field-icon">🔒</span>
-              <input id="loginPassword" type="password" class="ag-input" placeholder="Password"
-                onkeydown="if(event.key==='Enter')authDoLogin()" />
-              <button type="button" class="ag-pw-toggle" onclick="agTogglePw('loginPassword',this)"
-                title="Show password">👁</button>
-            </div>
-
-            <!-- Remember / Forgot -->
-            <div class="ag-row">
-              <label class="ag-remember">
-                <input type="checkbox" checked /> Remember me
-              </label>
-              <a href="#" class="ag-forgot" onclick="event.preventDefault();">Forgot Password?</a>
-            </div>
-
-            <!-- Submit -->
-            <button id="loginBtn" class="ag-submit" onclick="authDoLogin()">Sign In</button>
-
-            <!-- Divider -->
-            <div class="ag-divider">or continue with</div>
-
-            <!-- Social -->
-            <div class="ag-socials">
-              <button class="ag-social-btn" title="Google" onclick="notify('Google login coming soon!','success')">
-                <span style="font-size:18px;font-weight:800;color:#4285f4;">G</span>
-              </button>
-              <button class="ag-social-btn" title="Microsoft"
-                onclick="notify('Microsoft login coming soon!','success')">
-                <span style="font-size:18px;">🪟</span>
-              </button>
-              <button class="ag-social-btn" title="Apple" onclick="notify('Apple login coming soon!','success')">
-                <span style="font-size:18px;">🍎</span>
-              </button>
-            </div>
-
-            <!-- Bottom link -->
-            <div class="ag-bottom">
-              Don't have an account?
-              <a href="#" id="authTabRegister" onclick="event.preventDefault();authSwitchTab('register')">Let's Start
-                →</a>
-            </div>
-          </div>
-
-          <!-- REGISTER VIEW -->
-          <div id="registerForm" style="display:none;">
-            <div class="ag-card-title">Create your account</div>
-            <div class="ag-card-sub">Start building smart lessons, animations, and learning content in one place.</div>
-
-            <!-- Name -->
-            <div class="ag-field">
-              <span class="ag-field-icon">👤</span>
-              <input id="regName" type="text" class="ag-input" placeholder="Full name" />
-            </div>
-
-            <!-- Email -->
-            <div class="ag-field">
-              <span class="ag-field-icon">📧</span>
-              <input id="regEmail" type="email" class="ag-input" placeholder="Email address" />
-            </div>
-
-            <!-- Password -->
-            <div class="ag-field">
-              <span class="ag-field-icon">🔒</span>
-              <input id="regPassword" type="password" class="ag-input" placeholder="Password (min. 6 characters)"
-                onkeydown="if(event.key==='Enter')authDoRegister()" />
-              <button type="button" class="ag-pw-toggle" onclick="agTogglePw('regPassword',this)"
-                title="Show password">👁</button>
-            </div>
-
-            <!-- Submit -->
-            <button id="registerBtn" class="ag-submit" onclick="authDoRegister()">Create Account →</button>
-
-            <!-- Bottom link -->
-            <div class="ag-bottom" style="margin-top:20px;">
-              Already have an account?
-              <a href="#" id="authTabLogin" onclick="event.preventDefault();authSwitchTab('login')">Sign In →</a>
-            </div>
-          </div>
-
-          <!-- Error / Success Message -->
-          <div id="authMsg" style="margin-top:16px; padding:12px 14px; border-radius:10px;
-                                 font-size:13px; font-weight:500; display:none;
-                                 text-align:center;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Login Success Transition Overlay -->
-  <div class="ag-login-success-overlay" id="agLoginSuccessOverlay">
-    <div class="ag-success-icon">✨</div>
-    <div class="ag-success-text">Welcome back!</div>
-  </div>
-
-  <!-- ── Auth Status Bar (top-right corner, shown when logged in) ────── -->
-  <div id="authStatusBar" style="display:none; position:fixed; top:12px; right:16px;
-     z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px;
-     background:var(--surface); border:1.5px solid var(--border);
-     border-radius:40px; box-shadow:var(--shadow); font-size:13px;">
-    <div style="width:8px; height:8px; border-radius:50%; background:var(--green);
-              box-shadow:0 0 6px var(--green);"></div>
-    <span id="authUserName" style="font-weight:600; color:var(--text); max-width:140px;
-        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Teacher</span>
-    <span id="authSyncStatus" style="color:var(--text3); font-size:11px;"></span>
-    <button onclick="authLogout()" title="Sign out" style="padding:4px 10px; border:1.5px solid var(--border); border-radius:20px;
-           background:transparent; color:var(--text2); cursor:pointer; font-size:12px;
-           font-weight:600; transition:all .2s;"
-      onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)'"
-      onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text2)'">
-      Sign out
-    </button>
-
-  </div>
-
-
-  <!-- ═══ END AUTH OVERLAY ═══ -->
+  <!-- Auth Gate & Status Bar removed (Auth-Free App) -->
 
   <!-- TOPBAR -->
   <div class="topbar">
@@ -8273,10 +7689,6 @@ function amShowSuccess() {
           <span class="nav-item-text">AI Creator</span>
           <span class="nav-item-tag">AI</span>
         </button>
-        <button class="sidebar-nav-item" id="sideLibrary" onclick="switchMode('library')">
-          <div class="nav-icon">&#128218;</div>
-          <span class="nav-item-text">Library</span>
-        </button>
         <button class="sidebar-nav-item" id="sideFile" onclick="switchMode('file')">
           <div class="nav-icon">&#128193;</div>
           <span class="nav-item-text">File</span>
@@ -8285,10 +7697,6 @@ function amShowSuccess() {
           <div class="nav-icon">&#10067;</div>
           <span class="nav-item-text">QAnim</span>
           <span class="nav-item-tag">New</span>
-        </button>
-        <button class="sidebar-nav-item" id="sideVault" onclick="switchMode('vault')">
-          <div class="nav-icon">&#127909;</div>
-          <span class="nav-item-text">VideoVault</span>
         </button>
       </div>
       <div class="sidebar-footer">
@@ -8526,31 +7934,7 @@ function amShowSuccess() {
               </div>
             </div>
 
-            <!-- LIBRARY PANEL -->
-            <div class="panel" id="libraryPanel">
-              <div class="library-topbar">
-                <div>
-                  <h2 style="font-size:22px;font-weight:800;color:var(--text);">📚 My Library</h2>
-                  <p style="font-size:12px;color:var(--text2);margin-top:4px;">AI animations stored here</p>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                  <button class="lib-export-btn" onclick="exportLibraryCSV()">📋 Export CSV</button>
-                  <button class="lib-create-btn" onclick="switchMode('animind')">+ Create Animation</button>
-                </div>
-              </div>
-              <div class="upload-progress" id="uploadProgress">
-                <div class="up-label"><span id="upLabel">Saving…</span><span id="upPct">0%</span></div>
-                <div class="up-bar-bg">
-                  <div class="up-bar-fill" id="upFill"></div>
-                </div>
-              </div>
-              <div class="lib-tabs">
-                <button class="lib-tab active" id="tabAll" onclick="setLibTab('all')">All</button>
-                <button class="lib-tab" id="tabAnimations" onclick="setLibTab('animations')">🎬 Animations</button>
-              </div>
-              <div class="playlist-filters" id="playlistFilters"></div>
-              <div class="lib-grid" id="libraryGrid"></div>
-            </div>
+
 
             <!-- QUESTION ANIMATION PANEL -->
             <div class="panel" id="questionPanel">
@@ -8663,103 +8047,7 @@ function amShowSuccess() {
               </div>
             </div>
 
-            <!-- VIDEO VAULT PANEL -->
-            <div class="panel" id="vaultPanel">
-              <div class="vault-panel-wrap">
 
-                <!-- Header -->
-                <div class="vault-header">
-                  <div class="vault-header-icon">🎥</div>
-                  <div class="vault-header-text">
-                    <h2>Video Vault</h2>
-                    <p>Upload and manage your educational video library</p>
-                  </div>
-                </div>
-
-                <!-- Upload Card -->
-                <div class="vault-upload-card">
-                  <div class="vault-card-title">
-                    <span>📤</span> Upload Educational Video
-                  </div>
-
-                  <!-- Initial trigger (shown when no file selected) -->
-                  <div id="vaultUploadTrigger" class="vault-upload-trigger" onclick="vaultTriggerPick()">
-                    <div class="vut-icon">🎬</div>
-                    <div class="vut-label">Click to Upload Video</div>
-                    <div class="vut-sub">Supports MP4 format · Click to browse files</div>
-                    <button class="vault-primary-btn" onclick="event.stopPropagation();vaultTriggerPick()">
-                      🎥 Upload Video
-                    </button>
-                  </div>
-
-                  <!-- Hidden file input -->
-                  <input type="file" id="vaultFileInput" accept="video/mp4" style="display:none;"
-                    onchange="vaultHandleFile(event)" />
-
-                  <!-- Form Section (shown after file select) -->
-                  <div class="vault-form-section" id="vaultFormSection">
-
-                    <!-- File Preview -->
-                    <div class="vault-file-preview">
-                      <div class="vault-file-icon">🎞️</div>
-                      <div class="vault-file-info">
-                        <div class="vault-file-name" id="vaultSelectedFileName">video.mp4</div>
-                        <div class="vault-file-size" id="vaultSelectedFileSize">0 MB</div>
-                      </div>
-                    </div>
-
-                    <!-- Name Input -->
-                    <label class="vault-label" for="vaultVideoName">Enter Video Name</label>
-                    <input type="text" id="vaultVideoName" class="vault-input"
-                      placeholder="e.g. Newton Laws Explanation" maxlength="80"
-                      onkeydown="if(event.key==='Enter') vaultUpload()" />
-
-                    <!-- Action Buttons -->
-                    <div class="vault-actions">
-                      <button class="vault-primary-btn" onclick="vaultUpload()">
-                        ✅ Upload
-                      </button>
-                      <button class="vault-cancel-btn" onclick="vaultCancel()">
-                        ✕ Cancel
-                      </button>
-                    </div>
-                  </div>
-
-                </div><!-- /upload-card -->
-
-                <!-- Saved Videos Grid -->
-                <div class="vault-grid-section" id="vaultGridSection">
-                  <div class="vault-grid-title">
-                    Saved Videos <span id="vaultCount">0</span>
-                  </div>
-
-                  <!-- NEW: Video Vault Search Bar -->
-                  <div class="vault-search-wrap">
-                    <span class="vault-search-icon">🔍</span>
-                    <input type="text" id="vaultSearchInput" class="vault-search-input" placeholder="Search videos..."
-                      oninput="vaultFilterVideos(this.value)" autocomplete="off" />
-                    <button class="vault-search-clear" id="vaultSearchClear" onclick="vaultClearSearch()"
-                      title="Clear search">✕</button>
-                  </div>
-                  <!-- No results message -->
-                  <div class="vault-no-results" id="vaultNoResults">
-                    <div style="font-size:36px;margin-bottom:10px;">🔍</div>
-                    <p style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:4px;">No videos found</p>
-                    <small>Try a different search term</small>
-                  </div>
-                  <!-- END NEW: Video Vault Search Bar -->
-
-                  <div class="vault-video-grid" id="vaultVideoGrid">
-                    <div class="vault-empty-state">
-                      <div class="ves-icon">🎞️</div>
-                      <p>No videos uploaded yet</p>
-                      <small>Upload an MP4 file above to get started</small>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div><!-- /vaultPanel -->
 
             <!-- FILE PANEL — ENGINEERING COURSES -->
             <div class="panel" id="filePanel">
@@ -9192,63 +8480,95 @@ function amShowSuccess() {
     // STORAGE — Supabase Cloud (primary)
     // IndexedDB removed: Supabase is now the single
     // source of truth for all user data.
-    // initDB / idbSet / idbGet are stubs kept only so
-    // the authInit bootstrap chain doesn't crash.
     // ═══════════════════════════════════════════════
+    // INDEXEDDB STORAGE (For File Mode & Library)
+    // ═══════════════════════════════════════════════
+    let db;
+    const DB_NAME = 'genzet_db';
+    const STORE_NAME = 'genzet_store';
 
-    // Stub — no longer opens IndexedDB
     function initDB() {
-      return Promise.resolve(null);
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = function(e) {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = function(e) {
+          db = e.target.result;
+          resolve(db);
+        };
+        request.onerror = function(e) {
+          console.error("IndexedDB error:", e);
+          reject(e);
+        };
+      });
     }
 
-    // Stub — no-op (IDB removed)
     async function idbSet(key, value) {
-      // no-op: Supabase is the store
+      if (!db) await initDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
     }
 
-    // Stub — always returns null (IDB removed)
     async function idbGet(key) {
-      return null;
+      if (!db) await initDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
     }
 
-    // Save engineering courses → Supabase PUT /sync/courses (IMMEDIATE — no debounce)
+    // Save engineering courses → IndexedDB
     async function saveECourses() {
-      if (typeof window.syncCoursesToCloud === 'function') {
-        try {
-          await window.syncCoursesToCloud();
-        } catch (e) { console.warn('[STORAGE] saveECourses cloud error:', e.message); }
-      }
+      await idbSet('genzet_engineering_courses', engineeringCourses);
     }
 
-    // Load engineering courses — returns the in-memory state already pulled from cloud on login
+    // Load engineering courses ← IndexedDB
     async function loadECourses() {
-      return (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : null;
+      const data = await idbGet('genzet_engineering_courses');
+      if (data) {
+        engineeringCourses = data;
+      }
+      return engineeringCourses || [];
     }
 
-    // saveLibraryIDB — stub: individual animations are pushed to Supabase
-    // via syncPushToCloud() at save time; no local IDB write needed.
+    // saveLibraryIDB → IndexedDB
     async function saveLibraryIDB() {
-      // no-op: library writes go through syncPushToCloud (called at each save/delete)
-      console.debug('[STORAGE] saveLibraryIDB() → no-op (Supabase handles persistence)');
+      await idbSet('genzet_ai_library', animindLibrary);
     }
 
-    // loadLibraryIDB — returns the in-memory array already populated from cloud on login
+    // loadLibraryIDB ← IndexedDB
     async function loadLibraryIDB() {
-      return (typeof animindLibrary !== 'undefined') ? animindLibrary : [];
+      const data = await idbGet('genzet_ai_library');
+      if (data) {
+        animindLibrary = data;
+      }
+      return animindLibrary || [];
     }
 
     async function updateStorageBadge() {
       try {
         const animCount = (typeof animindLibrary !== 'undefined') ? animindLibrary.length : 0;
-        const coCount   = getTotalCOTopics ? getTotalCOTopics() : 0;
+        const coCount   = (typeof getTotalCOTopics === 'function') ? getTotalCOTopics() : 0;
         const syncEl    = document.getElementById('storageText');
-        if (syncEl) syncEl.textContent = '☁ Cloud';
+        if (syncEl) syncEl.textContent = '💾 Local (IndexedDB)';
         const fill = document.getElementById('storageBarFill');
         if (fill) fill.style.width = '100%';
         // Update banner in file mode
         const banner = document.getElementById('storageInfoText');
         if (banner) {
-          banner.textContent = `☁ Cloud Storage (Supabase): ${animCount} animation${animCount !== 1 ? 's' : ''}, ${coCount} CO topic${coCount !== 1 ? 's' : ''} — synced to your account`;
+          banner.textContent = `💾 Local Storage (IndexedDB): ${animCount} animation${animCount !== 1 ? 's' : ''}, ${coCount} CO topic${coCount !== 1 ? 's' : ''} — saved locally`;
         }
       } catch (e) { }
     }
@@ -9258,15 +8578,12 @@ function amShowSuccess() {
     // ═══════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', async () => {
       initTheme();
-      // Keep __dbReadyPromise as a resolved promise so authInit() downstream
-      // can still do: await (window.__dbReadyPromise || initDB())
       window.__dbReadyPromise = Promise.resolve(null);
 
       // Start with empty library and empty courses.
-      // The real cloud data is loaded by syncPullFromCloud() inside authInit()
-      // (triggered automatically after token verification on login/page load).
+      // IndexedDB data is loaded by authInit() → loadLibraryIDB() / loadECourses().
       animindLibrary    = [];
-      engineeringCourses = [];   // empty — cloud courses (or user-created) fill this
+      engineeringCourses = [];
       // Ensure syllabus field exists on all subjects
       engineeringCourses.forEach(s => { if (!s.hasOwnProperty('syllabus')) s.syllabus = null; });
 
@@ -9335,7 +8652,7 @@ function amShowSuccess() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); return; } // noop — search removed
       // REMOVED: Ctrl+1 for teacher mode
       if ((e.ctrlKey || e.metaKey) && e.key === '2') switchMode('animind');
-      if ((e.ctrlKey || e.metaKey) && e.key === '3') switchMode('library');
+      // Ctrl+3 (library shortcut removed)
       if ((e.ctrlKey || e.metaKey) && e.key === '4') switchMode('file');
     }
     function closeAllModals() {
@@ -9403,18 +8720,18 @@ function amShowSuccess() {
     function switchMode(mode) {
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
-      const modeMap = ['animind', 'library', 'file', 'question', 'vault'];
+      const modeMap = ['animind', 'file', 'question'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'vaultPanel'].forEach(id => {
-        document.getElementById(id).classList.toggle('active', id === mode + 'Panel');
+      ['animindPanel', 'filePanel', 'questionPanel'].forEach(id => {
+        const panel = document.getElementById(id);
+        if(panel) panel.classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', vault: 'sideVault' };
+      const sideMap = { animind: 'sideAicreator', file: 'sideFile', question: 'sideQanim' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
       // REMOVED: teacher mode handler
-      if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
     }
 
@@ -9831,11 +9148,8 @@ function amShowSuccess() {
       currentAnimation.playlist = pl;
       const idx = animindLibrary.findIndex(a => a.id === currentAnimation.id);
       if (idx >= 0) animindLibrary[idx] = { ...currentAnimation }; else animindLibrary.unshift({ ...currentAnimation });
-      // ✅ CLOUD SYNC — push to Supabase immediately (awaited, no fire-and-forget)
-      if (typeof window.syncPushToCloud === 'function') {
-        try { await window.syncPushToCloud(currentAnimation); }
-        catch (e) { console.warn('[SYNC] cloud push error:', e.message); }
-      }
+      // ✅ LOCAL SAVE — persist to IndexedDB immediately
+      await idbSet('genzet_ai_library', animindLibrary);
       syncLibraryToFolders(); showFolders(); closeSaveModal();
       document.getElementById('amSaveBtn').className = 'am-save-btn saved';
       document.getElementById('amSaveBtn').textContent = '✅ Saved!';
@@ -9921,20 +9235,8 @@ function amShowSuccess() {
       const newTopic = { id: 't_' + Date.now().toString(), name, animCode: currentAnimation.animation_code, explanation: currentAnimation.explanation || '', prompt: currentAnimation.prompt || '', created_at: new Date().toISOString() };
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
 
-      // ✅ Push animation to /sync/animations so it appears in Library on all devices
-      if (typeof window.syncPushToCloud === 'function') {
-        await window.syncPushToCloud({
-          id: newTopic.id,
-          title: name,
-          prompt: currentAnimation.prompt || '',
-          explanation: currentAnimation.explanation || '',
-          animation_code: currentAnimation.animation_code || '',
-          playlist: '__co_topic__',
-          created_at: newTopic.created_at
-        });
-      }
-
-      await saveECourses(); // ✅ Saves full courses tree (with animCode) to cloud
+      // ✅ LOCAL SAVE — persist topic to IndexedDB via courses tree
+      await saveECourses(); // Saves full courses tree (with animCode) to IndexedDB
       const subjName = engineeringCourses[subjIndex].name;
       const coNum = engineeringCourses[subjIndex].cos[coIndex].coNum;
       closeSaveToCOModal();
@@ -9944,59 +9246,19 @@ function amShowSuccess() {
 
 
     // ═══════════════════════════════════════════════
-    // LIBRARY
+    // LIBRARY (Only deleteAI retained for dashboard)
     // ═══════════════════════════════════════════════
-    async function renderLibrary() {
-      // animindLibrary is already in-memory from cloud pull — no IDB read needed
-      const aP = animindLibrary.map(a => a.playlist || 'General');
-      const allPl = ['all', ...new Set(aP)];
-      document.getElementById('playlistFilters').innerHTML = allPl.map(p => {
-        const cnt = p === 'all' ? animindLibrary.length : animindLibrary.filter(a => (a.playlist || 'General') === p).length;
-        return `<button class="pf-tag ${p === activePlaylist ? 'active' : ''}" onclick="filterPlaylist('${esc(p)}')">${p === 'all' ? '📂 All' : p} (${cnt})</button>`;
-      }).join('');
-      const showA = activeLibTab === 'all' || activeLibTab === 'animations';
-      const fA = showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : [];
-      const grid = document.getElementById('libraryGrid');
-      if (fA.length === 0) {
-        grid.innerHTML = `<div class="lib-empty"><div style="font-size:52px;margin-bottom:14px;">🎬</div><p style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);">Nothing here yet</p><p style="font-size:13px;">Go to AI Creator to generate animations!</p></div>`;
-        return;
-      }
-      grid.innerHTML = fA.map(a =>
-        `<div class="lib-anim-card" onclick="openLibAnim('${a.id}')"><button class="lac-delete" onclick="event.stopPropagation();deleteAI('${a.id}')">✕</button>
-    <div class="lac-type">🎬 Animation</div>
-    <div class="lac-title">${esc(a.title)}</div>
-    <div class="lac-desc">${esc((a.explanation || a.prompt || '').substring(0, 90))}…</div>
-    <div class="lac-footer"><span class="lac-date">${fmtDate(a.created_at)}</span><span class="lac-playlist">🗂 ${esc(a.playlist || 'General')}</span></div></div>`
-      ).join('');
-    }
-    function setLibTab(tab) { activeLibTab = tab; document.querySelectorAll('.lib-tab').forEach(b => b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1))); renderLibrary(); }
-    function filterPlaylist(p) { activePlaylist = p; renderLibrary(); }
-    function openLibAnim(id) {
-      const a = animindLibrary.find(x => String(x.id) === String(id)); if (!a) return;
-      // UPDATED: Teacher mode removed — open animation directly in Present Mode
-      openPresentMode(a.animation_code, a.title, 'AI Generated · ' + (a.playlist || 'General'));
-    }
     async function deleteAI(id) {
       if (!confirm('Delete this animation?')) return;
       animindLibrary = animindLibrary.filter(a => String(a.id) !== String(id));
-      // ✅ CLOUD SYNC — remove from Supabase (source of truth)
-      if (typeof window.syncDeleteFromCloud === 'function') {
-        window.syncDeleteFromCloud(id)
-          .catch(e => console.warn('[SYNC] cloud delete error:', e.message));
-      }
-      syncLibraryToFolders(); showFolders(); renderLibrary(); updateActiveCount();
+      // Save updated state to IndexedDB
+      await idbSet('genzet_ai_library', animindLibrary);
+      syncLibraryToFolders(); 
+      showFolders(); 
+      updateActiveCount();
       notify('🗑️ Animation deleted');
     }
-    function exportLibraryCSV() {
-      const rows = [['Type', 'Title', 'Playlist', 'Date']];
-      animindLibrary.forEach(a => rows.push(['Animation', a.title, a.playlist || 'General', fmtDate(a.created_at)]));
-      engineeringCourses?.forEach(s => s.cos.forEach(co => co.topics.forEach(t => rows.push(['CO Topic', t.name, s.name + ' › ' + co.coNum, fmtDate(t.created_at)]))));
-      const csv = rows.map(r => r.map(c => '"' + String(c || '').replace(/"/g, '""') + '"').join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const u = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = u; a.download = 'genzet_library.csv'; a.click(); URL.revokeObjectURL(u);
-      notify('📋 CSV exported!');
-    }
+
 
     // ═══════════════════════════════════════════════
     // FILE MODE — SUBJECTS GRID
@@ -10208,9 +9470,6 @@ function amShowSuccess() {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId); if (!co) return;
       co.topics = co.topics.filter(t => t.id !== topicId);
-      if (typeof window.syncDeleteFromCloud === 'function') {
-        await window.syncDeleteFromCloud(topicId);
-      }
       await saveECourses(); renderTopicList();
       syncLibraryToFolders(); showFolders(); updateActiveCount();
       notify('🗑️ Topic deleted');
@@ -10713,11 +9972,9 @@ ${text.substring(0, 4500)}`
         created_at: newTopic.created_at
       };
 
-      if (typeof window.syncPushToCloud === 'function') {
-        await window.syncPushToCloud(topicAnim);
-      }
       if (typeof animindLibrary !== 'undefined') {
         animindLibrary.unshift(topicAnim);
+        await idbSet('genzet_ai_library', animindLibrary);
       }
 
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
@@ -10978,8 +10235,8 @@ ${text.substring(0, 4500)}`
         currentQuestionAnim.playlist = pl;
         const idx = animindLibrary.findIndex(a => a.id === currentQuestionAnim.id);
         if (idx >= 0) animindLibrary[idx] = { ...currentQuestionAnim }; else animindLibrary.unshift({ ...currentQuestionAnim });
-        // ✅ CLOUD SYNC — push to Supabase (source of truth)
-        if (typeof window.syncPushToCloud === 'function') await window.syncPushToCloud(currentQuestionAnim);
+        // ✅ LOCAL SAVE — persist to IndexedDB
+        await idbSet('genzet_ai_library', animindLibrary);
         syncLibraryToFolders(); showFolders(); closeSaveModal();
         document.getElementById('qaSaveBtn').className = 'am-save-btn saved';
         document.getElementById('qaSaveBtn').textContent = '✅ Saved!';
@@ -11006,236 +10263,7 @@ ${text.substring(0, 4500)}`
         currentAnimation = window._qaRestoreAnim;
         window._qaRestoreAnim = undefined;
       }
-    };
 
-    // ═══════════════════════════════════════════════
-    // VIDEO VAULT — Cloud-synced (no localStorage)
-    // ═══════════════════════════════════════════════
-    // vaultVideos is populated from cloud on login via syncPullVaultFromCloud.
-    // localStorage is NOT used as a store (only as a temp migration source on first load).
-    let vaultVideos = [];
-    // One-time migration: if old localStorage data exists, adopt it then wipe it.
-    (function _migrateVaultFromLocalStorage() {
-      try {
-        const legacy = localStorage.getItem('genzet_vault');
-        if (legacy) {
-          const parsed = JSON.parse(legacy);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            vaultVideos = parsed;
-          }
-          localStorage.removeItem('genzet_vault');
-        }
-      } catch (_) {}
-    })();
-    let vaultPendingFile = null;
-
-    function vaultTriggerPick() {
-      document.getElementById('vaultFileInput').click();
-    }
-
-    function vaultHandleFile(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-      // Validate mp4
-      if (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
-        notify('⚠️ Only MP4 files are supported!', 'error');
-        event.target.value = '';
-        return;
-      }
-      vaultPendingFile = file;
-      // Show file preview
-      document.getElementById('vaultSelectedFileName').textContent = file.name;
-      document.getElementById('vaultSelectedFileSize').textContent = fmtBytes(file.size);
-      // Hide trigger, show form
-      document.getElementById('vaultUploadTrigger').style.display = 'none';
-      const formSec = document.getElementById('vaultFormSection');
-      formSec.classList.add('show');
-      // Pre-fill name from file name
-      const nameInput = document.getElementById('vaultVideoName');
-      nameInput.value = file.name
-        .replace(/\.mp4$/i, '')
-        .replace(/[-_]+/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
-      setTimeout(() => nameInput.focus(), 100);
-    }
-
-    async function vaultUpload() {
-      const name = (document.getElementById('vaultVideoName').value || '').trim();
-      if (!vaultPendingFile) {
-        notify('⚠️ No file selected!', 'error'); return;
-      }
-      if (!name) {
-        document.getElementById('vaultVideoName').focus();
-        notify('⚠️ Please enter a video name!', 'error'); return;
-      }
-      // Store metadata entry (file binary is never stored — only metadata)
-      const entry = {
-        id: 'v_' + Date.now(),
-        name,
-        fileName: vaultPendingFile.name,
-        size: vaultPendingFile.size,
-        created_at: new Date().toISOString()
-      };
-      vaultVideos.unshift(entry);
-      // ✅ CLOUD SYNC — push to Supabase immediately
-      if (typeof window.syncPushVaultToCloud === 'function') {
-        try { await window.syncPushVaultToCloud(); }
-        catch (e) { console.warn('[VAULT] cloud push error:', e.message); }
-      }
-      vaultReset();
-      vaultRenderGrid();
-      notify('✅ "' + name + '" added to Video Vault!');
-    }
-
-    function vaultCancel() {
-      vaultReset();
-    }
-
-    function vaultReset() {
-      vaultPendingFile = null;
-      document.getElementById('vaultFileInput').value = '';
-      document.getElementById('vaultVideoName').value = '';
-      document.getElementById('vaultUploadTrigger').style.display = '';
-      document.getElementById('vaultFormSection').classList.remove('show');
-    }
-
-    async function vaultDeleteVideo(id) {
-      if (!confirm('Remove this video from the vault?')) return;
-      vaultVideos = vaultVideos.filter(v => v.id !== id);
-      // ✅ CLOUD SYNC — push updated list to Supabase immediately
-      if (typeof window.syncPushVaultToCloud === 'function') {
-        try { await window.syncPushVaultToCloud(); }
-        catch (e) { console.warn('[VAULT] cloud delete error:', e.message); }
-      }
-      vaultRenderGrid();
-      notify('🗑️ Video removed from vault');
-    }
-
-    function vaultRenderGrid() {
-      const grid = document.getElementById('vaultVideoGrid');
-      const countEl = document.getElementById('vaultCount');
-      countEl.textContent = vaultVideos.length;
-      if (vaultVideos.length === 0) {
-        grid.innerHTML = `
-          <div class="vault-empty-state">
-            <div class="ves-icon">🎞️</div>
-            <p>No videos uploaded yet</p>
-            <small>Upload an MP4 file above to get started</small>
-          </div>`;
-        return;
-      }
-      grid.innerHTML = vaultVideos.map(v => `
-        <div class="vault-video-card">
-          <div class="vault-video-thumb">🎬</div>
-          <div class="vault-video-card-body">
-            <div class="vault-video-badge">🎥 MP4</div>
-            <div class="vault-video-title" title="${esc(v.name)}">${esc(v.name)}</div>
-            <div class="vault-video-filename" title="${esc(v.fileName)}">${esc(v.fileName)}</div>
-            <div class="vault-video-footer">
-              <span class="vault-video-date">${fmtDate(v.created_at)} · ${fmtBytes(v.size)}</span>
-              <button class="vault-del-btn" onclick="vaultDeleteVideo('${v.id}')" title="Remove">✕</button>
-            </div>
-          </div>
-        </div>`).join('');
-      // UPDATED: Re-apply any active search filter after re-rendering grid
-      const searchInput = document.getElementById('vaultSearchInput');
-      if (searchInput && searchInput.value.trim()) {
-        vaultFilterVideos(searchInput.value);
-      }
-    }
-
-    // Init grid on load
-    vaultRenderGrid();
-
-    // ═══════════════════════════════════════════════
-    // NEW: VIDEO VAULT SEARCH — TASK 1
-    // Real-time filtering with highlight and animation
-    // ═══════════════════════════════════════════════
-    function vaultFilterVideos(query) {
-      const q = query.trim().toLowerCase();
-      const clearBtn = document.getElementById('vaultSearchClear');
-      const noResults = document.getElementById('vaultNoResults');
-
-      // Show/hide clear button
-      if (clearBtn) clearBtn.classList.toggle('show', q.length > 0);
-
-      const cards = document.querySelectorAll('#vaultVideoGrid .vault-video-card');
-      if (cards.length === 0) return; // nothing to filter yet
-
-      if (!q) {
-        // No query — show all cards, remove highlights
-        cards.forEach(card => {
-          card.classList.remove('vault-hidden');
-          card.classList.add('vault-fade-in');
-          // Restore original title text
-          const titleEl = card.querySelector('.vault-video-title');
-          if (titleEl && titleEl.dataset.originalText) {
-            titleEl.textContent = titleEl.dataset.originalText;
-          }
-        });
-        if (noResults) noResults.classList.remove('show');
-        return;
-      }
-
-      let matchCount = 0;
-      const matching = [];
-      const nonMatching = [];
-
-      cards.forEach(card => {
-        const titleEl = card.querySelector('.vault-video-title');
-        if (!titleEl) return;
-
-        // Store original text if not already stored
-        if (!titleEl.dataset.originalText) {
-          titleEl.dataset.originalText = titleEl.textContent;
-        }
-
-        const originalTitle = titleEl.dataset.originalText;
-        const titleLower = originalTitle.toLowerCase();
-        const isMatch = titleLower.includes(q);
-
-        if (isMatch) {
-          matchCount++;
-          matching.push({ card, titleEl, originalTitle });
-        } else {
-          nonMatching.push(card);
-        }
-      });
-
-      // Apply: matching first (visible + highlighted), non-matching hidden
-      matching.forEach(({ card, titleEl, originalTitle }) => {
-        card.classList.remove('vault-hidden');
-        card.classList.add('vault-fade-in');
-
-        // Highlight matched text
-        const regex = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-        titleEl.innerHTML = originalTitle.replace(regex, '<mark class="vault-search-highlight">$1</mark>');
-      });
-
-      nonMatching.forEach(card => {
-        card.classList.add('vault-hidden');
-        card.classList.remove('vault-fade-in');
-        // Restore non-matching cards' title text
-        const titleEl = card.querySelector('.vault-video-title');
-        if (titleEl && titleEl.dataset.originalText) {
-          titleEl.textContent = titleEl.dataset.originalText;
-        }
-      });
-
-      if (noResults) noResults.classList.toggle('show', matchCount === 0);
-    }
-
-    function vaultClearSearch() {
-      const input = document.getElementById('vaultSearchInput');
-      if (input) {
-        input.value = '';
-        input.focus();
-      }
-      vaultFilterVideos('');
-    }
-    // ═══════════════════════════════════════════════
-    // END: VIDEO VAULT SEARCH
-    // ═══════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════
     // UTILS
@@ -11263,149 +10291,63 @@ ${text.substring(0, 4500)}`
     });
   </script>
 
-  <!-- ═══ AUTH + SYNC SCRIPT — PASTE auth_sync.js CONTENT HERE ═══ -->
+  <!-- ═══ LOCAL STORAGE + DATA INIT ═══ -->
   <script>
     // ═══════════════════════════════════════════════════════════════════════
-    // AUTH + CLOUD SYNC MANAGER — GenZet v4.0
+    // DATA MANAGER — GenZet (Auth-Free, IndexedDB Local Storage)
     // ═══════════════════════════════════════════════════════════════════════
-    // INJECT THIS ENTIRE BLOCK as a <script> tag JUST BEFORE </body>
-    // in frontend/public/teaching_smartboard.html
-    //
     // What this does:
-    //   1. On page load: check localStorage for JWT, verify with backend
-    //   2. If valid: auto-login, pull cloud animations, restore library
-    //   3. If missing: show auth gate (login / register)
-    //   4. On save: push animation to cloud automatically
-    //   5. On logout: clear localStorage, reset state, show auth gate
+    //   1. On page load: open IndexedDB, load local data, show dashboard
+    //   2. On save: persist animations/courses to IndexedDB immediately
+    //   3. On delete: update IndexedDB immediately
     // ═══════════════════════════════════════════════════════════════════════
 
-    // ── Configuration ─────────────────────────────────────────────────────
-    // Change this to your deployed backend URL in production.
+    // ── Backend URL (for AI generation API calls only) ─────────────────────
     const BACKEND_URL = 'https://animind-backend-production.up.railway.app';
 
-    // ── Supabase stub (frontend does NOT call Supabase directly) ──────────
-    // All DB operations go through the backend (which holds the service_role
-    // key). The frontend only speaks to BACKEND_URL via JWT-authenticated
-    // fetch() calls. sb.auth.signOut() is a no-op stub kept for compat.
-    const sb = { auth: { signOut: () => Promise.resolve() } };
-
-    // localStorage keys
-    const TOKEN_KEY = 'genzet_jwt';
-    const USER_KEY = 'genzet_user';
-
-    // ── Auth state — on window so ALL script blocks can read/write them ────
-    window.authUser  = null;   // { user_id, email, name }
-    window.authToken = null;   // Supabase access_token (JWT)
-    // Local aliases for use within this script block
-    // (assigning to window props; references inside functions use window.authToken)
+    // ── Auth state stubs (kept for any residual references) ───────────────
+    window.authUser  = null;
+    window.authToken = null;
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 1: INITIALIZATION
+    // SECTION 1: INITIALIZATION (Auth-Free — direct dashboard access)
     // ══════════════════════════════════════════════════════════════════════
 
     async function authInit() {
-      // ── Clean up legacy local-only session flags ────────────────────
-      // The old 'genzet_local_session' and 'genzet_authenticated' flags
-      // allowed users to appear logged-in without a real JWT. These are
-      // removed now — a real JWT (verified by the backend) is the only
-      // valid session proof. Without this, cross-device login never works
-      // because the local flag only exists on the originating device.
-      localStorage.removeItem('genzet_authenticated');
-      localStorage.removeItem('genzet_local_session');
-
-      // Step 1: Check for a stored JWT
-      const storedToken = localStorage.getItem(TOKEN_KEY);
-      const storedUser = (() => {
-        try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
-      })();
-
-      if (!storedToken) {
-        // No JWT at all — show landing/login page.
-        authShowGate();
-        return;
-      }
-
-      // Step 2: Verify JWT with backend — this is the cross-device check.
-      // The backend looks up the user_id in Supabase; if found, the same
-      // data is available regardless of which device is logging in.
-      authSetSyncStatus('Verifying session…');
+      // Auth-Free: directly load from IndexedDB and show dashboard
       try {
-        const res = await fetch(`${BACKEND_URL}/auth/verify`, {
-          headers: { 'Authorization': `Bearer ${storedToken}` }
-        });
-
-        if (res.ok) {
-          const profile = await res.json();
-          window.authToken = storedToken;
-          window.authUser = { user_id: profile.user_id, email: profile.email, name: profile.name };
-          localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
-
-          // Token valid — show dashboard
-          authHideGate();
-          authUpdateStatusBar();
-          authSetSyncStatus('Syncing library…');
-
-          // Step 3: Pull animations + courses from Supabase (cross-device sync)
-          // Always call via window so cloud_sync_v3.js override is used
-          if (typeof window.syncPullFromCloud === 'function') {
-            await window.syncPullFromCloud();
-          }
-          authSetSyncStatus('');
-
-        } else {
-          // Token expired or invalid — clear and send to login
-          authClearSession();
-          authShowGate();
-        }
-      } catch (err) {
-        // Network error — use cached data so app works offline
-        console.warn('[AUTH] Cannot reach backend:', err.message);
-        if (storedUser && storedToken) {
-          window.authToken = storedToken;
-          window.authUser = storedUser;
-          authHideGate();
-          authUpdateStatusBar();
-          authSetSyncStatus('Offline mode — syncs when reconnected');
-        } else {
-          authShowGate();
-        }
+        await initDB();
+        await loadLibraryIDB();
+        await loadECourses();
+      } catch(e) {
+        console.warn('[INIT] IndexedDB load error:', e.message);
       }
+      authHideGate();
+      syncLibraryToFolders();
+      showFolders();
+      updateActiveCount();
+      updateStorageBadge();
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 2: AUTH GATE UI
+    // SECTION 2: GATE UI (Auth-Free — always show dashboard)
     // ══════════════════════════════════════════════════════════════════════
 
-    // Removes the temporary pre-paint <style id="genzet-pre-paint-gate">
-    // (injected synchronously in <head> before first paint) once the real,
-    // verified auth state is known. After this point, inline styles set by
-    // authShowGate/authHideGate/showDashboard are the only source of truth
-    // — there's no leftover !important rule left to fight with them.
+    function enterDashboard() {
+      authHideGate();
+    }
+
     function authReleasePrePaintGate() {
       const pp = document.getElementById('genzet-pre-paint-gate');
       if (pp) pp.remove();
     }
 
-    // The old split-screen "Welcome back" / "Smart students don't memorize"
-    // gate (#authGate) is LEGACY UI from a previous design. It must never
-    // be shown again — that's the exact screen the user reported coming
-    // back after every refresh. The current, real sign-in experience is
-    // the #authModal overlay on the marketing landing page (opened via
-    // the "Start Free Trial" / "Sign In" buttons). So whenever auth state
-    // resolves to "not logged in" (no token, no local session, or a
-    // token that turned out to be invalid), we now send the user back to
-    // the landing page instead of reviving the legacy gate.
     function authShowGate() {
       authReleasePrePaintGate();
       const dp = document.getElementById('gz-dashboard');
       if (dp) { dp.style.display = 'none'; dp.style.opacity = '0'; dp.classList.remove('active'); }
       const lp = document.getElementById('gz-landing');
       if (lp) { lp.style.display = 'block'; lp.style.opacity = '1'; }
-      // Legacy gate stays permanently hidden — never revived.
-      const gate = document.getElementById('authGate');
-      if (gate) gate.style.display = 'none';
-      const bar = document.getElementById('authStatusBar');
-      if (bar) bar.style.display = 'none';
     }
 
     function authHideGate() {
@@ -11414,467 +10356,54 @@ ${text.substring(0, 4500)}`
       if (lp) lp.style.display = 'none';
       const dp = document.getElementById('gz-dashboard');
       if (dp) { dp.style.display = 'block'; dp.style.opacity = '1'; dp.classList.add('active'); }
-      const gate = document.getElementById('authGate');
-      if (gate) gate.style.display = 'none';
-      const bar = document.getElementById('authStatusBar');
-      if (bar) bar.style.display = 'flex';
     }
 
-    function authSwitchTab(tab) {
-      const isLogin = tab === 'login';
-      document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
-      document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
-      // New design uses link-based tab switchers — no button style toggling needed
-      authClearMsg();
-    }
-
-    // Password show/hide toggle for the premium auth gate
-    function agTogglePw(inputId, btn) {
-      const inp = document.getElementById(inputId);
-      if (!inp) return;
-      const show = inp.type === 'password';
-      inp.type = show ? 'text' : 'password';
-      btn.textContent = show ? '🙈' : '👁';
-    }
-
-    function authShowMsg(msg, type = 'error') {
-      const el = document.getElementById('authMsg');
-      if (!el) return;
-      el.textContent = msg;
-      el.style.display = 'block';
-      el.style.background = type === 'error' ? 'var(--red-lt)' : 'var(--green-lt)';
-      el.style.color = type === 'error' ? 'var(--red)' : 'var(--green)';
-      el.style.border = `1.5px solid ${type === 'error' ? 'var(--red)' : 'var(--green)'}`;
-    }
-
-    function authClearMsg() {
-      const el = document.getElementById('authMsg');
-      if (el) el.style.display = 'none';
-    }
-
-    function authSetBtnLoading(btnId, loading, defaultText) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
-      btn.disabled = loading;
-      btn.textContent = loading ? '…' : defaultText;
-      btn.style.opacity = loading ? '0.7' : '1';
-      btn.style.cursor = loading ? 'not-allowed' : 'pointer';
-    }
+    // ── Stubs for legacy references (safe no-ops) ──
+    function authStoreSession() {}
+    function authClearSession() {}
+    function authUpdateStatusBar() {}
+    function authSetSyncStatus() {}
+    function authShowMsg() {}
+    function authClearMsg() {}
+    function authSwitchTab() {}
+    function agTogglePw() {}
+    function authSetBtnLoading() {}
+    function authDoLogin() {}
+    function authDoRegister() {}
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 3: REGISTER
-    // ══════════════════════════════════════════════════════════════════════
-
-    async function authDoRegister() {
-      const name = (document.getElementById('regName')?.value || '').trim();
-      const email = (document.getElementById('regEmail')?.value || '').trim();
-      const password = (document.getElementById('regPassword')?.value || '').trim();
-
-      if (!name) return authShowMsg('Please enter your name.');
-      if (!email) return authShowMsg('Please enter your email.');
-      if (!password) return authShowMsg('Please create a password.');
-      if (password.length < 6) return authShowMsg('Password must be at least 6 characters.');
-
-      authSetBtnLoading('registerBtn', true, 'Create Account →');
-      authClearMsg();
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.detail || 'Registration failed.');
-        }
-
-        // Success — store credentials and enter app
-        authStoreSession(data);
-        authShowMsg(`Welcome, ${data.name}! Account created.`, 'success');
-
-        // Short delay for the user to see success message
-        setTimeout(async () => {
-          authHideGate();
-          authUpdateStatusBar();
-          // New account — pull cloud data for consistency with login
-          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
-        }, 800);
-
-      } catch (err) {
-        authShowMsg(err.message || 'Something went wrong. Please try again.');
-      } finally {
-        authSetBtnLoading('registerBtn', false, 'Create Account →');
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 4: LOGIN
-    // ══════════════════════════════════════════════════════════════════════
-
-    async function authDoLogin() {
-      const email = (document.getElementById('loginEmail')?.value || '').trim();
-      const password = (document.getElementById('loginPassword')?.value || '').trim();
-
-      if (!email) return authShowMsg('Please enter your email.');
-      if (!password) return authShowMsg('Please enter your password.');
-
-      // Trigger ripple animation on button
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        loginBtn.classList.remove('ag-login-pulse');
-        void loginBtn.offsetWidth; // force reflow
-        loginBtn.classList.add('ag-login-pulse');
-      }
-
-      authSetBtnLoading('loginBtn', true, 'Sign In →');
-      authClearMsg();
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.detail || 'Login failed.');
-        }
-
-        authStoreSession(data);
-
-        // Show success overlay with animation
-        const overlay = document.getElementById('agLoginSuccessOverlay');
-        const successText = overlay?.querySelector('.ag-success-text');
-        if (successText) successText.textContent = `Welcome back, ${data.name}!`;
-        if (overlay) overlay.classList.add('active');
-
-        setTimeout(async () => {
-          // Fade out the success overlay
-          if (overlay) {
-            overlay.style.transition = 'opacity .4s ease';
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-              overlay.classList.remove('active');
-              overlay.style.opacity = '';
-              overlay.style.transition = '';
-            }, 400);
-          }
-          authHideGate();
-          authUpdateStatusBar();
-          authSetSyncStatus('Restoring library…');
-          // Always call via window so cloud_sync_v3.js override is used
-          // This pulls animations + courses + vault in the correct order
-          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
-          authSetSyncStatus('');
-        }, 1200);
-
-      } catch (err) {
-        authShowMsg(err.message || 'Something went wrong. Please try again.');
-        // Remove pulse class on error
-        if (loginBtn) loginBtn.classList.remove('ag-login-pulse');
-      } finally {
-        authSetBtnLoading('loginBtn', false, 'Sign In →');
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 5: LOGOUT
+    // SECTION 5: LOGOUT (resets in-memory state, stays in app)
     // ══════════════════════════════════════════════════════════════════════
 
     function authLogout() {
-      if (!confirm('Sign out of GenZet? Your library is safely synced to the cloud.')) return;
-      authClearSession();
-      // Invalidate the Supabase session so the JWT can't be reused
-      sb.auth.signOut().catch(e => console.warn('[AUTH] Supabase signOut error:', e.message));
-      // Reset in-memory state — cloud data is already persisted in Supabase
+      if (!confirm('Clear all local data? This cannot be undone.')) return;
       if (typeof animindLibrary !== 'undefined') animindLibrary = [];
       if (typeof engineeringCourses !== 'undefined') engineeringCourses = JSON.parse(JSON.stringify(DEFAULT_COURSES));
+      idbSet('genzet_ai_library', []).catch(() => {});
+      idbSet('genzet_engineering_courses', []).catch(() => {});
       if (typeof showFolders === 'function') showFolders();
       if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
-      authShowGate(); // sends the user back to the landing page
-      // Offer the real, current sign-in modal right away so logging back
-      // in is a single click rather than hunting for the button.
-      if (typeof openAuthModal === 'function') openAuthModal();
+      updateActiveCount();
+      updateStorageBadge();
+      notify('🗑️ Local data cleared');
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // SECTION 6: SESSION PERSISTENCE
-    // ══════════════════════════════════════════════════════════════════════
-
-    function authStoreSession(data) {
-      // Store the JWT and full user profile (including user_id) so
-      // authInit() can restore the session and sync cloud data on reload.
-      window.authToken = data.token;
-      window.authUser  = {
-        user_id: data.user_id || null,
-        email:   data.email   || '',
-        name:    data.name    || (data.email || '').split('@')[0] || 'Student',
-      };
-      localStorage.setItem(TOKEN_KEY, window.authToken);
-      localStorage.setItem(USER_KEY,  JSON.stringify(window.authUser));
-      // Clear any legacy local-session flags that might confuse authInit
-      localStorage.removeItem('genzet_local_session');
-      localStorage.removeItem('genzet_authenticated');
-    }
-
-    function authClearSession() {
-      window.authToken = null;
-      window.authUser  = null;
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem('genzet_local_session');
-      localStorage.removeItem('genzet_authenticated');
-    }
-
-    function authUpdateStatusBar() {
-      if (!authUser) return;
-      const nameEl = document.getElementById('authUserName');
-      if (nameEl) nameEl.textContent = authUser.name;
-    }
-
-    function authSetSyncStatus(msg) {
-      const el = document.getElementById('authSyncStatus');
-      if (el) el.textContent = msg;
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 7: CLOUD SYNC — PULL (on login / app load)
+    // SECTION 7: LOCAL DATA LOAD (replaces cloud pull)
     // ══════════════════════════════════════════════════════════════════════
 
     async function syncPullFromCloud() {
-      // ⚠️ FALLBACK ONLY — cloud_sync_v3.js overrides window.syncPullFromCloud
-      // This function is only used if override script fails to load.
-      // All call sites now use window.syncPullFromCloud() to pick up the override.
-      const authToken = window.authToken;
-      if (!authToken) return;
-
-      // Step 1: Pull animations (non-blocking)
-      try {
-        const res = await fetch(`${BACKEND_URL}/sync/animations`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const cloudAnims = data.animations || [];
-          if (cloudAnims.length > 0) {
-            const localAnims = typeof animindLibrary !== 'undefined' ? [...animindLibrary] : [];
-            const localById = Object.fromEntries(localAnims.map(a => [a.id, a]));
-            for (const cloudAnim of cloudAnims) { localById[cloudAnim.id] = cloudAnim; }
-            const merged = Object.values(localById).sort((a, b) =>
-              new Date(b.created_at || 0) - new Date(a.created_at || 0)
-            );
-            if (typeof animindLibrary !== 'undefined') animindLibrary = merged;
-            if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
-            if (typeof showFolders === 'function') showFolders();
-            if (typeof updateActiveCount === 'function') updateActiveCount();
-            console.log(`[SYNC-FALLBACK] Pulled ${cloudAnims.length} animations from cloud.`);
-          }
-        } else {
-          console.warn('[SYNC-FALLBACK] Animations pull non-ok:', res.status, '— continuing with courses');
-        }
-      } catch (err) {
-        console.warn('[SYNC-FALLBACK] Animations pull error:', err.message, '— continuing with courses');
-      }
-
-      // Step 2: Always pull courses — regardless of animations result
-      if (typeof window.syncPullCoursesFromCloud === 'function') {
-        await window.syncPullCoursesFromCloud();
-      }
+      // Auth-Free stub — data is already in IndexedDB from loadLibraryIDB()
+      // This is kept as a no-op so existing call sites don't break.
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 8: CLOUD SYNC — PUSH ONE (called after every save)
-    // ══════════════════════════════════════════════════════════════════════
-
-    async function syncPushToCloud(animation) {
-      const authToken = window.authToken;
-      if (!authToken || !animation) return;
-
-      authSetSyncStatus('Syncing…');
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/sync/animations`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            id: animation.id,
-            title: animation.title || 'Untitled',
-            prompt: animation.prompt || '',
-            explanation: animation.explanation || '',
-            animation_code: animation.animation_code || '',
-            playlist: animation.playlist || 'General',
-            created_at: animation.created_at || new Date().toISOString(),
-          }),
-        });
-
-        if (res.ok) {
-          authSetSyncStatus('☁ Synced');
-          setTimeout(() => authSetSyncStatus(''), 3000);
-          console.log(`[SYNC] ✅ Pushed anim_id=${animation.id}`);
-        } else {
-          const err = await res.json();
-          console.warn('[SYNC] Push failed:', err.detail);
-          authSetSyncStatus('⚠ Sync failed');
-          setTimeout(() => authSetSyncStatus(''), 5000);
-        }
-      } catch (err) {
-        console.warn('[SYNC] Push error:', err.message);
-        authSetSyncStatus('⚠ Offline');
-        setTimeout(() => authSetSyncStatus(''), 5000);
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 9: CLOUD SYNC — PUSH ALL (on new device / first login)
-    // ══════════════════════════════════════════════════════════════════════
-
-    async function syncPushAllToCloud() {
-      const authToken = window.authToken;
-      if (!authToken) return;
-      const anims = typeof animindLibrary !== 'undefined' ? animindLibrary : [];
-      if (anims.length === 0) return;
-
-      authSetSyncStatus(`Uploading ${anims.length} animations…`);
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/sync/animations/batch`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ animations: anims }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          authSetSyncStatus(`☁ ${data.synced} animations backed up`);
-          setTimeout(() => authSetSyncStatus(''), 4000);
-          console.log(`[SYNC] ✅ Batch: ${data.synced} synced, ${data.failed} failed`);
-        } else {
-          authSetSyncStatus('⚠ Batch sync failed');
-          setTimeout(() => authSetSyncStatus(''), 5000);
-        }
-      } catch (err) {
-        console.warn('[SYNC] Batch push error:', err.message);
-        authSetSyncStatus('⚠ Offline');
-        setTimeout(() => authSetSyncStatus(''), 5000);
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 10: SYNC DELETE (called when user deletes from library)
-    // ══════════════════════════════════════════════════════════════════════
-
-    async function syncDeleteFromCloud(animId) {
-      const authToken = window.authToken;
-      if (!authToken || !animId) return;
-      try {
-        await fetch(`${BACKEND_URL}/sync/animations/${encodeURIComponent(animId)}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authToken}` },
-        });
-        console.log(`[SYNC] 🗑 Deleted anim_id=${animId} from cloud.`);
-      } catch (err) {
-        console.warn('[SYNC] Delete error:', err.message);
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SECTION 11: Expose sync functions on window so cross-script-block calls work.
-    window.syncPushToCloud     = syncPushToCloud;
-    window.syncPushAllToCloud  = syncPushAllToCloud;
+    // Expose on window for any residual call sites
     window.syncPullFromCloud   = syncPullFromCloud;
-    window.syncDeleteFromCloud = syncDeleteFromCloud;
-
-    // ── Courses Sync (fallback if cloud_sync_v3.js fails to load) ──
-    // cloud_sync_v3.js overrides this with a debounced version.
-    // This inline version ensures courses are always saved to Supabase.
-    let _coursesSyncTimer = null;
-    async function syncCoursesToCloud() {
-      const authToken = window.authToken;
-      if (!authToken) return;
-      const currentLocal = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
-      const courses = currentLocal.map(s => {
-        if (!s) return null;
-        const safeCos = Array.isArray(s.cos) ? s.cos.map(co => ({
-          ...co,
-          topics: Array.isArray(co.topics) ? [...co.topics] : []
-        })) : [];
-        return {
-          ...s,
-          cos: safeCos,
-          syllabus: s.syllabus ? { ...s.syllabus, raw: '' } : null
-        };
-      }).filter(Boolean);
-      clearTimeout(_coursesSyncTimer);
-      _coursesSyncTimer = setTimeout(async () => {
-        try {
-          const res = await fetch(`${BACKEND_URL}/sync/courses`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({ courses }),
-          });
-          if (res.ok) {
-            console.log('[SYNC] ✅ Courses pushed to Supabase:', courses.length, 'subjects');
-            authSetSyncStatus('☁ Courses Synced');
-            setTimeout(() => authSetSyncStatus(''), 3000);
-          } else {
-            console.warn('[SYNC] Courses push failed:', res.status);
-          }
-        } catch (err) {
-          console.warn('[SYNC] Courses push error:', err.message);
-        }
-      }, 1500);
-    }
-    // Only set on window if cloud_sync_v3.js hasn't already set it
-    if (!window.syncCoursesToCloud) window.syncCoursesToCloud = syncCoursesToCloud;
-
-    // ── Courses Pull (fallback inline version) ────────────────────────────
-    async function syncPullCoursesFromCloud() {
-      const authToken = window.authToken;
-      if (!authToken) return;
-      try {
-        const res = await fetch(`${BACKEND_URL}/sync/courses`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        if (!res.ok) {
-          console.warn('[SYNC-FALLBACK] Courses pull non-ok:', res.status);
-          return;
-        }
-        const data = await res.json();
-        // Explicitly coerce null → [] (backend may return {courses:null} on old deploys)
-        const cloud = Array.isArray(data.courses) ? data.courses : [];
-        if (!cloud.length) {
-          console.log('[SYNC-FALLBACK] No courses found in cloud.');
-          return;
-        }
-        // Strip legacy pre-seeded IDs
-        const LEGACY = new Set(['ep','ec','em','ht','mc']);
-        const filtered = cloud.filter(s => !LEGACY.has(s.id));
-        if (!filtered.length) return;
-        if (typeof engineeringCourses !== 'undefined') engineeringCourses = filtered;
-        if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
-        if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
-        if (typeof showFolders === 'function') showFolders();
-        if (typeof updateActiveCount === 'function') updateActiveCount();
-        if (typeof updateStorageBadge === 'function') updateStorageBadge();
-        console.log('[SYNC-FALLBACK] ✅ Courses pulled from Supabase:', filtered.length, 'subjects');
-      } catch (err) {
-        console.warn('[SYNC-FALLBACK] Courses pull error:', err.message);
-      }
-    }
-    // Only set on window if cloud_sync_v3.js hasn't already set it
-    if (!window.syncPullCoursesFromCloud) window.syncPullCoursesFromCloud = syncPullCoursesFromCloud;
+    window.syncPushToCloud     = async () => {};
+    window.syncPushAllToCloud  = async () => {};
+    window.syncDeleteFromCloud = async () => {};
+    window.syncCoursesToCloud  = async () => {};
+    window.syncPullCoursesFromCloud = async () => {};
 
     // ══════════════════════════════════════════════════════════════════════
     // SECTION 12: BOOTSTRAP
@@ -11887,31 +10416,12 @@ ${text.substring(0, 4500)}`
 `;
     document.head.appendChild(_authStyle);
 
-    // Run auth check as soon as IndexedDB is actually ready — no more
-    // guessing with a fixed 300ms delay (that timeout was the main cause
-    // of the old login-screen flash on refresh: on a slow device/network
-    // 300ms wasn't always enough, and even when it was, it left a visible
-    // window where neither the pre-paint CSS guess nor the real auth
-    // state had been reconciled yet). The pre-paint <script> in <head>
-    // already shows the right shell instantly; this just confirms/
-    // corrects it as soon as we genuinely know the answer.
     document.addEventListener('DOMContentLoaded', async () => {
-      // __dbReadyPromise is now a resolved Promise (IDB removed, Supabase is the store).
-      // We still await it so the bootstrap order is deterministic.
-      await (window.__dbReadyPromise || Promise.resolve(null));
-      // Call via window.authInit so cloud_sync_v3.js can override it.
-      // cloud_sync_v3.js sets window.authInit = _authInit (the correct version).
-      // This ensures there is ONE single auth entry point — no race conditions.
+      // Auth-Free: initialize IndexedDB and load local data directly
       const initFn = window.authInit || authInit;
       await initFn();
-      window.__authInitDone = true;  // signal to override's safety-net: don't double-run
     });
   </script>
-
-  <!-- ✅ Auth + Cloud Sync override — must be the LAST script (overrides authInit, syncPush, etc.) -->
-  <script src="cloud_sync_v3.js"></script>
-</body>
-
 </div>
 </body>
 </html>
