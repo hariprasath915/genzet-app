@@ -9918,29 +9918,58 @@ function amShowSuccess() {
       if (subjIndex === -1) { notify('Subject not found!', 'error'); return; }
       const coIndex = engineeringCourses[subjIndex].cos.findIndex(c => c.id === saveCOSelectedCOId);
       if (coIndex === -1) { notify('CO not found!', 'error'); return; }
-      const newTopic = { id: 't_' + Date.now().toString(), name, animCode: currentAnimation.animation_code, explanation: currentAnimation.explanation || '', prompt: currentAnimation.prompt || '', created_at: new Date().toISOString() };
-      engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
 
-      // ✅ Push animation to /sync/animations so it appears in Library on all devices
+      // ✅ Use normalized POST /sync/topics — saves directly to course_topics table.
+      let cloudTopicId = null;
+      if (typeof window.syncCreateTopic === 'function') {
+        try {
+          const created = await window.syncCreateTopic(
+            saveCOSelectedCOId,
+            saveCOSelectedSubjectId,
+            name,
+            currentAnimation.animation_code || '',
+            currentAnimation.prompt || ''
+          );
+          if (created && created.id) cloudTopicId = created.id;
+        } catch (e) {
+          console.warn('[SYNC] syncCreateTopic error — falling back to legacy:', e.message);
+        }
+      }
+
+      // ✅ Push animation to /sync/items so it appears in Library on all devices
       if (typeof window.syncPushToCloud === 'function') {
         await window.syncPushToCloud({
-          id: newTopic.id,
+          id: cloudTopicId || ('t_' + Date.now()),
           title: name,
           prompt: currentAnimation.prompt || '',
           explanation: currentAnimation.explanation || '',
           animation_code: currentAnimation.animation_code || '',
           playlist: '__co_topic__',
-          created_at: newTopic.created_at
+          created_at: new Date().toISOString()
         });
       }
 
-      await saveECourses(); // ✅ Saves full courses tree (with animCode) to cloud
+      const newTopic = {
+        id:          cloudTopicId || ('t_' + Date.now().toString()),
+        name,
+        animCode:    currentAnimation.animation_code,
+        explanation: currentAnimation.explanation || '',
+        prompt:      currentAnimation.prompt || '',
+        type:        'animation',
+        created_at:  new Date().toISOString()
+      };
+      engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
+
+      // Only fall back to legacy blob if normalized save failed
+      if (!cloudTopicId) await saveECourses();
+
       const subjName = engineeringCourses[subjIndex].name;
       const coNum = engineeringCourses[subjIndex].cos[coIndex].coNum;
       closeSaveToCOModal();
       syncLibraryToFolders(); showFolders(); updateActiveCount(); updateStorageBadge();
       notify('✅ "' + name + '" saved in ' + subjName + ' › ' + coNum + '!');
     }
+
 
 
     // ═══════════════════════════════════════════════
