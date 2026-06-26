@@ -10812,12 +10812,28 @@ ${text.substring(0, 4500)}`
       btn.disabled = true;
       btn.textContent = '⏳ Saving…';
 
-      const newTopicId = 't_' + Date.now().toString();
+      // ✅ Use normalized POST /sync/topics — saves directly to course_topics table.
+      let cloudTopicId = null;
+      if (typeof window.syncCreateTopic === 'function') {
+        try {
+          const created = await window.syncCreateTopic(
+            currentCOId,
+            currentSubjectId,
+            name,
+            code,             // HTML code
+            '[HTML Upload]'   // Prompt
+          );
+          if (created && created.id) cloudTopicId = created.id;
+        } catch (e) {
+          console.warn('[SYNC] syncCreateTopic error — falling back to legacy:', e.message);
+        }
+      }
+
+      const newTopicId = cloudTopicId || ('t_' + Date.now().toString());
       const newTopic = {
         id: newTopicId,
         name,
-        animCode: code,  // ✅ FIX: Must store HTML here — this is what engineeringCourses saves to /sync/courses.
-                         //   If null, the HTML is lost on re-login because courses are restored from cloud snapshot.
+        animCode: code,  // ✅ FIX: Must store HTML here — this is what engineeringCourses saves.
         explanation: 'Uploaded HTML code',
         prompt: '[HTML Upload]',
         type: 'html_upload',
@@ -10838,11 +10854,12 @@ ${text.substring(0, 4500)}`
         await window.syncPushToCloud(topicAnim);
       }
       if (typeof animindLibrary !== 'undefined') {
-        animindLibrary.unshift(topicAnim);
+        // Only push to memory if not already there, but we just created it so it shouldn't be
+        if (!animindLibrary.find(a => a.id === newTopicId)) animindLibrary.unshift(topicAnim);
       }
 
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
-      await saveECourses();
+      if (!cloudTopicId) await saveECourses(); // Fall back to legacy if cloud topic create failed
 
       closeUploadHTMLModal();
       renderTopicList();
