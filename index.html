@@ -10039,7 +10039,17 @@ function amShowSuccess() {
     async function deleteSubject(id) {
       if (!confirm('Delete this subject and ALL its COs and topics?')) return;
       engineeringCourses = engineeringCourses.filter(s => s.id !== id);
-      await saveECourses(); renderSubjectsGrid();
+
+      // ✅ Use normalized DELETE /sync/subjects/{id} — no CORS-breaking PUT blob.
+      let deleted = false;
+      if (typeof window.syncDeleteSubject === 'function') {
+        try { deleted = await window.syncDeleteSubject(id); } catch (e) {
+          console.warn('[SYNC] syncDeleteSubject error:', e.message);
+        }
+      }
+      if (!deleted) await saveECourses();  // fallback
+
+      renderSubjectsGrid();
       syncLibraryToFolders(); showFolders(); updateActiveCount();
       notify('🗑️ Subject deleted');
       if (deleteSubjectMode) deleteSubjectMode = false;
@@ -10104,7 +10114,17 @@ function amShowSuccess() {
       if (!confirm('Delete this CO and all its topics?')) return;
       const s = engineeringCourses.find(x => x.id === currentSubjectId); if (!s) return;
       s.cos = s.cos.filter(c => c.id !== coId);
-      await saveECourses(); renderCOGrid(); syncLibraryToFolders(); showFolders(); updateActiveCount();
+
+      // ✅ Use normalized DELETE /sync/cos/{id} — no CORS-breaking PUT blob.
+      let deleted = false;
+      if (typeof window.syncDeleteCO === 'function') {
+        try { deleted = await window.syncDeleteCO(coId); } catch (e) {
+          console.warn('[SYNC] syncDeleteCO error:', e.message);
+        }
+      }
+      if (!deleted) await saveECourses();  // fallback
+
+      renderCOGrid(); syncLibraryToFolders(); showFolders(); updateActiveCount();
       notify('🗑️ CO deleted');
       if (deleteCOMode) deleteCOMode = false;
     }
@@ -10208,10 +10228,21 @@ function amShowSuccess() {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId); if (!co) return;
       co.topics = co.topics.filter(t => t.id !== topicId);
-      if (typeof window.syncDeleteFromCloud === 'function') {
-        await window.syncDeleteFromCloud(topicId);
+
+      // ✅ Use normalized DELETE /sync/topics/{id} first; fall back to item delete.
+      let deleted = false;
+      if (typeof window.syncDeleteTopic === 'function') {
+        try { deleted = await window.syncDeleteTopic(topicId); } catch (e) {
+          console.warn('[SYNC] syncDeleteTopic error:', e.message);
+        }
       }
-      await saveECourses(); renderTopicList();
+      // Also remove from generated_items (library)
+      if (typeof window.syncDeleteFromCloud === 'function') {
+        try { await window.syncDeleteFromCloud(topicId); } catch (_) {}
+      }
+      if (!deleted) await saveECourses();  // fallback
+
+      renderTopicList();
       syncLibraryToFolders(); showFolders(); updateActiveCount();
       notify('🗑️ Topic deleted');
     }
@@ -10446,9 +10477,32 @@ ${text.substring(0, 4500)}`
       const name = document.getElementById('newSubjectName').value.trim();
       if (!name) { notify('Enter a subject name!', 'error'); return; }
       const code = document.getElementById('newSubjectCode').value.trim();
-      const newSubj = { id: 's_' + Date.now(), name, code, icon: selectedNewIcon, color: selectedNewColor, cos: [], syllabus: null };
+
+      // ✅ Use normalized POST /sync/subjects so data goes to cloud DB correctly.
+      // Falls back to legacy blob approach if the v3 sync function is unavailable.
+      let cloudId = null;
+      if (typeof window.syncCreateSubject === 'function') {
+        try {
+          const desc = code ? 'Code: ' + code : '';
+          const created = await window.syncCreateSubject(name, desc);
+          if (created && created.id) cloudId = created.id;
+        } catch (e) {
+          console.warn('[SYNC] syncCreateSubject error — falling back to legacy:', e.message);
+        }
+      }
+
+      // Use the cloud UUID if we got one; otherwise generate a local temp id.
+      const newSubj = {
+        id: cloudId || ('s_' + Date.now()),
+        name, code, icon: selectedNewIcon, color: selectedNewColor,
+        cos: [], syllabus: null
+      };
       engineeringCourses.push(newSubj);
-      await saveECourses(); renderSubjectsGrid(); closeCreateSubjectModal();
+
+      // Only fall back to legacy blob save if normalized save failed or was skipped.
+      if (!cloudId) await saveECourses();
+
+      renderSubjectsGrid(); closeCreateSubjectModal();
       notify('✅ "' + name + '" created!');
     }
 
@@ -10469,7 +10523,22 @@ ${text.substring(0, 4500)}`
       if (!name) { notify('Enter a subject name!', 'error'); return; }
       const s = engineeringCourses.find(x => x.id === modifySubjectId); if (!s) return;
       s.name = name; s.code = document.getElementById('modSubjectCode').value.trim();
-      await saveECourses(); renderSubjectsGrid(); closeModifyModal();
+
+      // ✅ Use normalized PUT /sync/subjects/{id} — no CORS-breaking PUT blob.
+      let updated = false;
+      if (typeof window.syncUpdateSubject === 'function') {
+        try {
+          updated = await window.syncUpdateSubject(s.id, {
+            name: s.name,
+            description: s.code ? 'Code: ' + s.code : ''
+          });
+        } catch (e) {
+          console.warn('[SYNC] syncUpdateSubject error:', e.message);
+        }
+      }
+      if (!updated) await saveECourses();  // fallback
+
+      renderSubjectsGrid(); closeModifyModal();
       modifyMode = false; syncLibraryToFolders(); showFolders();
       notify('✅ Subject updated!');
     }
@@ -10497,9 +10566,32 @@ ${text.substring(0, 4500)}`
       if (!selectedCONum) { notify('Select a CO number!', 'error'); return; }
       if (!name) { notify('Enter CO name!', 'error'); return; }
       const s = engineeringCourses.find(x => x.id === currentSubjectId); if (!s) return;
-      s.cos.push({ id: 'co_' + Date.now(), coNum: selectedCONum, name, topics: [] });
+
+      // ✅ Use normalized POST /sync/cos so CO goes directly to cloud DB.
+      // Falls back to legacy blob approach if the v3 sync function is unavailable.
+      let cloudCoId = null;
+      if (typeof window.syncCreateCO === 'function') {
+        try {
+          const created = await window.syncCreateCO(s.id, selectedCONum, name);
+          if (created && created.id) cloudCoId = created.id;
+        } catch (e) {
+          console.warn('[SYNC] syncCreateCO error — falling back to legacy:', e.message);
+        }
+      }
+
+      s.cos.push({
+        id: cloudCoId || ('co_' + Date.now()),
+        coNum: selectedCONum,
+        description: name,
+        name,
+        topics: []
+      });
       s.cos.sort((a, b) => parseInt(a.coNum.replace('CO', '')) - parseInt(b.coNum.replace('CO', '')));
-      await saveECourses(); renderCOGrid(); closeCreateCOModal();
+
+      // Only fall back to legacy blob save if normalized save failed or was skipped.
+      if (!cloudCoId) await saveECourses();
+
+      renderCOGrid(); closeCreateCOModal();
       notify('✅ ' + selectedCONum + ' "' + name + '" created!');
     }
 
