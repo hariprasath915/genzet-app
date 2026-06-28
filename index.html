@@ -8370,17 +8370,24 @@ function navigateToAuth() { openAuthModal(); }
 .lpam-divider::before,.lpam-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
 .lpam-divider span{font-size:.72rem;color:rgba(240,244,255,.4);font-family:var(--font-mono);letter-spacing:.08em;white-space:nowrap}
 
-/* ─── SOCIAL ─── */
-.lpam-social{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+/* ── SOCIAL BUTTONS ── */
+.lpam-social{display:grid;grid-template-columns:1fr;gap:.65rem}
 .lpam-social-btn{
-  display:flex;align-items:center;justify-content:center;gap:.55rem;
+  display:flex;align-items:center;justify-content:center;gap:.6rem;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
-  color:var(--white);padding:10px 14px;border-radius:10px;
-  font-family:var(--font-body);font-size:.85rem;font-weight:500;cursor:pointer;
-  transition:border-color .2s,background .2s;
+  color:var(--white);padding:11px 14px;border-radius:10px;
+  font-family:var(--font-body);font-size:.88rem;font-weight:500;cursor:pointer;
+  transition:border-color .2s,background .2s,transform .15s;
+  width:100%;
 }
-.lpam-social-btn:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.08)}
-.lpam-social-icon{width:17px;height:17px;flex-shrink:0}
+.lpam-social-btn:hover:not(:disabled){border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.08);transform:translateY(-1px)}
+.lpam-social-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.lpam-social-btn.google-btn:hover:not(:disabled){border-color:rgba(66,133,244,.4);background:rgba(66,133,244,.06)}
+.lpam-social-icon{width:18px;height:18px;flex-shrink:0}
+.lpam-social-btn-txt{transition:opacity .2s}
+.lpam-social-btn.loading .lpam-social-btn-txt{opacity:0}
+.lpam-google-spin{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:amSpin .7s linear infinite}
+.lpam-social-btn.loading .lpam-google-spin{display:block}
 
 /* ─── ERROR BANNER ─── */
 .lpam-err-banner{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:rgba(255,140,140,.95);padding:9px 13px;border-radius:9px;font-size:.8rem;display:none;margin-bottom:.4rem;line-height:1.5}
@@ -8396,7 +8403,6 @@ function navigateToAuth() { openAuthModal(); }
 /* ─── RESPONSIVE ─── */
 @media(max-width:500px){
   .lpam-card{padding:28px 20px 24px;border-radius:18px}
-  .lpam-social{grid-template-columns:1fr}
 }
 </style>
 
@@ -8441,13 +8447,10 @@ function navigateToAuth() { openAuthModal(); }
       </button>
       <div class="lpam-divider"><span>or continue with</span></div>
       <div class="lpam-social">
-        <button class="lpam-social-btn" onclick="amSocial('Google')">
+        <button class="lpam-social-btn google-btn" id="amGoogleBtnLogin" onclick="amGoogleLogin(this)">
           <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          Google
-        </button>
-        <button class="lpam-social-btn" onclick="amSocial('GitHub')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          GitHub
+          <span class="lpam-social-btn-txt">Continue with Google</span>
+          <div class="lpam-google-spin"></div>
         </button>
       </div>
     </div>
@@ -8490,13 +8493,10 @@ function navigateToAuth() { openAuthModal(); }
       </button>
       <div class="lpam-divider"><span>or continue with</span></div>
       <div class="lpam-social">
-        <button class="lpam-social-btn" onclick="amSocial('Google')">
+        <button class="lpam-social-btn google-btn" id="amGoogleBtnSignup" onclick="amGoogleLogin(this)">
           <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          Google
-        </button>
-        <button class="lpam-social-btn" onclick="amSocial('GitHub')">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          GitHub
+          <span class="lpam-social-btn-txt">Continue with Google</span>
+          <div class="lpam-google-spin"></div>
         </button>
       </div>
     </div>
@@ -8592,6 +8592,35 @@ function amSetLoading(btnId, on) {
   b.disabled = on; b.classList.toggle('loading', on);
 }
 
+// ── Google OAuth Login ────────────────────────────────────────────────────────────────────────
+// Triggered by onclick="amGoogleLogin(this)" on the Google button in both tabs.
+// Delegates to window.authGoogleLogin (set by cloud_sync_v3.js) which handles
+// the popup flow, token exchange, session storage, and dashboard transition.
+async function amGoogleLogin(btn) {
+  amClearErrors();
+  amHideErr();
+
+  if (typeof window.authGoogleLogin !== 'function') {
+    amShowErr('Google sign-in is initializing… Please try again in a moment.');
+    return;
+  }
+
+  // Show loading state on the clicked button
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('loading');
+  }
+
+  try {
+    await window.authGoogleLogin();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+}
+
 // ── LOGIN ────────────────────────────────────────────────────────
 // ── Simple hash (not cryptographic, but hides plain text in storage) ──
 function amHash(str) {
@@ -8604,7 +8633,6 @@ function amHash(str) {
   return 'gz_' + Math.abs(hash).toString(36);
 }
 
-// ── Get all registered accounts (LEGACY - removed) ────────────────
 // ── LOGIN ─────────────────────────────────────────────────────────
 async function amHandleLogin() {
   amClearErrors(); amHideErr();
@@ -8714,9 +8742,10 @@ async function amHandleSignup() {
 // ── After signup (LEGACY - no longer used) ────────────────────────
 function amShowSignupSuccess(email) {}
 
-// ── Social / Forgot (UI-only) ────────────────────────────────────
-function amSocial(p)  { amShowErr(`${p} login is not yet connected. Use email/password.`); }
-function amForgot(e)  { e.preventDefault(); amShowErr('Password reset is not yet available.'); }
+// ── Social / Forgot stubs ─────────────────────────────────────────
+// amSocial() is only called for non-Google providers (currently unused).
+function amSocial(p)  { amShowErr(p + ' sign-in is not available yet. Use Google or email/password.'); }
+function amForgot(e)  { e.preventDefault(); amShowErr('Use Google sign-in, or contact support to reset your password.'); }
 
 // ── Login success → go to dashboard ──────────────────────────────
 function amShowSuccess() {
@@ -8953,19 +8982,55 @@ function amShowSuccess() {
           <div class="theme-knob" id="themeKnob">☀️</div>
         </div>
       </label>
-      <!-- User info (shown when logged in) -->
-      <div id="topbarUserPill" style="display:none;align-items:center;gap:8px;padding:5px 12px;
-           background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0;"></div>
-        <span id="authUserName" style="font-weight:600;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <span id="authSyncStatus" style="color:var(--text3);font-size:11px;"></span>
-        <button onclick="authLogout()" title="Sign out"
-          style="padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;"
-          onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
-          onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
-          Sign out
+      <!-- User info pill + Logout (shown when logged in) -->
+      <div id="topbarUserPill" style="display:none;align-items:center;gap:8px;">
+
+        <!-- User avatar + name chip -->
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
+             background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
+          <!-- Avatar circle with user initial -->
+          <div id="authUserAvatar" style="width:28px;height:28px;border-radius:50%;
+               background:linear-gradient(135deg,#6B4FFF,#00D4FF);
+               display:flex;align-items:center;justify-content:center;
+               font-size:12px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0;">
+            U
+          </div>
+          <div style="display:flex;flex-direction:column;line-height:1.2;">
+            <span id="authUserName" style="font-weight:600;color:var(--text);max-width:110px;
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;"></span>
+            <span id="authSyncStatus" style="color:var(--text3);font-size:10px;"></span>
+          </div>
+          <!-- Green online dot -->
+          <div style="width:7px;height:7px;border-radius:50%;background:#10b981;
+               box-shadow:0 0 6px #10b981;flex-shrink:0;margin-left:2px;"></div>
+        </div>
+
+        <!-- Sign Out button — prominent, always visible in top-right -->
+        <button id="gzLogoutBtn" onclick="gzHandleLogout()" title="Sign out of Genzet"
+          style="display:flex;align-items:center;gap:6px;
+                 padding:7px 14px;
+                 border:1.5px solid var(--border);
+                 border-radius:24px;
+                 background:var(--bg2);
+                 color:var(--text2);
+                 cursor:pointer;
+                 font-size:12px;
+                 font-weight:600;
+                 font-family:'Sora','Inter',sans-serif;
+                 letter-spacing:.01em;
+                 transition:all .2s ease;
+                 white-space:nowrap;"
+          onmouseover="this.style.background='#FEF2F2';this.style.borderColor='#EF4444';this.style.color='#EF4444';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(239,68,68,.18)'"
+          onmouseout="this.style.background='var(--bg2)';this.style.borderColor='var(--border)';this.style.color='var(--text2)';this.style.transform='';this.style.boxShadow=''">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
         </button>
       </div>
+
     </div>
   </div>
 
@@ -12867,8 +12932,33 @@ ${text.substring(0, 4500)}`
 
     function authUpdateStatusBar() {
       if (!authUser) return;
+      // Set user name
       const nameEl = document.getElementById('authUserName');
       if (nameEl) nameEl.textContent = authUser.name;
+      // Set avatar initial (first letter of name or email)
+      const avatarEl = document.getElementById('authUserAvatar');
+      if (avatarEl) {
+        const initial = (authUser.name || authUser.email || 'U').charAt(0).toUpperCase();
+        avatarEl.textContent = initial;
+      }
+    }
+
+    // ── Logout handler — called by the Sign Out button in the topbar ──────
+    function gzHandleLogout() {
+      // Use window.authLogout from cloud_sync_v3.js if available (handles sync cleanup)
+      if (typeof window.authLogout === 'function') {
+        window.authLogout();
+        return;
+      }
+      // Fallback: manual logout
+      if (!confirm('Sign out of Genzet? Your library is safely synced to the cloud.')) return;
+      authClearSession();
+      if (typeof animindLibrary !== 'undefined') animindLibrary = [];
+      if (typeof engineeringCourses !== 'undefined') engineeringCourses = JSON.parse(JSON.stringify(DEFAULT_COURSES));
+      if (typeof showFolders === 'function') showFolders();
+      if (typeof renderSubjectsGrid === 'function') renderSubjectsGrid();
+      authShowGate();
+      if (typeof openAuthModal === 'function') openAuthModal();
     }
 
     function authSetSyncStatus(msg) {
