@@ -6,217 +6,204 @@
   <title>Signing in — Genzet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
-      height: 100%;
-      background: #050B18;
-      color: #F0F4FF;
+      height: 100%; background: #050B18; color: #F0F4FF;
       font-family: 'Inter', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
-
     body::before {
-      content: '';
-      position: fixed;
-      top: -20%; left: -10%;
+      content: ''; position: fixed; top: -20%; left: -10%;
       width: 55%; height: 55%;
       background: radial-gradient(circle, rgba(107,79,255,.22) 0%, transparent 65%);
       pointer-events: none;
     }
     body::after {
-      content: '';
-      position: fixed;
-      bottom: -10%; right: -5%;
+      content: ''; position: fixed; bottom: -10%; right: -5%;
       width: 50%; height: 50%;
       background: radial-gradient(circle, rgba(0,212,255,.13) 0%, transparent 65%);
       pointer-events: none;
     }
-
     .card {
-      background: rgba(13, 27, 53, 0.93);
-      border: 1px solid rgba(255,255,255,.11);
-      border-radius: 24px;
-      padding: 48px 44px;
-      max-width: 360px;
-      width: 90%;
-      text-align: center;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      background: rgba(13,27,53,.93); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 24px; padding: 48px 44px; max-width: 360px; width: 90%;
+      text-align: center; backdrop-filter: blur(24px);
       box-shadow: 0 32px 80px rgba(0,0,0,.55);
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
       animation: popIn .3s cubic-bezier(.34,1.56,.64,1) forwards;
     }
     @keyframes popIn {
       from { opacity:0; transform:translateY(16px) scale(.96); }
       to   { opacity:1; transform:translateY(0) scale(1); }
     }
-
     .brand {
-      font-weight: 800;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #6B4FFF 0%, #00D4FF 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 2rem;
-      letter-spacing: -.02em;
+      font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em;
+      background: linear-gradient(135deg,#6B4FFF 0%,#00D4FF 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 2rem;
     }
-
     .icon-wrap {
-      width: 64px; height: 64px;
-      border-radius: 50%;
+      width: 68px; height: 68px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 1.5rem;
-      transition: all .3s;
-    }
-    .icon-wrap.loading {
       background: linear-gradient(135deg,rgba(107,79,255,.15),rgba(0,212,255,.08));
       border: 1px solid rgba(107,79,255,.3);
     }
-    .icon-wrap.success {
-      background: linear-gradient(135deg,rgba(16,185,129,.15),rgba(0,212,255,.1));
-      border: 1px solid rgba(16,185,129,.35);
-    }
-    .icon-wrap.error {
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.3);
-    }
-
+    .icon-wrap.success { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); }
+    .icon-wrap.error   { background: rgba(239,68,68,.1);   border-color: rgba(239,68,68,.3); }
     .spinner {
       width: 28px; height: 28px;
-      border: 3px solid rgba(255,255,255,.12);
-      border-top-color: #6B4FFF;
-      border-right-color: #00D4FF;
-      border-radius: 50%;
-      animation: spin .75s linear infinite;
+      border: 3px solid rgba(255,255,255,.1);
+      border-top-color: #6B4FFF; border-right-color: #00D4FF;
+      border-radius: 50%; animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .icon-txt { font-size: 1.5rem; display: none; }
-
-    #title { font-size: 1.1rem; font-weight: 600; margin-bottom: .45rem; }
-    #msg   { font-size: .8rem; color: rgba(240,244,255,.55); line-height: 1.65; }
-
-    .card.error  #title { color: rgba(255,140,140,.9); }
+    .icon-char { font-size: 1.6rem; display: none; }
+    #title { font-size: 1.05rem; font-weight: 600; margin-bottom: .45rem; }
+    #msg   { font-size: .8rem; color: rgba(240,244,255,.5); line-height: 1.65; }
+    .card.error #title { color: rgba(255,140,140,.9); }
+    .retry-btn {
+      margin-top: 1.4rem;
+      padding: 9px 22px;
+      border: 1.5px solid rgba(107,79,255,.5);
+      border-radius: 20px;
+      background: transparent;
+      color: #a78bfa;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all .2s;
+      display: none;
+    }
+    .retry-btn:hover { background: rgba(107,79,255,.15); border-color: #6B4FFF; }
   </style>
 </head>
 <body>
   <div class="card" id="card">
     <div class="brand">Genzet</div>
-    <div class="icon-wrap loading" id="iconWrap">
+    <div class="icon-wrap" id="iconWrap">
       <div class="spinner" id="spinner"></div>
-      <span class="icon-txt" id="iconTxt"></span>
+      <span class="icon-char" id="iconChar"></span>
     </div>
-    <div id="title">Completing sign-in…</div>
+    <div id="title">Signing you in…</div>
     <div id="msg">Verifying your Google account</div>
+    <button class="retry-btn" id="retryBtn" onclick="window.location.href='/'">Go back</button>
   </div>
 
   <script>
-    /* ─── Genzet OAuth Callback Handler ───────────────────────────────────
-       Works with both flow types:
-         Implicit flow  → Supabase redirects to  #access_token=...&refresh_token=...
-         PKCE flow      → Supabase redirects to  ?code=...  (fallback — signals opener)
-
-       Sends GENZET_OAUTH_SUCCESS or GENZET_OAUTH_ERROR to window.opener then
-       closes itself.
+    /* ─── Genzet OAuth Callback ────────────────────────────────────────────
+       Full-page redirect flow (like Claude.ai / Gemini):
+       1. Google → Supabase → this page with  #access_token=...
+       2. We call backend  POST /auth/google/callback  to exchange the token
+          and upsert the user row in Supabase (saves email + user_id)
+       3. Store JWT in localStorage → redirect to main app → dashboard loads
     ─────────────────────────────────────────────────────────────────────── */
-    (function () {
-      var card     = document.getElementById('card');
-      var iconWrap = document.getElementById('iconWrap');
-      var spinner  = document.getElementById('spinner');
-      var iconTxt  = document.getElementById('iconTxt');
-      var titleEl  = document.getElementById('title');
-      var msgEl    = document.getElementById('msg');
 
-      function showSuccess(msg) {
-        iconWrap.className = 'icon-wrap success';
-        spinner.style.display = 'none';
-        iconTxt.textContent = '✓';
-        iconTxt.style.display = 'block';
-        titleEl.textContent = 'Signed in!';
-        msgEl.textContent = msg || 'Returning to Genzet…';
-      }
+    var BACKEND = 'https://animind-backend-production.up.railway.app';
 
-      function showError(msg) {
-        card.classList.add('error');
-        iconWrap.className = 'icon-wrap error';
-        spinner.style.display = 'none';
-        iconTxt.textContent = '✕';
-        iconTxt.style.display = 'block';
-        titleEl.textContent = 'Sign-in failed';
-        msgEl.textContent = msg || 'Close this window and try again.';
-      }
+    var iconWrap = document.getElementById('iconWrap');
+    var spinner  = document.getElementById('spinner');
+    var iconChar = document.getElementById('iconChar');
+    var titleEl  = document.getElementById('title');
+    var msgEl    = document.getElementById('msg');
+    var retryBtn = document.getElementById('retryBtn');
+    var card     = document.getElementById('card');
 
-      function send(data) {
-        if (window.opener && !window.opener.closed) {
-          try { window.opener.postMessage(data, '*'); } catch(e) {}
-        }
-      }
+    function showSuccess(name) {
+      iconWrap.className = 'icon-wrap success';
+      spinner.style.display = 'none';
+      iconChar.textContent = '✓'; iconChar.style.display = 'block';
+      titleEl.textContent = 'Welcome, ' + (name || 'there') + '!';
+      msgEl.textContent = 'Taking you to your dashboard…';
+    }
 
-      // ── Parse URL ──────────────────────────────────────────────────────
-      var hash    = window.location.hash.replace(/^#/, '');
-      var hashP   = new URLSearchParams(hash);
-      var qp      = new URLSearchParams(window.location.search);
+    function showError(msg) {
+      card.classList.add('error');
+      iconWrap.className = 'icon-wrap error';
+      spinner.style.display = 'none';
+      iconChar.textContent = '✕'; iconChar.style.display = 'block';
+      titleEl.textContent = 'Sign-in failed';
+      msgEl.textContent = msg || 'Something went wrong. Please try again.';
+      retryBtn.style.display = 'inline-block';
+    }
+
+    (async function () {
+      // ── 1. Parse URL hash and query ─────────────────────────────────────
+      var hashP  = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      var qp     = new URLSearchParams(window.location.search);
 
       var accessToken  = hashP.get('access_token');
       var refreshToken = hashP.get('refresh_token') || '';
       var pkceCode     = qp.get('code');
-      var errorKey     = hashP.get('error') || qp.get('error');
-      var errorDesc    = (hashP.get('error_description') || qp.get('error_description') || errorKey || '')
+      var error        = hashP.get('error') || qp.get('error');
+      var errorDesc    = (hashP.get('error_description') || qp.get('error_description') || error || '')
                           .replace(/\+/g, ' ');
 
-      // ── No opener ──────────────────────────────────────────────────────
-      if (!window.opener || window.opener.closed) {
-        showError('This page must be opened by Genzet. Close this window and try signing in again.');
+      // ── 2. Handle errors ─────────────────────────────────────────────────
+      if (error) {
+        showError(errorDesc || 'Google sign-in was cancelled or denied.');
         return;
       }
 
-      // ── Error from Google / Supabase ───────────────────────────────────
-      if (errorKey) {
-        var errMsg = errorDesc || 'Google sign-in was cancelled or denied.';
-        send({ type: 'GENZET_OAUTH_ERROR', error: errMsg });
-        showError(errMsg);
-        setTimeout(function() { window.close(); }, 2200);
+      // ── 3. No token at all ───────────────────────────────────────────────
+      if (!accessToken && !pkceCode) {
+        showError('No authentication token received. Please try again.');
         return;
       }
 
-      // ── ✅ IMPLICIT FLOW: #access_token=...  (primary path) ────────────
-      if (accessToken) {
-        send({
-          type:          'GENZET_OAUTH_SUCCESS',
-          access_token:  accessToken,
-          refresh_token: refreshToken,
-          is_pkce_code:  false,
+      // ── 4. Exchange token with backend ───────────────────────────────────
+      msgEl.textContent = 'Saving your account…';
+      try {
+        var endpoint, body;
+
+        if (accessToken) {
+          // ✅ Implicit flow — we have the real access token
+          endpoint = BACKEND + '/auth/google/callback';
+          body = JSON.stringify({ access_token: accessToken, refresh_token: refreshToken });
+        } else {
+          // Fallback: PKCE code
+          endpoint = BACKEND + '/auth/google/exchange-code';
+          body = JSON.stringify({ code: pkceCode });
+        }
+
+        var res  = await fetch(endpoint, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    body,
         });
-        showSuccess('Returning to Genzet…');
-        setTimeout(function() { window.close(); }, 700);
-        return;
-      }
 
-      // ── PKCE FLOW: ?code=...  (fallback if implicit is overridden) ─────
-      if (pkceCode) {
-        send({
-          type:         'GENZET_OAUTH_SUCCESS',
-          access_token:  pkceCode,
-          refresh_token: '',
-          is_pkce_code:  true,
-        });
-        showSuccess('Finalising sign-in…');
-        setTimeout(function() { window.close(); }, 800);
-        return;
-      }
+        var data = await res.json().catch(function () { return {}; });
 
-      // ── No token received ──────────────────────────────────────────────
-      send({ type: 'GENZET_OAUTH_ERROR', error: 'No auth token received. Please try again.' });
-      showError('No auth token received. Close this window and try again.');
-      setTimeout(function() { window.close(); }, 2500);
+        if (!res.ok) {
+          throw new Error(data.detail || 'Authentication failed (HTTP ' + res.status + ')');
+        }
+
+        // ── 5. Save session to localStorage ─────────────────────────────
+        //   Same keys that cloud_sync_v3.js reads on init
+        localStorage.setItem('genzet_jwt', data.token);
+        localStorage.setItem('genzet_user', JSON.stringify({
+          user_id: data.user_id,
+          email:   data.email,
+          name:    data.name,
+        }));
+        // Remove legacy flags so _authInit doesn't get confused
+        localStorage.removeItem('genzet_authenticated');
+        localStorage.removeItem('genzet_local_session');
+
+        // ── 6. Show success, then redirect to app ────────────────────────
+        showSuccess(data.name || data.email);
+        setTimeout(function () {
+          // Redirect to root — _authInit() will read localStorage and enter dashboard
+          window.location.href = '/';
+        }, 900);
+
+      } catch (err) {
+        console.error('[GENZET_OAUTH] Exchange error:', err);
+        showError(err.message || 'Could not complete sign-in. Please try again.');
+      }
     })();
   </script>
 </body>
