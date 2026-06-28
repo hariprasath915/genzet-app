@@ -6,26 +6,15 @@
   <title>Signing in — Genzet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --navy:       #050B18;
-      --violet:     #6B4FFF;
-      --cyan:       #00D4FF;
-      --white:      #F0F4FF;
-      --white-dim:  rgba(240, 244, 255, 0.6);
-      --gradient:   linear-gradient(135deg, #6B4FFF 0%, #00D4FF 100%);
-      --font-body:  'Inter', sans-serif;
-      --font-mono:  'DM Mono', monospace;
-    }
-
     html, body {
       height: 100%;
-      background: var(--navy);
-      color: var(--white);
-      font-family: var(--font-body);
+      background: #050B18;
+      color: #F0F4FF;
+      font-family: 'Inter', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -37,47 +26,42 @@
       position: fixed;
       top: -20%; left: -10%;
       width: 55%; height: 55%;
-      background: radial-gradient(circle, rgba(107, 79, 255, .25) 0%, transparent 65%);
+      background: radial-gradient(circle, rgba(107,79,255,.22) 0%, transparent 65%);
       pointer-events: none;
-      animation: drift1 10s ease-in-out infinite;
     }
     body::after {
       content: '';
       position: fixed;
       bottom: -10%; right: -5%;
       width: 50%; height: 50%;
-      background: radial-gradient(circle, rgba(0, 212, 255, .15) 0%, transparent 65%);
+      background: radial-gradient(circle, rgba(0,212,255,.13) 0%, transparent 65%);
       pointer-events: none;
-      animation: drift2 13s ease-in-out infinite;
     }
-    @keyframes drift1 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(30px, -20px); } }
-    @keyframes drift2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-20px, 15px); } }
 
     .card {
-      background: rgba(13, 27, 53, 0.92);
-      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(13, 27, 53, 0.93);
+      border: 1px solid rgba(255,255,255,.11);
       border-radius: 24px;
       padding: 48px 44px;
-      max-width: 380px;
+      max-width: 360px;
       width: 90%;
       text-align: center;
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      box-shadow: 0 32px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(107, 79, 255, .1);
+      box-shadow: 0 32px 80px rgba(0,0,0,.55);
       position: relative;
       z-index: 1;
-      animation: popIn .35s cubic-bezier(.34, 1.56, .64, 1) forwards;
+      animation: popIn .3s cubic-bezier(.34,1.56,.64,1) forwards;
     }
     @keyframes popIn {
-      from { opacity: 0; transform: translateY(20px) scale(.96); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity:0; transform:translateY(16px) scale(.96); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
     }
 
     .brand {
-      font-family: 'Inter', sans-serif;
       font-weight: 800;
       font-size: 1.5rem;
-      background: var(--gradient);
+      background: linear-gradient(135deg, #6B4FFF 0%, #00D4FF 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -85,144 +69,154 @@
       letter-spacing: -.02em;
     }
 
-    .spinner-wrap {
+    .icon-wrap {
       width: 64px; height: 64px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(107,79,255,.2), rgba(0,212,255,.1));
-      border: 1px solid rgba(107, 79, 255, .3);
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 1.5rem;
+      transition: all .3s;
     }
+    .icon-wrap.loading {
+      background: linear-gradient(135deg,rgba(107,79,255,.15),rgba(0,212,255,.08));
+      border: 1px solid rgba(107,79,255,.3);
+    }
+    .icon-wrap.success {
+      background: linear-gradient(135deg,rgba(16,185,129,.15),rgba(0,212,255,.1));
+      border: 1px solid rgba(16,185,129,.35);
+    }
+    .icon-wrap.error {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+    }
+
     .spinner {
       width: 28px; height: 28px;
-      border: 3px solid rgba(255,255,255,.15);
-      border-top-color: var(--violet);
-      border-right-color: var(--cyan);
+      border: 3px solid rgba(255,255,255,.12);
+      border-top-color: #6B4FFF;
+      border-right-color: #00D4FF;
       border-radius: 50%;
-      animation: spin .8s linear infinite;
+      animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #status-title { font-size: 1.1rem; font-weight: 600; margin-bottom: .5rem; }
-    #status-msg   { font-size: .82rem; color: var(--white-dim); font-family: var(--font-mono); letter-spacing: .03em; line-height: 1.6; }
+    .icon-txt { font-size: 1.5rem; display: none; }
 
-    .card.error .spinner-wrap { background: rgba(255,80,80,.1); border-color: rgba(255,80,80,.3); }
-    .card.error .spinner       { display: none; }
-    .err-icon                  { display: none; font-size: 1.4rem; }
-    .card.error .err-icon      { display: block; }
-    .card.error #status-title  { color: rgba(255,140,140,.95); }
+    #title { font-size: 1.1rem; font-weight: 600; margin-bottom: .45rem; }
+    #msg   { font-size: .8rem; color: rgba(240,244,255,.55); line-height: 1.65; }
 
-    .card.success .spinner-wrap { background: linear-gradient(135deg, rgba(0,212,255,.15), rgba(16,185,129,.15)); border-color: rgba(16,185,129,.3); }
-    .card.success .spinner      { display: none; }
-    .ok-icon                    { display: none; font-size: 1.4rem; }
-    .card.success .ok-icon      { display: block; }
+    .card.error  #title { color: rgba(255,140,140,.9); }
   </style>
 </head>
 <body>
   <div class="card" id="card">
     <div class="brand">Genzet</div>
-    <div class="spinner-wrap">
-      <div class="spinner"></div>
-      <span class="err-icon">✕</span>
-      <span class="ok-icon">✓</span>
+    <div class="icon-wrap loading" id="iconWrap">
+      <div class="spinner" id="spinner"></div>
+      <span class="icon-txt" id="iconTxt"></span>
     </div>
-    <div id="status-title">Completing sign-in…</div>
-    <div id="status-msg">Verifying your Google account</div>
+    <div id="title">Completing sign-in…</div>
+    <div id="msg">Verifying your Google account</div>
   </div>
 
   <script>
-    /* ─── OAuth Callback Handler ───────────────────────────────────────────
-       Handles BOTH Supabase flow types:
-       • Implicit flow  →  #access_token=...&refresh_token=... in URL hash
-       • PKCE flow      →  ?code=... in URL query string
+    /* ─── Genzet OAuth Callback Handler ───────────────────────────────────
+       Works with both flow types:
+         Implicit flow  → Supabase redirects to  #access_token=...&refresh_token=...
+         PKCE flow      → Supabase redirects to  ?code=...  (fallback — signals opener)
 
-       Sends GENZET_OAUTH_SUCCESS or GENZET_OAUTH_ERROR to window.opener
-       via postMessage, then closes itself.
-    ──────────────────────────────────────────────────────────────────────── */
+       Sends GENZET_OAUTH_SUCCESS or GENZET_OAUTH_ERROR to window.opener then
+       closes itself.
+    ─────────────────────────────────────────────────────────────────────── */
     (function () {
-      var card      = document.getElementById('card');
-      var titleEl   = document.getElementById('status-title');
-      var msgEl     = document.getElementById('status-msg');
+      var card     = document.getElementById('card');
+      var iconWrap = document.getElementById('iconWrap');
+      var spinner  = document.getElementById('spinner');
+      var iconTxt  = document.getElementById('iconTxt');
+      var titleEl  = document.getElementById('title');
+      var msgEl    = document.getElementById('msg');
 
-      function setError(msg) {
-        card.classList.add('error');
-        titleEl.textContent = 'Sign-in failed';
-        msgEl.textContent   = msg || 'Something went wrong. Close this window and try again.';
-      }
-
-      function setSuccess(msg) {
-        card.classList.add('success');
+      function showSuccess(msg) {
+        iconWrap.className = 'icon-wrap success';
+        spinner.style.display = 'none';
+        iconTxt.textContent = '✓';
+        iconTxt.style.display = 'block';
         titleEl.textContent = 'Signed in!';
-        msgEl.textContent   = msg || 'Returning to Genzet…';
+        msgEl.textContent = msg || 'Returning to Genzet…';
       }
 
-      function postToOpener(data) {
-        if (window.opener) {
-          window.opener.postMessage(data, window.opener.location ? window.opener.location.origin : '*');
+      function showError(msg) {
+        card.classList.add('error');
+        iconWrap.className = 'icon-wrap error';
+        spinner.style.display = 'none';
+        iconTxt.textContent = '✕';
+        iconTxt.style.display = 'block';
+        titleEl.textContent = 'Sign-in failed';
+        msgEl.textContent = msg || 'Close this window and try again.';
+      }
+
+      function send(data) {
+        if (window.opener && !window.opener.closed) {
+          try { window.opener.postMessage(data, '*'); } catch(e) {}
         }
       }
 
-      // ── Parse URL parts ──────────────────────────────────────────────────
-      var hash   = window.location.hash.substring(1);
-      var hashP  = new URLSearchParams(hash);
-      var qp     = new URLSearchParams(window.location.search);
+      // ── Parse URL ──────────────────────────────────────────────────────
+      var hash    = window.location.hash.replace(/^#/, '');
+      var hashP   = new URLSearchParams(hash);
+      var qp      = new URLSearchParams(window.location.search);
 
       var accessToken  = hashP.get('access_token');
       var refreshToken = hashP.get('refresh_token') || '';
       var pkceCode     = qp.get('code');
-      var error        = hashP.get('error') || qp.get('error');
-      var errorDesc    = (hashP.get('error_description') || qp.get('error_description') || error || '').replace(/\+/g, ' ');
+      var errorKey     = hashP.get('error') || qp.get('error');
+      var errorDesc    = (hashP.get('error_description') || qp.get('error_description') || errorKey || '')
+                          .replace(/\+/g, ' ');
 
-      // ── No opener: page was opened directly ──────────────────────────────
-      if (!window.opener) {
-        // If there's a code or token in the URL, the flow worked on Supabase's
-        // end but the popup lost its opener (e.g., hard-refreshed). 
-        // Just tell the user to try again.
-        setError('Sign-in window lost connection. Please close this and try again from Genzet.');
+      // ── No opener ──────────────────────────────────────────────────────
+      if (!window.opener || window.opener.closed) {
+        showError('This page must be opened by Genzet. Close this window and try signing in again.');
         return;
       }
 
-      // ── Error from Supabase / Google ──────────────────────────────────────
-      if (error) {
-        postToOpener({ type: 'GENZET_OAUTH_ERROR', error: errorDesc || 'Google sign-in was cancelled.' });
-        setError(errorDesc || 'Google sign-in was cancelled.');
-        setTimeout(function () { window.close(); }, 2000);
+      // ── Error from Google / Supabase ───────────────────────────────────
+      if (errorKey) {
+        var errMsg = errorDesc || 'Google sign-in was cancelled or denied.';
+        send({ type: 'GENZET_OAUTH_ERROR', error: errMsg });
+        showError(errMsg);
+        setTimeout(function() { window.close(); }, 2200);
         return;
       }
 
-      // ── IMPLICIT FLOW: #access_token=... ──────────────────────────────────
+      // ── ✅ IMPLICIT FLOW: #access_token=...  (primary path) ────────────
       if (accessToken) {
-        setSuccess();
-        postToOpener({
+        send({
           type:          'GENZET_OAUTH_SUCCESS',
           access_token:  accessToken,
           refresh_token: refreshToken,
+          is_pkce_code:  false,
         });
-        setTimeout(function () { window.close(); }, 600);
+        showSuccess('Returning to Genzet…');
+        setTimeout(function() { window.close(); }, 700);
         return;
       }
 
-      // ── PKCE FLOW: ?code=... ──────────────────────────────────────────────
-      // Supabase uses PKCE by default. The code must be sent to our backend
-      // which will exchange it via the Supabase admin client.
+      // ── PKCE FLOW: ?code=...  (fallback if implicit is overridden) ─────
       if (pkceCode) {
-        msgEl.textContent = 'Exchanging auth code…';
-        postToOpener({
-          type: 'GENZET_OAUTH_SUCCESS',
-          // Send code instead of tokens — _handleGoogleCallback will detect this
+        send({
+          type:         'GENZET_OAUTH_SUCCESS',
           access_token:  pkceCode,
           refresh_token: '',
           is_pkce_code:  true,
         });
-        setSuccess('Finalising sign-in…');
-        setTimeout(function () { window.close(); }, 800);
+        showSuccess('Finalising sign-in…');
+        setTimeout(function() { window.close(); }, 800);
         return;
       }
 
-      // ── No token and no code ──────────────────────────────────────────────
-      postToOpener({ type: 'GENZET_OAUTH_ERROR', error: 'No auth token received. Please try again.' });
-      setError('No auth token received. Please close this window and try again.');
-      setTimeout(function () { window.close(); }, 2500);
+      // ── No token received ──────────────────────────────────────────────
+      send({ type: 'GENZET_OAUTH_ERROR', error: 'No auth token received. Please try again.' });
+      showError('No auth token received. Close this window and try again.');
+      setTimeout(function() { window.close(); }, 2500);
     })();
   </script>
 </body>
