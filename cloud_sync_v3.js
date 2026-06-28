@@ -564,6 +564,10 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
       if (!data.url) throw new Error('No OAuth URL returned');
+      if (!data.verifier) throw new Error('No PKCE verifier returned');
+
+      // ✅ Save the PKCE verifier so the callback page can use it
+      localStorage.setItem('oauth_verifier', data.verifier);
 
       // ✅ Full-page redirect — no popup, no postMessage, no CORS issues
       window.location.href = data.url;
