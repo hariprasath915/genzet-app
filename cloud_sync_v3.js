@@ -547,15 +547,37 @@
    */
   async function _googleLogin() {
     // Determine the OAuth callback page URL.
-    // When served from file:// the origin is 'null', so fall back to the
-    // deployed Vercel URL where oauth_callback.html lives.
+    // When served from file:// the origin is 'null', fall back to deployed URL.
     var origin = window.location.origin;
-    if (!origin || origin === 'null' || origin === 'null') {
+    if (!origin || origin === 'null') {
       origin = 'https://genzet-app.vercel.app';
     }
     var callbackUrl = origin + '/oauth_callback.html';
 
-    // Step 1: Ask backend for the Supabase-generated Google OAuth URL
+    // ── Step 1: Open the popup NOW, synchronously, while still inside the ──
+    // user-gesture call stack.  Chrome blocks window.open() called after any
+    // await.  We open to 'about:blank' first, then navigate once we have the URL.
+    var popW = 500, popH = 620;
+    var popL = Math.max(0, Math.floor((screen.width  - popW) / 2));
+    var popT = Math.max(0, Math.floor((screen.height - popH) / 2));
+    var popup = window.open(
+      'about:blank',
+      'genzet_google_oauth',
+      'width=' + popW + ',height=' + popH +
+      ',left=' + popL + ',top=' + popT +
+      ',scrollbars=yes,resizable=yes'
+      // NOTE: do NOT use 'noreferrer' or 'noopener' — those set window.opener
+      // to null inside the popup, breaking the postMessage flow.
+    );
+
+    if (!popup || popup.closed) {
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr('Popup was blocked. Please allow pop-ups for this site and try again.');
+      }
+      return;
+    }
+
+    // ── Step 2: Fetch the OAuth URL from the backend ──────────────────────
     var oauthUrl;
     try {
       var urlRes = await fetch(
@@ -567,34 +589,17 @@
       if (!oauthUrl) throw new Error('No OAuth URL returned');
     } catch (err) {
       console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
+      popup.close();
       if (typeof window.amShowErr === 'function') {
         window.amShowErr('Google sign-in unavailable right now. Please try email/password.');
       }
       return;
     }
 
-    // Step 2: Open a centered popup with the OAuth URL
-    var popW = 500, popH = 620;
-    var popL = Math.max(0, Math.floor((screen.width  - popW) / 2));
-    var popT = Math.max(0, Math.floor((screen.height - popH) / 2));
-    var popup = window.open(
-      oauthUrl,
-      'genzet_google_oauth',
-      'width=' + popW + ',height=' + popH +
-      ',left=' + popL + ',top=' + popT +
-      ',scrollbars=yes,resizable=yes,noreferrer'
-    );
+    // ── Step 3: Navigate the already-open popup to the OAuth URL ──────────
+    popup.location.href = oauthUrl;
 
-    if (!popup || popup.closed) {
-      if (typeof window.amShowErr === 'function') {
-        window.amShowErr(
-          'Popup was blocked. Allow pop-ups for this site and try again.'
-        );
-      }
-      return;
-    }
-
-    // Step 3: Wait for postMessage from oauth_callback.html
+    // ── Step 4: Wait for postMessage from oauth_callback.html ─────────────
     await new Promise(function (resolve) {
       var done = false;
 
@@ -607,7 +612,6 @@
       }
 
       async function onMessage(evt) {
-        // Only accept messages that look like ours
         if (!evt.data || typeof evt.data.type !== 'string') return;
         if (!evt.data.type.startsWith('GENZET_OAUTH_')) return;
 
@@ -615,7 +619,8 @@
           finish();
           await _handleGoogleCallback(
             evt.data.access_token,
-            evt.data.refresh_token || ''
+            evt.data.refresh_token || '',
+            evt.data.is_pkce_code || false
           );
         } else if (evt.data.type === 'GENZET_OAUTH_ERROR') {
           finish();
@@ -628,7 +633,7 @@
 
       window.addEventListener('message', onMessage);
 
-      // Also resolve if the user closes the popup without completing
+      // Resolve if user closes popup without completing
       var pollTimer = setInterval(function () {
         if (popup.closed) finish();
       }, 500);
@@ -636,20 +641,33 @@
   }
 
   /**
-   * _handleGoogleCallback(accessToken, refreshToken)
-   * POSTs tokens to /auth/google/callback, upserts the profile in Supabase,
-   * stores the session, and enters the dashboard.
+   * _handleGoogleCallback(accessToken, refreshToken, isPkceCode)
+   * Routes to the correct backend endpoint based on flow type:
+   *   • Implicit flow:  POST /auth/google/callback  { access_token, refresh_token }
+   *   • PKCE flow:      POST /auth/google/exchange-code  { code }
    */
-  async function _handleGoogleCallback(accessToken, refreshToken) {
+  async function _handleGoogleCallback(accessToken, refreshToken, isPkceCode) {
     _setSyncStatus('Completing Google sign-in…');
     try {
-      var res = await fetch(BACKEND + '/auth/google/callback', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
+      var endpoint, body;
+
+      if (isPkceCode) {
+        // PKCE flow — accessToken is actually the auth code
+        endpoint = BACKEND + '/auth/google/exchange-code';
+        body = JSON.stringify({ code: accessToken });
+      } else {
+        // Implicit flow — we have real tokens
+        endpoint = BACKEND + '/auth/google/callback';
+        body = JSON.stringify({
           access_token:  accessToken,
           refresh_token: refreshToken || '',
-        }),
+        });
+      }
+
+      var res = await fetch(endpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    body,
       });
 
       var data = await res.json().catch(function () { return {}; });
