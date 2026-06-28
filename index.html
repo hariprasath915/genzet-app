@@ -379,7 +379,12 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       --glass-blur: 20px;
     }
 
-    [data-theme="dark"] {
+    [data-theme="dark"] html,
+    [data-theme="dark"] body {
+      background: #060a16;
+    }
+
+    [data-theme="dark"] #gz-dashboard {
       --bg: #060a16;
       --bg2: #0a1020;
       --bg3: #0f1729;
@@ -1506,6 +1511,189 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
       100% {
         transform: rotate(360deg);
+      }
+    }
+
+    .am-loading-orb {
+      position: relative;
+      width: 96px;
+      height: 96px;
+    }
+
+    .am-orb-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+
+    .am-orb-ring.r1 {
+      border-top-color: var(--teal);
+      border-right-color: var(--teal);
+      animation: orbSpin 1.7s linear infinite;
+      opacity: .9;
+    }
+
+    .am-orb-ring.r2 {
+      inset: 13px;
+      border-top-color: var(--blue);
+      border-left-color: var(--blue);
+      animation: orbSpin 1.3s linear infinite reverse;
+      opacity: .7;
+    }
+
+    .am-orb-ring.r3 {
+      inset: 26px;
+      border-bottom-color: var(--indigo);
+      border-right-color: var(--indigo);
+      animation: orbSpin 2.1s linear infinite;
+      opacity: .55;
+    }
+
+    @keyframes orbSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .am-orb-core {
+      position: absolute;
+      inset: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 28px rgba(13, 148, 136, .45), 0 4px 14px rgba(0, 0, 0, .15);
+      animation: orbPulse 1.6s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes orbPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .am-orb-particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      margin: -3px;
+    }
+
+    .am-orb-particle.p1 {
+      background: var(--blue);
+      box-shadow: 0 0 8px var(--blue);
+      animation: orbit1 2.4s linear infinite;
+    }
+
+    .am-orb-particle.p2 {
+      background: var(--teal);
+      box-shadow: 0 0 8px var(--teal);
+      animation: orbit2 3s linear infinite;
+    }
+
+    .am-orb-particle.p3 {
+      background: var(--indigo);
+      box-shadow: 0 0 8px var(--indigo);
+      animation: orbit3 2s linear infinite;
+    }
+
+    @keyframes orbit1 {
+      from {
+        transform: rotate(0deg) translateX(48px) rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg) translateX(48px) rotate(-360deg);
+      }
+    }
+
+    @keyframes orbit2 {
+      from {
+        transform: rotate(120deg) translateX(48px) rotate(-120deg);
+      }
+
+      to {
+        transform: rotate(480deg) translateX(48px) rotate(-480deg);
+      }
+    }
+
+    @keyframes orbit3 {
+      from {
+        transform: rotate(240deg) translateX(48px) rotate(-240deg);
+      }
+
+      to {
+        transform: rotate(600deg) translateX(48px) rotate(-600deg);
+      }
+    }
+
+    .am-loading-steps {
+      display: flex;
+      gap: 9px;
+    }
+
+    .am-step {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      font-size: 13px;
+      opacity: .35;
+      transform: scale(.82);
+      transition: all .35s var(--spring);
+    }
+
+    .am-step.active {
+      opacity: 1;
+      transform: scale(1.18);
+      border-color: var(--teal);
+      background: var(--blue-lt);
+      box-shadow: 0 4px 14px rgba(13, 148, 136, .28);
+    }
+
+    .am-step.done {
+      opacity: .8;
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .am-load-msg {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      min-height: 20px;
+    }
+
+    .am-load-msg.fade {
+      animation: msgFade .4s ease;
+    }
+
+    @keyframes msgFade {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
@@ -4606,7 +4794,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-right: 1px solid #E5E7EB;
       display: flex;
       flex-direction: column;
-      padding: 0;
+      padding: 8px 0 0;
       overflow: hidden;
       position: relative;
       box-shadow: 2px 0 12px rgba(0, 0, 0, .04);
@@ -5029,12 +5217,14 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     /* Enhanced progress bar */
     .am-progress-bar {
-      width: 200px;
-      height: 5px;
+      width: 220px;
+      height: 8px;
       background: var(--border);
-      border-radius: 5px;
+      border-radius: 8px;
       overflow: hidden;
-      margin-top: 6px;
+      margin-top: 8px;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .08);
     }
 
     .am-progress-fill {
@@ -5042,9 +5232,30 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       width: 0;
       background: linear-gradient(90deg, var(--teal), var(--blue), var(--indigo));
       background-size: 300% 100%;
-      border-radius: 5px;
-      transition: width .3s ease;
+      border-radius: 8px;
+      transition: width .4s ease;
       animation: progressShimmer 2s ease infinite;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(13, 148, 136, .5);
+    }
+
+    .am-progress-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent);
+      animation: progressSweep 1.3s linear infinite;
+    }
+
+    @keyframes progressSweep {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
     }
 
     @keyframes progressShimmer {
@@ -5683,6 +5894,529 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
         transform: scale(1.04);
       }
     }
+
+    /* ══════════════════════════════════════
+       SIMULATION PANEL
+    ══════════════════════════════════════ */
+
+    .sim-wrap {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--topbar-h) - 48px);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .sim-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 28px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #f0fdf9 0%, #eff6ff 50%, #fdf4ff 100%);
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .sim-header {
+      background: linear-gradient(135deg, rgba(13,148,136,.08), rgba(99,102,241,.06));
+    }
+
+    .sim-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .sim-header-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 18px rgba(13,148,136,.30);
+      flex-shrink: 0;
+    }
+
+    .sim-header-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.3px;
+      margin-bottom: 3px;
+    }
+
+    .sim-header-sub {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+
+    .sim-header-badge {
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 10px rgba(13,148,136,.25);
+    }
+
+    /* Mode tabs */
+    .sim-mode-tabs {
+      display: flex;
+      gap: 0;
+      padding: 14px 28px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .sim-mode-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      color: var(--text3);
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+
+    .sim-mode-tab:hover {
+      color: var(--text);
+      background: var(--blue-lt);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .sim-mode-tab.active {
+      color: #0d9488;
+      border-bottom-color: #0d9488;
+      font-weight: 700;
+    }
+
+    .sim-tab-icon {
+      font-size: 15px;
+    }
+
+    /* Main content split */
+    .sim-content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* Left sidebar */
+    .sim-sidebar {
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 18px 16px;
+      gap: 14px;
+    }
+
+    .sim-input-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .sim-input-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sim-input-label-dot {
+      width: 3px;
+      height: 12px;
+      border-radius: 3px;
+      background: linear-gradient(to bottom, #0d9488, #6366f1);
+      flex-shrink: 0;
+    }
+
+    .sim-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 11px 13px;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      font-family: 'Sora', sans-serif;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .sim-textarea:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13,148,136,.10);
+    }
+
+    .sim-input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .sim-char-count {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .sim-gen-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      background-size: 300% 300%;
+      border: none;
+      border-radius: 11px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      box-shadow: 0 3px 14px rgba(13,148,136,.35);
+      transition: all .25s var(--spring);
+      animation: gradientShift 4s ease infinite;
+    }
+
+    .sim-gen-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(13,148,136,.45);
+    }
+
+    .sim-gen-btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    .sim-gen-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      animation: none;
+    }
+
+    .sim-error {
+      display: none;
+      margin-top: 8px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      background: var(--red-lt);
+      color: var(--red);
+      border: 1px solid #fca5a5;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Examples */
+    .sim-examples {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 14px 10px;
+    }
+
+    .sim-examples-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+
+    .sim-example-btn {
+      width: 100%;
+      text-align: left;
+      padding: 9px 12px;
+      margin-bottom: 6px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .22s var(--spring);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sim-example-btn:hover {
+      border-color: #0d9488;
+      color: #0d9488;
+      background: #f0fdf9;
+      transform: translateX(4px);
+    }
+
+    .sim-example-btn .sim-ex-arrow {
+      color: #0d9488;
+      transition: transform .2s;
+    }
+
+    .sim-example-btn:hover .sim-ex-arrow {
+      transform: translateX(3px);
+    }
+
+    /* Save section */
+    .sim-save-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-save-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      border: 2px solid var(--blue-md);
+      background: var(--blue-lt);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+
+    .sim-save-btn:hover {
+      background: var(--blue-md);
+      transform: translateY(-1px);
+    }
+
+    .sim-dl-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 9px;
+      border: 2px solid var(--border2);
+      background: var(--bg);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+
+    .sim-dl-btn:hover {
+      border-color: #0d9488;
+      color: #0d9488;
+      background: #f0fdf9;
+    }
+
+    /* Right preview */
+    .sim-preview {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .sim-preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sim-preview-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .sim-preview-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sim-act-btn {
+      padding: 7px 14px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+
+    .sim-act-btn:hover {
+      border-color: #0d9488;
+      color: #0d9488;
+      background: #f0fdf9;
+    }
+
+    .sim-preview-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Empty state */
+    .sim-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .sim-empty-icon {
+      font-size: 52px;
+      line-height: 1;
+      animation: gentleFloat 3s ease-in-out infinite;
+      filter: grayscale(.3);
+    }
+
+    .sim-empty-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sim-empty-sub {
+      font-size: 12.5px;
+      color: var(--text3);
+    }
+
+    /* Loading */
+    .sim-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 14px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .sim-spin-wrap {
+      position: relative;
+      width: 72px;
+      height: 72px;
+    }
+
+    .sim-spinner {
+      position: absolute;
+      inset: 0;
+      border: 3px solid rgba(13,148,136,.15);
+      border-top-color: #0d9488;
+      border-radius: 50%;
+      animation: simSpin 1s linear infinite;
+    }
+
+    @keyframes simSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .sim-spin-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+
+    .sim-load-msg {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0d9488;
+    }
+
+    .sim-load-sub {
+      font-size: 11.5px;
+      color: var(--text3);
+    }
+
+    .sim-progress-bar {
+      width: 220px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .sim-progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0d9488, #6366f1);
+      border-radius: 5px;
+      transition: width .3s ease;
+    }
+
+    /* iframe */
+    .sim-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sim-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .sim-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 340px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .sim-header { padding: 14px 16px; }
+      .sim-header-title { font-size: 16px; }
+      .sim-header-badge { display: none; }
+      .sim-mode-tabs { padding: 10px 12px 0; }
+      .sim-mode-tab { padding: 8px 12px; font-size: 12px; }
+    }
+
+    /* ══ END SIMULATION PANEL ══ */
 
     /* ══ HOMEPAGE SPLIT LAYOUT ══ */
     .hp-split {
@@ -8184,25 +8918,8 @@ function amShowSuccess() {
     <div class="ag-success-text">Welcome back!</div>
   </div>
 
-  <!-- ── Auth Status Bar (top-right corner, shown when logged in) ────── -->
-  <div id="authStatusBar" style="display:none; position:fixed; top:12px; right:16px;
-     z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px;
-     background:var(--surface); border:1.5px solid var(--border);
-     border-radius:40px; box-shadow:var(--shadow); font-size:13px;">
-    <div style="width:8px; height:8px; border-radius:50%; background:var(--green);
-              box-shadow:0 0 6px var(--green);"></div>
-    <span id="authUserName" style="font-weight:600; color:var(--text); max-width:140px;
-        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Teacher</span>
-    <span id="authSyncStatus" style="color:var(--text3); font-size:11px;"></span>
-    <button onclick="authLogout()" title="Sign out" style="padding:4px 10px; border:1.5px solid var(--border); border-radius:20px;
-           background:transparent; color:var(--text2); cursor:pointer; font-size:12px;
-           font-weight:600; transition:all .2s;"
-      onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)'"
-      onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text2)'">
-      Sign out
-    </button>
-
-  </div>
+  <!-- Auth Status Bar: now hidden (user info moved into topbar) -->
+  <div id="authStatusBar" style="display:none;"></div>
 
 
   <!-- ═══ END AUTH OVERLAY ═══ -->
@@ -8236,6 +8953,19 @@ function amShowSuccess() {
           <div class="theme-knob" id="themeKnob">☀️</div>
         </div>
       </label>
+      <!-- User info (shown when logged in) -->
+      <div id="topbarUserPill" style="display:none;align-items:center;gap:8px;padding:5px 12px;
+           background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0;"></div>
+        <span id="authUserName" style="font-weight:600;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <span id="authSyncStatus" style="color:var(--text3);font-size:11px;"></span>
+        <button onclick="authLogout()" title="Sign out"
+          style="padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;"
+          onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+          Sign out
+        </button>
+      </div>
     </div>
   </div>
 
@@ -8262,10 +8992,6 @@ function amShowSuccess() {
 
     <!-- PREMIUM LEFT NAVIGATION SIDEBAR -->
     <nav class="nav-sidebar">
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">&#127891;</div>
-        <span class="sidebar-brand-name">Gen<em>Zet</em></span>
-      </div>
       <div class="sidebar-nav-label">Navigation</div>
       <div class="sidebar-nav">
         <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('animind')">
@@ -8289,6 +9015,11 @@ function amShowSuccess() {
         <button class="sidebar-nav-item" id="sideVault" onclick="switchMode('vault')">
           <div class="nav-icon">&#127909;</div>
           <span class="nav-item-text">VideoVault</span>
+        </button>
+        <button class="sidebar-nav-item" id="sideSimulation" onclick="switchMode('simulation')">
+          <div class="nav-icon">&#9881;&#65039;</div>
+          <span class="nav-item-text">Simulation</span>
+          <span class="nav-item-tag">New</span>
         </button>
       </div>
       <div class="sidebar-footer">
@@ -8499,13 +9230,23 @@ function amShowSuccess() {
                       <p style="font-size:12px;">Enter a topic and click Generate</p>
                     </div>
                     <div class="am-loading" id="amLoading">
-                      <div style="position:relative;width:72px;height:72px;">
-                        <div class="am-spin" style="position:absolute;inset:0;"></div>
-                        <div
-                          style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;">
-                          🎬</div>
+                      <div class="am-loading-orb">
+                        <div class="am-orb-ring r1"></div>
+                        <div class="am-orb-ring r2"></div>
+                        <div class="am-orb-ring r3"></div>
+                        <div class="am-orb-particle p1"></div>
+                        <div class="am-orb-particle p2"></div>
+                        <div class="am-orb-particle p3"></div>
+                        <div class="am-orb-core">🎬</div>
                       </div>
-                      <p id="amLoadMsg">🧠 Analyzing topic…</p>
+                      <div class="am-loading-steps" id="amLoadingSteps">
+                        <div class="am-step" data-step="0">🧠</div>
+                        <div class="am-step" data-step="1">🎨</div>
+                        <div class="am-step" data-step="2">⚡</div>
+                        <div class="am-step" data-step="3">🔬</div>
+                        <div class="am-step" data-step="4">✨</div>
+                      </div>
+                      <p id="amLoadMsg" class="am-load-msg">🧠 Analyzing topic…</p>
                       <small style="color:var(--text3);font-size:11px;">Genzet is building a high-accuracy
                         animation</small>
                       <div class="am-progress-bar">
@@ -8661,6 +9402,115 @@ function amShowSuccess() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- SIMULATION PANEL -->
+            <div class="panel" id="simulationPanel">
+              <div class="animind-wrap">
+
+                <!-- LEFT: Controls (sidebar) -->
+                <div class="animind-sidebar">
+
+                  <!-- Header -->
+                  <div class="am-sid-header" style="background:linear-gradient(135deg,#f0fdf9,#eff6ff);">
+                    <h3>⚙️ Simulation Studio</h3>
+                    <p>Generate interactive physics, chemistry, math &amp; biology simulations</p>
+                  </div>
+
+                  <!-- Mode tabs -->
+                  <div class="sim-mode-tabs" style="padding:10px 14px 0;border-bottom:1px solid var(--border);background:var(--bg);">
+                    <button class="sim-mode-tab active" data-sim-mode="physics" onclick="simSetMode('physics')">
+                      <span class="sim-tab-icon">🔭</span> Physics
+                    </button>
+                    <button class="sim-mode-tab" data-sim-mode="chemistry" onclick="simSetMode('chemistry')">
+                      <span class="sim-tab-icon">⚗️</span> Chemistry
+                    </button>
+<button class="sim-mode-tab" data-sim-mode="biology" onclick="simSetMode('biology')">
+                      <span class="sim-tab-icon">🧬</span> Biology
+                    </button>
+                  </div>
+
+                  <div class="sim-sidebar-inner" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:14px;gap:14px;">
+
+                    <div class="sim-input-card">
+                      <div class="sim-input-label">
+                        <span class="sim-input-label-dot"></span>
+                        Describe your simulation
+                      </div>
+                      <textarea
+                        class="sim-textarea"
+                        id="simPrompt"
+                        rows="5"
+                        maxlength="600"
+                        placeholder="e.g. Projectile motion with adjustable angle and initial velocity…"
+                        oninput="document.getElementById('simCharCount').textContent=this.value.length+'/600'"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();generateSimulation();}"></textarea>
+                      <div class="sim-input-footer">
+                        <span class="sim-char-count" id="simCharCount">0/600</span>
+                        <button class="sim-gen-btn" id="simGenBtn" onclick="generateSimulation()">
+                          <span id="simBtnIcon">⚡</span>
+                          <span id="simBtnText">Generate</span>
+                        </button>
+                      </div>
+                      <div class="sim-error" id="simError"></div>
+                    </div>
+
+                    <!-- Example prompts -->
+                    <div class="sim-examples">
+                      <div class="sim-examples-label">Quick examples</div>
+                      <div class="sim-example-list" id="simExampleList">
+                        <!-- Filled by JS based on active tab -->
+                      </div>
+                    </div>
+
+                    <!-- Save / Download (shown after generation) -->
+                    <div class="sim-save-section" id="simSaveSection" style="display:none;">
+                      <button class="sim-save-btn" onclick="saveSimulation()">📚 Save to Library</button>
+                      <button class="sim-dl-btn" onclick="downloadSimulation()">⬇️ Download HTML</button>
+                    </div>
+
+                  </div><!-- end sim-sidebar-inner -->
+                </div><!-- end animind-sidebar -->
+
+                <!-- RIGHT: Preview -->
+                <div class="animind-preview" style="display:flex;flex-direction:column;">
+                  <div class="sim-preview-header">
+                    <span class="sim-preview-title" id="simPreviewTitle">Simulation Preview</span>
+                    <div class="sim-preview-actions">
+                      <button class="sim-act-btn" onclick="simRestart()">↺ Restart</button>
+                      <button class="sim-act-btn" onclick="simFullscreen()">⛶ Fullscreen</button>
+                    </div>
+                  </div>
+                  <div class="sim-preview-body" id="simPreviewBody" style="flex:1;">
+                    <!-- Empty state -->
+                    <div class="sim-empty" id="simEmpty">
+                      <div class="sim-empty-icon">⚙️</div>
+                      <p class="sim-empty-title">Your simulation appears here</p>
+                      <p class="sim-empty-sub">Describe a concept and click Generate</p>
+                    </div>
+                    <!-- Loading -->
+                    <div class="sim-loading" id="simLoading" style="display:none;">
+                      <div class="sim-spin-wrap">
+                        <div class="sim-spinner"></div>
+                        <span class="sim-spin-icon">⚙️</span>
+                      </div>
+                      <p class="sim-load-msg" id="simLoadMsg">Building your simulation…</p>
+                      <small class="sim-load-sub">This usually takes 10–20 seconds</small>
+                      <div class="sim-progress-bar">
+                        <div class="sim-progress-fill" id="simProgFill"></div>
+                      </div>
+                    </div>
+                    <!-- Result iframe -->
+                    <iframe
+                      id="simIframe"
+                      class="sim-iframe"
+                      sandbox="allow-scripts"
+                      title="Simulation"
+                      style="display:none;"></iframe>
+                  </div>
+                </div><!-- end animind-preview -->
+
+              </div><!-- end animind-wrap -->
             </div>
 
             <!-- VIDEO VAULT PANEL -->
@@ -9403,19 +10253,257 @@ function amShowSuccess() {
     function switchMode(mode) {
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
-      const modeMap = ['animind', 'library', 'file', 'question', 'vault'];
+      const modeMap = ['animind', 'library', 'file', 'question', 'vault', 'simulation'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'vaultPanel'].forEach(id => {
+      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'vaultPanel', 'simulationPanel'].forEach(id => {
         document.getElementById(id).classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', vault: 'sideVault' };
+      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', vault: 'sideVault', simulation: 'sideSimulation' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
       // REMOVED: teacher mode handler
       if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
+      if (mode === 'simulation') simInit();
+    }
+
+    // ═══════════════════════════════════════════════
+    // SIMULATION PANEL
+    // ═══════════════════════════════════════════════
+    var simCurrentMode = 'physics';
+    var simCurrentAnimation = null;
+    var simProgTimer = null;
+    var simInitDone = false;
+
+    var SIM_EXAMPLES = {
+      physics: [
+        'Projectile motion with adjustable angle and velocity',
+        'Simple harmonic motion of a spring-mass system',
+        'Wave interference — two point sources',
+        'Free fall with air resistance slider',
+        'Circular motion and centripetal force'
+      ],
+      chemistry: [
+        'Titration curve with pH indicator',
+        'Molecular orbital diagram for H₂O',
+        'Reaction rate vs temperature (Arrhenius)',
+        'Electrochemical cell with voltage meter',
+        'Gas laws — pressure, volume, temperature'
+      ],
+      math: [
+        'Derivative visualizer — tangent line on any curve',
+        'Fourier series approximation with N terms',
+        'Matrix transformation on a 2D grid',
+        'Polar coordinate grapher',
+        'Riemann sum approximation with adjustable n'
+      ],
+      biology: [
+        'Enzyme kinetics — Michaelis-Menten curve',
+        'Action potential propagation in a neuron',
+        'Population dynamics — predator-prey model',
+        'Hardy-Weinberg equilibrium simulation',
+        'Cell membrane diffusion and osmosis'
+      ]
+    };
+
+    var SIM_LOADING_MSGS = [
+      '🔬 Analysing concept…',
+      '⚙️ Building simulation engine…',
+      '🎨 Designing interactive controls…',
+      '✨ Polishing the experience…',
+      '🚀 Almost ready…'
+    ];
+
+    function simInit() {
+      if (simInitDone) return;
+      simInitDone = true;
+      simRenderExamples();
+    }
+
+    function simSetMode(mode) {
+      simCurrentMode = mode;
+      document.querySelectorAll('.sim-mode-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.simMode === mode);
+      });
+      simRenderExamples();
+
+      // Update textarea placeholder
+      var placeholders = {
+        physics: 'e.g. Projectile motion with adjustable angle and initial velocity…',
+        chemistry: 'e.g. Titration curve with HCl and NaOH…',
+        math: 'e.g. Derivative visualizer showing tangent line on any function…',
+        biology: 'e.g. Enzyme kinetics — Michaelis-Menten curve with substrate concentration…'
+      };
+      var ta = document.getElementById('simPrompt');
+      if (ta) ta.placeholder = placeholders[mode] || '';
+    }
+
+    function simRenderExamples() {
+      var list = document.getElementById('simExampleList');
+      if (!list) return;
+      var examples = SIM_EXAMPLES[simCurrentMode] || [];
+      list.innerHTML = examples.map(function(ex) {
+        return '<button class="sim-example-btn" onclick="simSetPrompt(' + JSON.stringify(ex) + ')">'
+          + '<span class="sim-ex-arrow">→</span>' + ex + '</button>';
+      }).join('');
+    }
+
+    function simSetPrompt(text) {
+      var ta = document.getElementById('simPrompt');
+      if (ta) {
+        ta.value = text;
+        document.getElementById('simCharCount').textContent = text.length + '/600';
+        ta.focus();
+      }
+    }
+
+    async function generateSimulation() {
+      var prompt = (document.getElementById('simPrompt').value || '').trim();
+      if (!prompt) {
+        simShowError('Please describe the simulation you want to generate.');
+        return;
+      }
+
+      // Hide error, disable button
+      simHideError();
+      var genBtn = document.getElementById('simGenBtn');
+      genBtn.disabled = true;
+      document.getElementById('simBtnIcon').textContent = '⏳';
+      document.getElementById('simBtnText').textContent = 'Generating…';
+
+      // Show loading, hide empty/iframe/save
+      document.getElementById('simEmpty').style.display = 'none';
+      document.getElementById('simLoading').style.display = 'flex';
+      document.getElementById('simIframe').style.display = 'none';
+      document.getElementById('simSaveSection').style.display = 'none';
+      document.getElementById('simPreviewTitle').textContent = 'Building simulation…';
+
+      // Animate progress bar and cycle messages
+      var pct = 0;
+      var msgIdx = 0;
+      simProgTimer = setInterval(function() {
+        pct = Math.min(pct + (Math.random() * 6 + 2), 88);
+        document.getElementById('simProgFill').style.width = pct + '%';
+        if (msgIdx < SIM_LOADING_MSGS.length - 1) {
+          document.getElementById('simLoadMsg').textContent = SIM_LOADING_MSGS[msgIdx++];
+        }
+      }, 1800);
+
+      try {
+        var systemPrompt = 'You are an expert interactive simulation builder. '
+          + 'Generate a complete, self-contained HTML page with an interactive simulation for the given topic. '
+          + 'The simulation MUST: '
+          + '(1) Use plain HTML/CSS/JS only — no external libraries unless from cdnjs.cloudflare.com. '
+          + '(2) Have sliders, buttons, or inputs so the user can interact and explore parameters. '
+          + '(3) Show real-time updates (canvas animation or live DOM updates) as parameters change. '
+          + '(4) Have a clean light-theme UI (#f8fafc background, teal #0d9488 accent, clear labels). '
+          + '(5) Display axis labels, units, and a short legend where appropriate. '
+          + '(6) Include a clear title and a one-line description at the top. '
+          + 'Output ONLY the complete <!DOCTYPE html>…</html> code. No explanations, no markdown fences.';
+
+        var userMsg = 'Build an interactive simulation for: ' + prompt
+          + '\nSubject area: ' + simCurrentMode
+          + '\nMake it educational, visually clear, and interactive with at least 2 adjustable parameters.';
+
+        var response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 8000,
+            messages: [{ role: 'user', content: systemPrompt + '\n\n' + userMsg }]
+          })
+        });
+
+        if (!response.ok) throw new Error('API error: ' + response.status);
+        var data = await response.json();
+        var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
+
+        // Strip markdown fences if present
+        var html = raw.replace(/^```html?\n?/i, '').replace(/\n?```$/i, '').trim();
+        if (!html || html.length < 100) throw new Error('Simulation generation returned empty content.');
+
+        simCurrentAnimation = { prompt: prompt, mode: simCurrentMode, html: html, created_at: new Date().toISOString() };
+
+        // Inject into iframe
+        clearInterval(simProgTimer);
+        document.getElementById('simProgFill').style.width = '100%';
+        setTimeout(function() {
+          document.getElementById('simLoading').style.display = 'none';
+          var iframe = document.getElementById('simIframe');
+          iframe.srcdoc = html;
+          iframe.style.display = 'block';
+          document.getElementById('simSaveSection').style.display = 'flex';
+          document.getElementById('simPreviewTitle').textContent = prompt.slice(0, 55) + (prompt.length > 55 ? '…' : '');
+        }, 400);
+
+      } catch (err) {
+        clearInterval(simProgTimer);
+        document.getElementById('simLoading').style.display = 'none';
+        document.getElementById('simEmpty').style.display = 'flex';
+        simShowError('Generation failed: ' + (err.message || 'Unknown error. Please try again.'));
+        console.error('[Simulation]', err);
+      } finally {
+        genBtn.disabled = false;
+        document.getElementById('simBtnIcon').textContent = '⚡';
+        document.getElementById('simBtnText').textContent = 'Generate';
+      }
+    }
+
+    function simRestart() {
+      if (!simCurrentAnimation) return;
+      var iframe = document.getElementById('simIframe');
+      iframe.srcdoc = '';
+      setTimeout(function() { iframe.srcdoc = simCurrentAnimation.html; }, 80);
+    }
+
+    function simFullscreen() {
+      var iframe = document.getElementById('simIframe');
+      if (iframe.requestFullscreen) iframe.requestFullscreen();
+      else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+    }
+
+    function saveSimulation() {
+      if (!simCurrentAnimation) return;
+      var title = simCurrentAnimation.prompt.slice(0, 60);
+      animindLibrary.push({
+        id: 'sim_' + Date.now(),
+        title: title,
+        prompt: simCurrentAnimation.prompt,
+        animation_code: simCurrentAnimation.html,
+        explanation: 'Simulation: ' + simCurrentAnimation.mode,
+        playlist: 'Simulations',
+        created_at: simCurrentAnimation.created_at
+      });
+      if (typeof syncPushToCloud === 'function') {
+        syncPushToCloud(animindLibrary[animindLibrary.length - 1]).catch(function() {});
+      }
+      updateActiveCount();
+      if (typeof notify === 'function') notify('Simulation saved to Library!', 'success');
+    }
+
+    function downloadSimulation() {
+      if (!simCurrentAnimation) return;
+      var blob = new Blob([simCurrentAnimation.html], { type: 'text/html' });
+      var a = document.createElement('a');
+      a.download = 'simulation_' + simCurrentAnimation.mode + '_' + Date.now() + '.html';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(function() { URL.revokeObjectURL(a.href); }, 3000);
+    }
+
+    function simShowError(msg) {
+      var el = document.getElementById('simError');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function simHideError() {
+      var el = document.getElementById('simError');
+      if (el) el.style.display = 'none';
     }
 
     // ── Sub-mode switch inside AI Creator panel ──────────────────────────
@@ -9570,10 +10658,20 @@ function amShowSuccess() {
       document.getElementById('amEmpty').style.display = 'none'; document.getElementById('amLoading').style.display = 'flex';
       document.getElementById('amIframe').style.display = 'none'; document.getElementById('amCodeView').style.display = 'none';
       document.getElementById('amSaveSection').style.display = 'none'; document.getElementById('amDlSection').style.display = 'none';
+      document.getElementById('amProgFill').style.width = '0%'; document.getElementById('amProgPct').textContent = '0%';
       const msgs = ['🧠 Analyzing topic…', '🎨 Designing visuals…', '⚡ Building simulation…', '🔬 Ensuring accuracy…', '✨ Polishing…'];
       let pct = 0, mi = 0;
+      const amStepEls = document.querySelectorAll('#amLoadingSteps .am-step');
+      amStepEls.forEach((el, i) => { el.classList.toggle('active', i === 0); el.classList.remove('done'); });
+      document.getElementById('amLoadMsg').textContent = msgs[0];
       const pt = setInterval(() => { pct = Math.min(pct + Math.random() * 3.5, 88); document.getElementById('amProgFill').style.width = pct + '%'; document.getElementById('amProgPct').textContent = Math.round(pct) + '%'; }, 400);
-      const mt = setInterval(() => { mi = (mi + 1) % msgs.length; document.getElementById('amLoadMsg').textContent = msgs[mi]; }, 3000);
+      const mt = setInterval(() => {
+        mi = (mi + 1) % msgs.length;
+        const msgEl = document.getElementById('amLoadMsg');
+        msgEl.classList.remove('fade'); void msgEl.offsetWidth;
+        msgEl.textContent = msgs[mi]; msgEl.classList.add('fade');
+        amStepEls.forEach((el, i) => { el.classList.toggle('active', i === mi); el.classList.toggle('done', i < mi); });
+      }, 3000);
       try {
         const res = await fetch(`${BACKEND_URL}/generate-animation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
         if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
@@ -11542,7 +12640,7 @@ ${text.substring(0, 4500)}`
       // Legacy gate stays permanently hidden — never revived.
       const gate = document.getElementById('authGate');
       if (gate) gate.style.display = 'none';
-      const bar = document.getElementById('authStatusBar');
+      const bar = document.getElementById('topbarUserPill');
       if (bar) bar.style.display = 'none';
     }
 
@@ -11554,7 +12652,7 @@ ${text.substring(0, 4500)}`
       if (dp) { dp.style.display = 'block'; dp.style.opacity = '1'; dp.classList.add('active'); }
       const gate = document.getElementById('authGate');
       if (gate) gate.style.display = 'none';
-      const bar = document.getElementById('authStatusBar');
+      const bar = document.getElementById('topbarUserPill');
       if (bar) bar.style.display = 'flex';
     }
 
