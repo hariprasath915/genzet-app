@@ -105,10 +105,25 @@
   function _updateStatusBar() {
     const user = window.authUser;
     if (!user) return;
+
+    // Show the topbar user pill (avatar + name + Sign Out button)
+    const pill = document.getElementById('topbarUserPill');
+    if (pill) pill.style.display = 'flex';
+
+    // Set user name
+    const nameEl = document.getElementById('authUserName');
+    if (nameEl) nameEl.textContent = user.name || 'Student';
+
+    // Set avatar initial (first letter of name or email)
+    const avatarEl = document.getElementById('authUserAvatar');
+    if (avatarEl) {
+      avatarEl.textContent = (user.name || user.email || 'U').charAt(0).toUpperCase();
+    }
+
+    // Legacy: old authStatusBar (hidden in most layouts, no-op if absent)
     const bar = document.getElementById('authStatusBar');
     if (bar) bar.style.display = 'flex';
-    const nameEl = document.getElementById('authUserName');
-    if (nameEl) nameEl.textContent = user.name || 'Teacher';
+
     const chipEl = document.getElementById('authUserIdChip');
     if (chipEl) {
       const uid = user.user_id;
@@ -521,6 +536,148 @@
 
 
   // ════════════════════════════════════════════════════════════════════════
+  // GOOGLE OAUTH  —  popup-based flow
+  // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * _googleLogin()
+   * Opens a centered popup → Supabase Google OAuth → oauth_callback.html
+   * → receives GENZET_OAUTH_SUCCESS postMessage → exchanges tokens with
+   *   POST /auth/google/callback → calls _onAuthSuccess(data).
+   */
+  async function _googleLogin() {
+    // Determine the OAuth callback page URL.
+    // When served from file:// the origin is 'null', so fall back to the
+    // deployed Vercel URL where oauth_callback.html lives.
+    var origin = window.location.origin;
+    if (!origin || origin === 'null' || origin === 'null') {
+      origin = 'https://genzet-app.vercel.app';
+    }
+    var callbackUrl = origin + '/oauth_callback.html';
+
+    // Step 1: Ask backend for the Supabase-generated Google OAuth URL
+    var oauthUrl;
+    try {
+      var urlRes = await fetch(
+        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl)
+      );
+      if (!urlRes.ok) throw new Error('Backend returned ' + urlRes.status);
+      var urlData = await urlRes.json();
+      oauthUrl = urlData.url;
+      if (!oauthUrl) throw new Error('No OAuth URL returned');
+    } catch (err) {
+      console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr('Google sign-in unavailable right now. Please try email/password.');
+      }
+      return;
+    }
+
+    // Step 2: Open a centered popup with the OAuth URL
+    var popW = 500, popH = 620;
+    var popL = Math.max(0, Math.floor((screen.width  - popW) / 2));
+    var popT = Math.max(0, Math.floor((screen.height - popH) / 2));
+    var popup = window.open(
+      oauthUrl,
+      'genzet_google_oauth',
+      'width=' + popW + ',height=' + popH +
+      ',left=' + popL + ',top=' + popT +
+      ',scrollbars=yes,resizable=yes,noreferrer'
+    );
+
+    if (!popup || popup.closed) {
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr(
+          'Popup was blocked. Allow pop-ups for this site and try again.'
+        );
+      }
+      return;
+    }
+
+    // Step 3: Wait for postMessage from oauth_callback.html
+    await new Promise(function (resolve) {
+      var done = false;
+
+      function finish() {
+        if (done) return;
+        done = true;
+        clearInterval(pollTimer);
+        window.removeEventListener('message', onMessage);
+        resolve();
+      }
+
+      async function onMessage(evt) {
+        // Only accept messages that look like ours
+        if (!evt.data || typeof evt.data.type !== 'string') return;
+        if (!evt.data.type.startsWith('GENZET_OAUTH_')) return;
+
+        if (evt.data.type === 'GENZET_OAUTH_SUCCESS') {
+          finish();
+          await _handleGoogleCallback(
+            evt.data.access_token,
+            evt.data.refresh_token || ''
+          );
+        } else if (evt.data.type === 'GENZET_OAUTH_ERROR') {
+          finish();
+          console.warn('[AUTH] Google OAuth error:', evt.data.error);
+          if (typeof window.amShowErr === 'function') {
+            window.amShowErr(evt.data.error || 'Google sign-in failed.');
+          }
+        }
+      }
+
+      window.addEventListener('message', onMessage);
+
+      // Also resolve if the user closes the popup without completing
+      var pollTimer = setInterval(function () {
+        if (popup.closed) finish();
+      }, 500);
+    });
+  }
+
+  /**
+   * _handleGoogleCallback(accessToken, refreshToken)
+   * POSTs tokens to /auth/google/callback, upserts the profile in Supabase,
+   * stores the session, and enters the dashboard.
+   */
+  async function _handleGoogleCallback(accessToken, refreshToken) {
+    _setSyncStatus('Completing Google sign-in…');
+    try {
+      var res = await fetch(BACKEND + '/auth/google/callback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          access_token:  accessToken,
+          refresh_token: refreshToken || '',
+        }),
+      });
+
+      var data = await res.json().catch(function () { return {}; });
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Google sign-in exchange failed (HTTP ' + res.status + ')');
+      }
+
+      // data is a full AuthResponse — store session & enter dashboard
+      await _onAuthSuccess(data);
+
+      // Close the auth modal if it's open
+      if (typeof window.closeAuthModal === 'function') window.closeAuthModal();
+
+      console.log('[AUTH] ✅ Google OAuth complete:', data.email);
+
+    } catch (err) {
+      console.warn('[AUTH] Google callback exchange failed:', err.message);
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr(err.message || 'Google sign-in failed. Please try again.');
+      }
+    } finally {
+      _setSyncStatus('');
+    }
+  }
+
+
+  // ════════════════════════════════════════════════════════════════════════
   // AUTH BOOTSTRAP
   // ════════════════════════════════════════════════════════════════════════
 
@@ -628,6 +785,7 @@
   window.authSetSyncStatus   = _setSyncStatus;
   window.authShowGate        = _showLanding;     // back-compat alias
   window.authHideGate        = _enterDashboard;  // back-compat alias
+  window.authGoogleLogin     = _googleLogin;     // Google OAuth popup flow
 
   // ── Item sync (new + legacy fallback) ────────────────────────────────────
   // syncPushToCloud(item, itemType?) — itemType defaults to 'ai_creator'
