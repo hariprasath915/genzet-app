@@ -160,13 +160,19 @@
         var endpoint, body;
 
         if (accessToken) {
-          // ✅ Implicit flow — we have the real access token
+          // Implicit flow — we have the real access token
           endpoint = BACKEND + '/auth/google/callback';
           body = JSON.stringify({ access_token: accessToken, refresh_token: refreshToken });
         } else {
-          // Fallback: PKCE code
+          // PKCE flow — we have the code, must pass the verifier
+          var verifier = localStorage.getItem('oauth_verifier');
+          if (!verifier) {
+            throw new Error('Missing PKCE verifier. Please try signing in again.');
+          }
           endpoint = BACKEND + '/auth/google/exchange-code';
-          body = JSON.stringify({ code: pkceCode });
+          body = JSON.stringify({ code: pkceCode, verifier: verifier });
+          // Clear it so it's not reused
+          localStorage.removeItem('oauth_verifier');
         }
 
         var res  = await fetch(endpoint, {
