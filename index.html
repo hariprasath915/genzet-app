@@ -435,6 +435,110 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       --glass-border: rgba(52, 217, 195, 0.18);
     }
 
+    /* ══ DARK MODE — SIDEBAR OVERRIDES ══ */
+    [data-theme="dark"] .nav-sidebar {
+      background: #0a1020;
+      border-right-color: #1a2940;
+      box-shadow: 2px 0 16px rgba(0,0,0,.35);
+    }
+
+    [data-theme="dark"] .sidebar-brand {
+      border-bottom-color: #1a2940;
+    }
+
+    [data-theme="dark"] .sidebar-brand-name {
+      color: #eef4ff;
+    }
+
+    [data-theme="dark"] .sidebar-brand-name em {
+      color: #34d9c3;
+    }
+
+    [data-theme="dark"] .sidebar-nav-label {
+      color: #455c78;
+    }
+
+    [data-theme="dark"] .sidebar-nav-item {
+      color: #88a0c2;
+      background: transparent;
+    }
+
+    [data-theme="dark"] .sidebar-nav-item:hover {
+      color: #34d9c3;
+      background: rgba(52, 217, 195, .08);
+    }
+
+    [data-theme="dark"] .sidebar-nav-item .nav-icon {
+      background: rgba(52, 217, 195, .07);
+    }
+
+    [data-theme="dark"] .sidebar-nav-item:hover:not(.active) .nav-icon {
+      background: rgba(52, 217, 195, .13);
+    }
+
+    [data-theme="dark"] .sidebar-nav-item.active {
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(13,148,136,.35);
+    }
+
+    [data-theme="dark"] .sidebar-nav-item.active .nav-icon {
+      background: rgba(255,255,255,.18);
+    }
+
+    [data-theme="dark"] .nav-item-tag {
+      background: rgba(52,217,195,.1);
+      color: #34d9c3;
+      border-color: rgba(52,217,195,.2);
+    }
+
+    [data-theme="dark"] .sidebar-nav-item.active .nav-item-tag {
+      background: rgba(255,255,255,.18);
+      color: #fff;
+      border-color: rgba(255,255,255,.25);
+    }
+
+    [data-theme="dark"] .sidebar-footer {
+      border-top-color: #1a2940;
+      background: #0a1020;
+    }
+
+    [data-theme="dark"] .sidebar-stat-row {
+      background: #0f1729;
+      border-color: #1a2940;
+    }
+
+    [data-theme="dark"] .sidebar-stat-row .ss-text {
+      color: #88a0c2;
+    }
+
+    [data-theme="dark"] .sidebar-stat-row .ss-val {
+      color: #eef4ff;
+    }
+
+    [data-theme="dark"] .feedback-btn {
+      background: #042a14;
+      border-color: #114e2a;
+      color: #56e48c;
+    }
+
+    [data-theme="dark"] .feedback-btn:hover {
+      border-color: #22c55e;
+      box-shadow: 0 4px 16px rgba(34,197,94,.18);
+    }
+
+    [data-theme="dark"] .feedback-btn-text span {
+      color: #56e48c;
+    }
+
+    [data-theme="dark"] .sidebar-contact-row {
+      color: #455c78;
+    }
+
+    [data-theme="dark"] .sidebar-contact-row:hover {
+      color: #34d9c3;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -2563,76 +2667,193 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 12px;
+      padding: 18px 22px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .file-topbar-identity {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .file-topbar-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(245,158,11,.25);
     }
 
     .file-topbar-left h2 {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 800;
       color: var(--text);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      line-height: 1.2;
     }
 
     .file-topbar-left p {
       font-size: 12px;
       color: var(--text2);
-      margin-top: 4px;
+      margin-top: 3px;
+      font-weight: 400;
     }
 
     .file-topbar-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     .file-action-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 10px 20px;
-      border-radius: 12px;
+      padding: 9px 18px;
+      border-radius: 10px;
       font-family: 'Sora', sans-serif;
       font-size: 12.5px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
-      transition: all .25s var(--spring);
-      border: 2px solid var(--border);
+      transition: all .22s var(--spring);
+      border: 1.5px solid var(--border);
+      white-space: nowrap;
     }
 
     .file-action-btn.create {
       background: linear-gradient(135deg, var(--teal), #14b8a6);
       color: #fff;
       border-color: transparent;
-      box-shadow: 0 4px 16px rgba(13, 148, 136, .35);
+      box-shadow: 0 3px 12px rgba(13, 148, 136, .30);
+      padding: 9px 18px 9px 14px;
+    }
+
+    .file-action-btn.create::before {
+      content: '+';
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .file-action-btn.create:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(13, 148, 136, .45);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 148, 136, .40);
     }
 
     .file-action-btn.modify {
       background: var(--surface);
-      color: var(--blue);
+      color: var(--text);
+      border-color: var(--border);
     }
 
     .file-action-btn.modify:hover {
       border-color: var(--blue);
+      color: var(--blue);
       background: var(--blue-lt);
     }
 
     .file-action-btn.delbtn {
       background: var(--surface);
-      color: var(--red);
+      color: var(--text);
+      border-color: var(--border);
     }
 
     .file-action-btn.delbtn:hover {
       border-color: var(--red);
+      color: var(--red);
       background: var(--red-lt);
+    }
+
+    /* ── Subjects filter bar (All subjects tab + search) ── */
+    .subjects-filterbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .subjects-filterbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .subjects-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+    }
+
+    .subjects-tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 22px;
+      padding: 0 8px;
+      background: var(--border);
+      color: var(--text2);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .subjects-search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .subjects-search-wrap::before {
+      content: '🔍';
+      position: absolute;
+      left: 10px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .subjects-search {
+      padding: 7px 14px 7px 30px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      outline: none;
+      transition: border-color .2s;
+      width: 200px;
+    }
+
+    .subjects-search::placeholder {
+      color: var(--text3);
+    }
+
+    .subjects-search:focus {
+      border-color: var(--teal);
     }
 
     /* Subject Cards Grid */
@@ -3086,14 +3307,14 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 16px;
-      background: var(--teal-lt);
-      border: 1.5px solid var(--teal-md);
+      padding: 11px 18px;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
       border-radius: 12px;
-      font-size: 12px;
-      color: var(--teal);
+      font-size: 12.5px;
+      color: #16a34a;
       font-weight: 600;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     /* CO Grid */
@@ -3599,6 +3820,146 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .color-pick.sel {
       transform: scale(1.2);
       border-color: var(--text);
+    }
+
+    /* ══ CREATE SUBJECT MODAL — Redesigned ══ */
+    .cs-modal-header {
+      background: #fff !important;
+      border-bottom: 1.5px solid #f3f4f6 !important;
+      padding: 20px 24px !important;
+    }
+
+    .cs-label {
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      color: #374151 !important;
+      margin-bottom: 8px !important;
+    }
+
+    .cs-input-name {
+      border: 2px solid #10b981 !important;
+      border-radius: 12px !important;
+      background: #f0fdf4 !important;
+      font-size: 14px !important;
+      padding: 13px 16px !important;
+      color: #111827 !important;
+    }
+
+    .cs-input-name:focus {
+      border-color: #059669 !important;
+      background: #ecfdf5 !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,.12) !important;
+    }
+
+    .cs-input-code {
+      border: 1.5px solid #e5e7eb !important;
+      border-radius: 12px !important;
+      background: #f9fafb !important;
+      font-size: 14px !important;
+      padding: 13px 16px !important;
+      color: #111827 !important;
+    }
+
+    .cs-input-code:focus {
+      border-color: #6b7280 !important;
+      background: #fff !important;
+    }
+
+    /* Icon picker — bigger, image-style cards */
+    .cs-icon-row {
+      gap: 10px !important;
+      margin: 10px 0 16px !important;
+    }
+
+    .cs-icon-row .icon-pick {
+      width: 52px !important;
+      height: 52px !important;
+      border-radius: 14px !important;
+      border: 2px solid #e5e7eb !important;
+      background: #f9fafb !important;
+      font-size: 24px !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
+      transition: all .18s !important;
+    }
+
+    .cs-icon-row .icon-pick:hover {
+      border-color: #10b981 !important;
+      background: #f0fdf4 !important;
+      transform: scale(1.1) !important;
+      box-shadow: 0 3px 10px rgba(16,185,129,.18) !important;
+    }
+
+    .cs-icon-row .icon-pick.sel {
+      border-color: #10b981 !important;
+      background: #ecfdf5 !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,.18) !important;
+      transform: scale(1.08) !important;
+    }
+
+    /* Color swatches — larger rounded squares */
+    .cs-color-row {
+      gap: 10px !important;
+      margin: 10px 0 4px !important;
+    }
+
+    .cs-color-row .color-pick {
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 12px !important;
+      border: 3px solid transparent !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,.12) !important;
+      transition: all .18s !important;
+    }
+
+    .cs-color-row .color-pick:hover {
+      transform: scale(1.15) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2) !important;
+    }
+
+    .cs-color-row .color-pick.sel {
+      border-color: #111827 !important;
+      transform: scale(1.15) !important;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111827 !important;
+    }
+
+    .cs-modal-footer {
+      background: #fff !important;
+      border-top: 1.5px solid #f3f4f6 !important;
+      padding: 16px 24px !important;
+      justify-content: flex-end !important;
+      gap: 12px !important;
+    }
+
+    .cs-cancel-btn {
+      padding: 11px 24px !important;
+      border-radius: 12px !important;
+      border: 1.5px solid #e5e7eb !important;
+      background: #fff !important;
+      color: #374151 !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all .18s !important;
+    }
+
+    .cs-cancel-btn:hover {
+      border-color: #9ca3af !important;
+      background: #f9fafb !important;
+    }
+
+    .cs-create-btn {
+      padding: 11px 28px !important;
+      border-radius: 12px !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      background: linear-gradient(135deg, #0d9488, #10b981) !important;
+      box-shadow: 0 4px 14px rgba(13,148,136,.30) !important;
+      transition: all .18s !important;
+    }
+
+    .cs-create-btn:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 6px 20px rgba(13,148,136,.40) !important;
     }
 
     /* Notification */
@@ -4115,562 +4476,10 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       transform: translateY(-1px);
     }
 
-    /* ══ VIDEO VAULT TAB ══ */
-    .nav-tab.vault-tab {
-      color: var(--orange);
-    }
 
-    .nav-tab.vault-tab.active {
-      background: linear-gradient(135deg, var(--orange), #f59e0b);
-      color: #fff;
-      box-shadow: 0 3px 12px rgba(249, 115, 22, .38);
-    }
-
-    .nav-tab.vault-tab:hover:not(.active) {
-      background: var(--orange-lt);
-      color: var(--orange);
-    }
-
-    /* ══ VIDEO VAULT PANEL ══ */
-    .vault-panel-wrap {
-      padding: 20px 24px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-
-    .vault-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .vault-header-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--orange), #f59e0b);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 6px 20px rgba(249, 115, 22, .3);
-      flex-shrink: 0;
-    }
-
-    .vault-header-text h2 {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -0.4px;
-    }
-
-    .vault-header-text p {
-      font-size: 13px;
-      color: var(--text3);
-      margin-top: 3px;
-    }
-
-    /* Upload Card */
-    .vault-upload-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px 28px 24px;
-      box-shadow: var(--shadow);
-      margin-bottom: 28px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .vault-upload-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--orange), #f59e0b, var(--orange));
-      border-radius: 3px 3px 0 0;
-    }
-
-    .vault-card-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .vault-upload-trigger {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 40px 20px;
-      border: 2.5px dashed var(--orange-md);
-      border-radius: 16px;
-      background: var(--orange-lt);
-      cursor: pointer;
-      transition: all .3s var(--spring);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .vault-upload-trigger::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 30%, rgba(249, 115, 22, .08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .vault-upload-trigger:hover {
-      border-color: var(--orange);
-      background: color-mix(in srgb, var(--orange-lt) 80%, white 20%);
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md), 0 0 30px rgba(249, 115, 22, .08);
-    }
-
-    .vault-upload-trigger .vut-icon {
-      font-size: 40px;
-      line-height: 1;
-    }
-
-    .vault-upload-trigger .vut-label {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--orange);
-    }
-
-    .vault-upload-trigger .vut-sub {
-      font-size: 11.5px;
-      color: var(--text3);
-    }
-
-    .vault-primary-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 13px 28px;
-      background: linear-gradient(135deg, var(--orange), #f59e0b);
-      color: #fff;
-      font-family: 'Sora', sans-serif;
-      font-size: 13.5px;
-      font-weight: 700;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(249, 115, 22, .40);
-      transition: all .28s var(--spring);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .vault-primary-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2), transparent);
-      transition: left .5s;
-    }
-
-    .vault-primary-btn:hover::before {
-      left: 100%;
-    }
-
-    .vault-primary-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(249, 115, 22, .50);
-    }
-
-    .vault-primary-btn:active {
-      transform: translateY(0);
-    }
-
-    /* After file selected — form section */
-    .vault-form-section {
-      display: none;
-      animation: vaultFadeIn .35s cubic-bezier(.4, 0, .2, 1) both;
-    }
-
-    .vault-form-section.show {
-      display: block;
-    }
-
-    @keyframes vaultFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .vault-file-preview {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      background: var(--green-lt);
-      border: 1.5px solid var(--green-md);
-      border-radius: 12px;
-      margin-bottom: 18px;
-    }
-
-    .vault-file-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--green), var(--teal));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .vault-file-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .vault-file-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .vault-file-size {
-      font-size: 11px;
-      color: var(--text3);
-      margin-top: 2px;
-    }
-
-    .vault-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text2);
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .vault-input {
-      width: 100%;
-      padding: 11px 14px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      background: var(--bg);
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      margin-bottom: 16px;
-    }
-
-    .vault-input:focus {
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(249, 115, 22, .12);
-    }
-
-    .vault-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .vault-cancel-btn {
-      padding: 11px 22px;
-      border: 2px solid var(--border2);
-      border-radius: 10px;
-      background: var(--bg);
-      color: var(--text2);
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
-    }
-
-    .vault-cancel-btn:hover {
-      border-color: var(--red);
-      color: var(--red);
-      background: var(--red-lt);
-    }
-
-    /* Saved Videos Grid */
-    .vault-grid-section {
-      margin-top: 4px;
-    }
-
-    .vault-grid-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .vault-grid-title span {
-      background: var(--orange-lt);
-      color: var(--orange);
-      border: 1px solid var(--orange-md);
-      border-radius: 20px;
-      padding: 1px 8px;
-      font-size: 10px;
-      font-weight: 800;
-    }
-
-    .vault-video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 16px;
-    }
-
-    .vault-video-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: all .25s;
-      animation: vaultFadeIn .4s cubic-bezier(.4, 0, .2, 1) both;
-      position: relative;
-    }
-
-    .vault-video-card:hover {
-      border-color: var(--orange);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(249, 115, 22, .18);
-    }
-
-    .vault-video-thumb {
-      height: 130px;
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 44px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .vault-video-thumb::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(249, 115, 22, .15), rgba(245, 158, 11, .08));
-    }
-
-    .vault-video-card-#gz-dashboard {
-      padding: 13px 14px 12px;
-    }
-
-    .vault-video-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      background: var(--orange-lt);
-      color: var(--orange);
-      border: 1px solid var(--orange-md);
-      margin-bottom: 6px;
-    }
-
-    .vault-video-title {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .vault-video-filename {
-      font-size: 11px;
-      color: var(--text3);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .vault-video-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-    }
-
-    .vault-video-date {
-      font-size: 10px;
-      color: var(--text3);
-      font-weight: 600;
-    }
-
-    .vault-del-btn {
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
-      border: 1.5px solid var(--border);
-      background: var(--bg);
-      color: var(--text3);
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
-    }
-
-    .vault-del-btn:hover {
-      border-color: var(--red);
-      background: var(--red-lt);
-      color: var(--red);
-    }
-
-    .vault-empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text3);
-    }
-
-    .vault-empty-state .ves-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-
-    .vault-empty-state p {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text2);
-      margin-bottom: 5px;
-    }
-
-    .vault-empty-state small {
-      font-size: 12px;
-    }
-
-    /* Toast (reuses .notif, but we add vault-specific toast support) */
-
-    /* ══ VAULT SEARCH BAR — NEW ══ */
-    .vault-search-wrap {
-      position: relative;
-      margin-bottom: 18px;
-    }
-
-    .vault-search-input {
-      width: 100%;
-      padding: 12px 44px 12px 44px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      background: var(--surface);
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-
-    .vault-search-input:focus {
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(249, 115, 22, .12);
-    }
-
-    .vault-search-input::placeholder {
-      color: var(--text3);
-    }
-
-    .vault-search-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
-      pointer-events: none;
-    }
-
-    .vault-search-clear {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: var(--border);
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 11px;
-      color: var(--text3);
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      transition: all .15s;
-    }
-
-    .vault-search-clear:hover {
-      background: var(--orange-md);
-      color: var(--orange);
-    }
-
-    .vault-search-clear.show {
-      display: flex;
-    }
-
-    /* Highlight matched text in vault cards */
-    .vault-search-highlight {
-      background: rgba(249, 115, 22, .25);
-      border-radius: 3px;
-      padding: 0 1px;
-      color: var(--orange);
-      font-weight: 800;
-    }
-
-    /* Smooth filter animation on vault cards */
-    .vault-video-card.vault-hidden {
-      display: none;
-    }
-
-    .vault-video-card.vault-fade-in {
-      animation: vaultFadeIn .35s cubic-bezier(.4, 0, .2, 1) both;
-    }
-
-    .vault-no-results {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text3);
-      display: none;
-    }
-
-    .vault-no-results.show {
-      display: block;
-    }
-
-    /* ══ END VAULT SEARCH ══ */
+    /* ══════════════════════════════════════
+       PREMIUM SIDEBAR REDESIGN
+    ══════════════════════════════════════ */
 
     /* ══════════════════════════════════════
        PREMIUM SIDEBAR REDESIGN
@@ -9077,10 +8886,6 @@ function amShowSuccess() {
           <span class="nav-item-text">QAnim</span>
           <span class="nav-item-tag">New</span>
         </button>
-        <button class="sidebar-nav-item" id="sideVault" onclick="switchMode('vault')">
-          <div class="nav-icon">&#127909;</div>
-          <span class="nav-item-text">VideoVault</span>
-        </button>
         <button class="sidebar-nav-item" id="sideSimulation" onclick="switchMode('simulation')">
           <div class="nav-icon">&#9881;&#65039;</div>
           <span class="nav-item-text">Simulation</span>
@@ -9482,18 +9287,6 @@ function amShowSuccess() {
                     <p>Generate interactive physics, chemistry, math &amp; biology simulations</p>
                   </div>
 
-                  <!-- Mode tabs -->
-                  <div class="sim-mode-tabs" style="padding:10px 14px 0;border-bottom:1px solid var(--border);background:var(--bg);">
-                    <button class="sim-mode-tab active" data-sim-mode="physics" onclick="simSetMode('physics')">
-                      <span class="sim-tab-icon">🔭</span> Physics
-                    </button>
-                    <button class="sim-mode-tab" data-sim-mode="chemistry" onclick="simSetMode('chemistry')">
-                      <span class="sim-tab-icon">⚗️</span> Chemistry
-                    </button>
-<button class="sim-mode-tab" data-sim-mode="biology" onclick="simSetMode('biology')">
-                      <span class="sim-tab-icon">🧬</span> Biology
-                    </button>
-                  </div>
 
                   <div class="sim-sidebar-inner" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:14px;gap:14px;">
 
@@ -9579,124 +9372,41 @@ function amShowSuccess() {
             </div>
 
             <!-- VIDEO VAULT PANEL -->
-            <div class="panel" id="vaultPanel">
-              <div class="vault-panel-wrap">
-
-                <!-- Header -->
-                <div class="vault-header">
-                  <div class="vault-header-icon">🎥</div>
-                  <div class="vault-header-text">
-                    <h2>Video Vault</h2>
-                    <p>Upload and manage your educational video library</p>
-                  </div>
-                </div>
-
-                <!-- Upload Card -->
-                <div class="vault-upload-card">
-                  <div class="vault-card-title">
-                    <span>📤</span> Upload Educational Video
-                  </div>
-
-                  <!-- Initial trigger (shown when no file selected) -->
-                  <div id="vaultUploadTrigger" class="vault-upload-trigger" onclick="vaultTriggerPick()">
-                    <div class="vut-icon">🎬</div>
-                    <div class="vut-label">Click to Upload Video</div>
-                    <div class="vut-sub">Supports MP4 format · Click to browse files</div>
-                    <button class="vault-primary-btn" onclick="event.stopPropagation();vaultTriggerPick()">
-                      🎥 Upload Video
-                    </button>
-                  </div>
-
-                  <!-- Hidden file input -->
-                  <input type="file" id="vaultFileInput" accept="video/mp4" style="display:none;"
-                    onchange="vaultHandleFile(event)" />
-
-                  <!-- Form Section (shown after file select) -->
-                  <div class="vault-form-section" id="vaultFormSection">
-
-                    <!-- File Preview -->
-                    <div class="vault-file-preview">
-                      <div class="vault-file-icon">🎞️</div>
-                      <div class="vault-file-info">
-                        <div class="vault-file-name" id="vaultSelectedFileName">video.mp4</div>
-                        <div class="vault-file-size" id="vaultSelectedFileSize">0 MB</div>
-                      </div>
-                    </div>
-
-                    <!-- Name Input -->
-                    <label class="vault-label" for="vaultVideoName">Enter Video Name</label>
-                    <input type="text" id="vaultVideoName" class="vault-input"
-                      placeholder="e.g. Newton Laws Explanation" maxlength="80"
-                      onkeydown="if(event.key==='Enter') vaultUpload()" />
-
-                    <!-- Action Buttons -->
-                    <div class="vault-actions">
-                      <button class="vault-primary-btn" onclick="vaultUpload()">
-                        ✅ Upload
-                      </button>
-                      <button class="vault-cancel-btn" onclick="vaultCancel()">
-                        ✕ Cancel
-                      </button>
-                    </div>
-                  </div>
-
-                </div><!-- /upload-card -->
-
-                <!-- Saved Videos Grid -->
-                <div class="vault-grid-section" id="vaultGridSection">
-                  <div class="vault-grid-title">
-                    Saved Videos <span id="vaultCount">0</span>
-                  </div>
-
-                  <!-- NEW: Video Vault Search Bar -->
-                  <div class="vault-search-wrap">
-                    <span class="vault-search-icon">🔍</span>
-                    <input type="text" id="vaultSearchInput" class="vault-search-input" placeholder="Search videos..."
-                      oninput="vaultFilterVideos(this.value)" autocomplete="off" />
-                    <button class="vault-search-clear" id="vaultSearchClear" onclick="vaultClearSearch()"
-                      title="Clear search">✕</button>
-                  </div>
-                  <!-- No results message -->
-                  <div class="vault-no-results" id="vaultNoResults">
-                    <div style="font-size:36px;margin-bottom:10px;">🔍</div>
-                    <p style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:4px;">No videos found</p>
-                    <small>Try a different search term</small>
-                  </div>
-                  <!-- END NEW: Video Vault Search Bar -->
-
-                  <div class="vault-video-grid" id="vaultVideoGrid">
-                    <div class="vault-empty-state">
-                      <div class="ves-icon">🎞️</div>
-                      <p>No videos uploaded yet</p>
-                      <small>Upload an MP4 file above to get started</small>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div><!-- /vaultPanel -->
-
             <!-- FILE PANEL — ENGINEERING COURSES -->
             <div class="panel" id="filePanel">
 
               <!-- VIEW 1: Subjects Home -->
               <div id="fileHome">
                 <div class="file-topbar">
-                  <div class="file-topbar-left">
-                    <h2>📁 Engineering Courses — Subjects</h2>
-                    <p>Manage subjects, Course Outcomes (COs) and save AI animations per CO</p>
+                  <div class="file-topbar-identity">
+                    <div class="file-topbar-icon">📁</div>
+                    <div class="file-topbar-left">
+                      <h2>Engineering Courses — Subjects</h2>
+                      <p>Manage subjects, course outcomes (COs) and AI animations per CO</p>
+                    </div>
                   </div>
                   <div class="file-topbar-actions">
-                    <button class="file-action-btn create" onclick="openCreateSubjectModal()">➕ Create New
-                      Course</button>
-                    <button class="file-action-btn modify" onclick="toggleModifyMode()">✏️ Modify</button>
-                    <button class="file-action-btn delbtn" onclick="toggleDeleteSubjectMode()">🗑️ Delete</button>
+                    <button class="file-action-btn create" onclick="openCreateSubjectModal()">Create new course</button>
+                    <button class="file-action-btn modify" onclick="toggleModifyMode()">✏ Modify</button>
+                    <button class="file-action-btn delbtn" onclick="toggleDeleteSubjectMode()">🗑 Delete</button>
                   </div>
                 </div>
                 <!-- Storage info banner -->
                 <div class="storage-info-banner" id="storageInfoBanner">
-                  <span>🗄️</span>
+                  <span>☁️</span>
                   <span id="storageInfoText">Loading storage info…</span>
+                </div>
+                <!-- Filter bar: All subjects tab + search -->
+                <div class="subjects-filterbar">
+                  <div class="subjects-filterbar-left">
+                    <div class="subjects-tab">
+                      All subjects
+                      <span class="subjects-tab-count" id="subjectsTabCount">0</span>
+                    </div>
+                  </div>
+                  <div class="subjects-search-wrap">
+                    <input class="subjects-search" id="subjectsSearchInput" type="text" placeholder="Search subjects…" oninput="filterSubjectsGrid(this.value)" />
+                  </div>
                 </div>
                 <div class="subjects-grid" id="subjectsGrid"></div>
               </div>
@@ -9819,25 +9529,26 @@ function amShowSuccess() {
   <!-- Create Subject -->
   <div class="modal-overlay" id="createSubjectModal">
     <div class="modal-box">
-      <div class="modal-header teal">
-        <h3>➕ Create New Course Subject</h3><button class="modal-close-btn"
-          onclick="closeCreateSubjectModal()">✕</button>
+      <div class="modal-header cs-modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;font-weight:800;color:#7c3aed;font-family:'Sora',sans-serif;">+</span>
+          <h3 style="font-size:16px;font-weight:800;color:#111827;">Create New Course Subject</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeCreateSubjectModal()">✕</button>
       </div>
-      <div class="modal-body">
-        <label class="modal-label">Subject Name *</label>
-        <input type="text" class="modal-text-input teal" id="newSubjectName" placeholder="e.g. Engineering Physics"
-          maxlength="50" />
-        <label class="modal-label">Subject Code (optional)</label>
-        <input type="text" class="modal-text-input" id="newSubjectCode" placeholder="e.g. GEA1102 · Sem I"
-          maxlength="40" />
-        <label class="modal-label">Choose Icon</label>
-        <div class="icon-picker-row" id="iconPickerRow"></div>
-        <label class="modal-label">Choose Color</label>
-        <div class="color-pick-row" id="colorPickerRow"></div>
+      <div class="modal-body" style="padding:22px 24px;">
+        <label class="modal-label cs-label">Subject Name *</label>
+        <input type="text" class="modal-text-input teal cs-input-name" id="newSubjectName" placeholder="e.g. Engineering Physics" maxlength="50" />
+        <label class="modal-label cs-label">Subject Code (optional)</label>
+        <input type="text" class="modal-text-input cs-input-code" id="newSubjectCode" placeholder="e.g. GEA1102 · Sem I" maxlength="40" />
+        <label class="modal-label cs-label">Choose Icon</label>
+        <div class="icon-picker-row cs-icon-row" id="iconPickerRow"></div>
+        <label class="modal-label cs-label">Choose Color</label>
+        <div class="color-pick-row cs-color-row" id="colorPickerRow"></div>
       </div>
-      <div class="modal-footer">
-        <button class="modal-cancel-btn" onclick="closeCreateSubjectModal()">Cancel</button>
-        <button class="modal-save-btn teal" onclick="saveNewSubject()">Create Subject</button>
+      <div class="modal-footer cs-modal-footer">
+        <button class="modal-cancel-btn cs-cancel-btn" onclick="closeCreateSubjectModal()">Cancel</button>
+        <button class="modal-save-btn teal cs-create-btn" onclick="saveNewSubject()">Create Subject</button>
       </div>
     </div>
   </div>
@@ -9846,7 +9557,7 @@ function amShowSuccess() {
   <div class="modal-overlay" id="modifySubjectModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>✏️ Modify Subject</h3><button class="modal-close-btn" onclick="closeModifyModal()">✕</button>
+        <h3>Modify Subject</h3><button class="modal-close-btn" onclick="closeModifyModal()">✕</button>
       </div>
       <div class="modal-body">
         <label class="modal-label">Subject Name</label>
@@ -9856,7 +9567,7 @@ function amShowSuccess() {
       </div>
       <div class="modal-footer">
         <button class="modal-cancel-btn" onclick="closeModifyModal()">Cancel</button>
-        <button class="modal-save-btn" onclick="saveModifySubject()">💾 Save Changes</button>
+        <button class="modal-save-btn" onclick="saveModifySubject()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -10318,14 +10029,14 @@ function amShowSuccess() {
     function switchMode(mode) {
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
-      const modeMap = ['animind', 'library', 'file', 'question', 'vault', 'simulation'];
+      const modeMap = ['animind', 'library', 'file', 'question', 'simulation'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
-      // REMOVED: teacherPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'vaultPanel', 'simulationPanel'].forEach(id => {
+      // REMOVED: teacherPanel, vaultPanel
+      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel'].forEach(id => {
         document.getElementById(id).classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', vault: 'sideVault', simulation: 'sideSimulation' };
+      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', simulation: 'sideSimulation' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
       // REMOVED: teacher mode handler
@@ -11195,15 +10906,22 @@ function amShowSuccess() {
     // ═══════════════════════════════════════════════
     function renderSubjectsGrid() {
       const grid = document.getElementById('subjectsGrid');
+      // Update tab count badge
+      const tabCount = document.getElementById('subjectsTabCount');
+      if (tabCount) tabCount.textContent = engineeringCourses ? engineeringCourses.length : 0;
       if (!engineeringCourses || engineeringCourses.length === 0) {
         grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);">
       <div style="font-size:52px;margin-bottom:14px;">📁</div>
       <p style="font-size:15px;font-weight:700;color:var(--text);">No subjects yet</p>
-      <p style="font-size:13px;margin-top:6px;">Click "Create New Course" to get started</p>
+      <p style="font-size:13px;margin-top:6px;">Click "Create new course" to get started</p>
     </div>`;
         return;
       }
-      grid.innerHTML = engineeringCourses.map(s => {
+      // Re-apply search filter if any
+      const searchInput = document.getElementById('subjectsSearchInput');
+      const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      const list = q ? engineeringCourses.filter(s => s.name.toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q)) : engineeringCourses;
+      grid.innerHTML = list.map(s => {
         const totalTopics = s.cos.reduce((sum, co) => sum + co.topics.length, 0);
         const hasPdf = s.syllabus && s.syllabus.modules && s.syllabus.modules.length > 0;
         const totalPickTopics = hasPdf ? s.syllabus.modules.reduce((sum, m) => sum + m.topics.length, 0) : 0;
@@ -11223,8 +10941,13 @@ function amShowSuccess() {
       </div>
       ${!deleteSubjectMode && !modifyMode ? `<button class="subject-del-btn" onclick="event.stopPropagation();deleteSubject('${s.id}')">✕</button>` : ''}
     </div>`;
-      }).join('');
+      }).join('') + `<div class="subject-card" onclick="openCreateSubjectModal()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:160px;border-style:dashed;background:transparent;color:var(--text3);gap:8px;cursor:pointer;">
+    <div style="width:38px;height:38px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;opacity:0.5;margin-bottom:4px;">+</div>
+    <div style="font-size:13px;font-weight:600;opacity:0.5;">New subject</div>
+  </div>`;
     }
+
+    function filterSubjectsGrid(q) { renderSubjectsGrid(); }
 
     function toggleDeleteSubjectMode() { deleteSubjectMode = !deleteSubjectMode; modifyMode = false; renderSubjectsGrid(); notify(deleteSubjectMode ? '🗑️ Delete mode ON — click a subject to delete' : '✅ Delete mode OFF', deleteSubjectMode ? 'warn' : 'success'); }
     function toggleModifyMode() { modifyMode = !modifyMode; deleteSubjectMode = false; renderSubjectsGrid(); notify(modifyMode ? '✏️ Modify mode ON — click a subject to edit' : '✅ Modify mode OFF', modifyMode ? 'warn' : 'success'); }
