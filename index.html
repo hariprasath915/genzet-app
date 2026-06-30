@@ -10406,30 +10406,32 @@ function amShowSuccess() {
       var genBtn = document.getElementById('simGenBtn');
       genBtn.disabled = true;
       document.getElementById('simBtnIcon').textContent = '⏳';
-      document.getElementById('simBtnText').textContent = 'Generating…';
+      document.getElementById('simBtnText').textContent = 'Searching…';
 
       // Show loading, hide empty/iframe/save
       document.getElementById('simEmpty').style.display = 'none';
       document.getElementById('simLoading').style.display = 'flex';
       document.getElementById('simIframe').style.display = 'none';
       document.getElementById('simSaveSection').style.display = 'none';
-      document.getElementById('simPreviewTitle').textContent = 'Building simulation…';
+      document.getElementById('simLoadMsg').textContent = '📂 Checking experiment library…';
+      document.getElementById('simPreviewTitle').textContent = 'Searching experiment library…';
 
-      // Animate progress bar and cycle messages
+      // Animate progress bar — will be overridden quickly on a cache hit
       var pct = 0;
       var msgIdx = 0;
       simProgTimer = setInterval(function() {
         pct = Math.min(pct + (Math.random() * 6 + 2), 88);
         document.getElementById('simProgFill').style.width = pct + '%';
-        if (msgIdx < SIM_LOADING_MSGS.length - 1) {
+        // Only advance through AI-generation messages once we know it's not cached
+        if (!simProgTimer._cacheHit && msgIdx < SIM_LOADING_MSGS.length - 1) {
           document.getElementById('simLoadMsg').textContent = SIM_LOADING_MSGS[msgIdx++];
         }
       }, 1800);
 
       try {
-        // POST to the backend SimEngine v2.0 pipeline instead of calling Anthropic directly.
-        // The backend (simulation.py → /generate-simulation) handles classify → prompt →
-        // Claude → parse → sanitize → validate and returns structured JSON with an "html" field.
+        // POST to the backend SimEngine v2.0 pipeline.
+        // The backend first checks simulation_experiments/ for a matching pre-built file.
+        // If found it returns it instantly (source:"cache"); otherwise it calls simulation.py.
         var response = await fetch(BACKEND_URL + '/generate-simulation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -10451,30 +10453,48 @@ function amShowSuccess() {
         var html = (data.html || '').trim();
         if (!html || html.length < 100) throw new Error('Simulation generation returned empty content.');
 
-        simCurrentAnimation = { prompt: prompt, mode: simCurrentMode, html: html, created_at: new Date().toISOString() };
+        var fromCache = (data.source === 'cache');
+        simCurrentAnimation = { prompt: prompt, mode: simCurrentMode, html: html, created_at: new Date().toISOString(), fromCache: fromCache };
 
         // Inject into iframe
         clearInterval(simProgTimer);
         document.getElementById('simProgFill').style.width = '100%';
+
+        // Faster reveal for cache hits (they're instant), short delay for generated ones
+        var revealDelay = fromCache ? 120 : 400;
         setTimeout(function() {
           document.getElementById('simLoading').style.display = 'none';
           var iframe = document.getElementById('simIframe');
           iframe.srcdoc = html;
           iframe.style.display = 'block';
           document.getElementById('simSaveSection').style.display = 'flex';
-          document.getElementById('simPreviewTitle').textContent = prompt.slice(0, 55) + (prompt.length > 55 ? '…' : '');
-        }, 400);
+
+          var shortTitle = prompt.slice(0, 50) + (prompt.length > 50 ? '…' : '');
+          if (fromCache) {
+            // Show a "from library" badge next to the title
+            document.getElementById('simPreviewTitle').innerHTML =
+              shortTitle +
+              ' <span style="display:inline-flex;align-items:center;gap:4px;' +
+              'font-size:0.72em;font-weight:600;color:#059669;' +
+              'background:#d1fae5;border:1px solid #6ee7b7;' +
+              'border-radius:999px;padding:2px 9px;margin-left:8px;' +
+              'vertical-align:middle;letter-spacing:.01em;">' +
+              '📂 Loaded from library</span>';
+          } else {
+            document.getElementById('simPreviewTitle').textContent = shortTitle;
+          }
+        }, revealDelay);
 
       } catch (err) {
         clearInterval(simProgTimer);
         document.getElementById('simLoading').style.display = 'none';
         document.getElementById('simEmpty').style.display = 'flex';
-        
+
         var msg = err.message || 'Unknown error';
         if (msg === 'Failed to fetch') {
-            msg = 'Could not reach the server. Note: The backend changes might not be deployed to Railway yet, or the local server is not running.';
+          msg = 'Could not reach the server. Note: The backend changes might not be deployed to Railway yet, or the local server is not running.';
         }
-        
+
         simShowError('Generation failed: ' + msg);
         console.error('[Simulation]', err);
       } finally {
