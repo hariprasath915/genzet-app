@@ -10469,7 +10469,13 @@ function amShowSuccess() {
         clearInterval(simProgTimer);
         document.getElementById('simLoading').style.display = 'none';
         document.getElementById('simEmpty').style.display = 'flex';
-        simShowError('Generation failed: ' + (err.message || 'Unknown error. Please try again.'));
+        
+        var msg = err.message || 'Unknown error';
+        if (msg === 'Failed to fetch') {
+            msg = 'Could not reach the server. Note: The backend changes might not be deployed to Railway yet, or the local server is not running.';
+        }
+        
+        simShowError('Generation failed: ' + msg);
         console.error('[Simulation]', err);
       } finally {
         genBtn.disabled = false;
