@@ -10427,37 +10427,28 @@ function amShowSuccess() {
       }, 1800);
 
       try {
-        var systemPrompt = 'You are an expert interactive simulation builder. '
-          + 'Generate a complete, self-contained HTML page with an interactive simulation for the given topic. '
-          + 'The simulation MUST: '
-          + '(1) Use plain HTML/CSS/JS only — no external libraries unless from cdnjs.cloudflare.com. '
-          + '(2) Have sliders, buttons, or inputs so the user can interact and explore parameters. '
-          + '(3) Show real-time updates (canvas animation or live DOM updates) as parameters change. '
-          + '(4) Have a clean light-theme UI (#f8fafc background, teal #0d9488 accent, clear labels). '
-          + '(5) Display axis labels, units, and a short legend where appropriate. '
-          + '(6) Include a clear title and a one-line description at the top. '
-          + 'Output ONLY the complete <!DOCTYPE html>…</html> code. No explanations, no markdown fences.';
-
-        var userMsg = 'Build an interactive simulation for: ' + prompt
-          + '\nSubject area: ' + simCurrentMode
-          + '\nMake it educational, visually clear, and interactive with at least 2 adjustable parameters.';
-
-        var response = await fetch('https://api.anthropic.com/v1/messages', {
+        // POST to the backend SimEngine v2.0 pipeline instead of calling Anthropic directly.
+        // The backend (simulation.py → /generate-simulation) handles classify → prompt →
+        // Claude → parse → sanitize → validate and returns structured JSON with an "html" field.
+        var response = await fetch(BACKEND_URL + '/generate-simulation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 8000,
-            messages: [{ role: 'user', content: systemPrompt + '\n\n' + userMsg }]
-          })
+          body: JSON.stringify({ topic: prompt, mode: simCurrentMode })
         });
 
-        if (!response.ok) throw new Error('API error: ' + response.status);
+        if (!response.ok) {
+          var errBody = {};
+          try { errBody = await response.json(); } catch (_) {}
+          throw new Error(errBody.detail || ('Backend error: ' + response.status));
+        }
         var data = await response.json();
-        var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
 
-        // Strip markdown fences if present
-        var html = raw.replace(/^```html?\n?/i, '').replace(/\n?```$/i, '').trim();
+        // Backend always returns 200; check render_status for generation failures
+        if (data.render_status === 'error') {
+          throw new Error(data.error_reason || 'Simulation generation failed on the server.');
+        }
+
+        var html = (data.html || '').trim();
         if (!html || html.length < 100) throw new Error('Simulation generation returned empty content.');
 
         simCurrentAnimation = { prompt: prompt, mode: simCurrentMode, html: html, created_at: new Date().toISOString() };
