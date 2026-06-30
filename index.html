@@ -1170,6 +1170,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     /* ══ STREAM MAIN ══ */
     .stream-main {
       overflow-y: auto;
+      overflow-x: hidden;
       background: var(--bg);
     }
 
@@ -3347,7 +3348,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: linear-gradient(90deg, var(--teal), #06b6d4, #38bdf8);
     }
 
-    .co-card-#gz-dashboard {
+    .co-card-body {
       padding: 16px 18px;
     }
 
@@ -3583,6 +3584,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-radius: 20px;
       width: 100%;
       max-width: 480px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       box-shadow: 0 24px 80px rgba(0, 0, 0, .14);
     }
@@ -3623,8 +3627,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       color: var(--red);
     }
 
-    .modal-#gz-dashboard {
+    .modal-body {
       padding: 22px;
+      overflow-y: auto;
     }
 
     .modal-footer {
@@ -4311,6 +4316,14 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       animation: fadeUp .2s ease;
     }
 
+    .html-preview-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
     .html-preview-topbar {
       display: flex;
       align-items: center;
@@ -4436,12 +4449,14 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .html-pv-iframe {
       width: 100%;
       height: 100%;
+      flex: 1;
       border: none;
       display: block;
     }
 
     .html-pv-code {
       display: none;
+      flex: 1;
       height: 100%;
       overflow: auto;
       background: #0f172a;
@@ -4843,6 +4858,38 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: var(--bg);
     }
 
+    /* ── MOBILE NAV: hamburger + drawer backdrop ── */
+    .mobile-sidebar-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 17px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .mobile-sidebar-toggle:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: var(--topbar-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 450;
+    }
+
     /* Override old topbar-nav display */
     .topbar-nav {
       display: none !important;
@@ -4920,7 +4967,17 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       }
     }
 
-    @media(max-width:600px) {
+    @media(max-width:900px) {
+      .topbar {
+        padding: 0 14px;
+      }
+
+      .topbar-center-badge {
+        display: none;
+      }
+    }
+
+    @media(max-width:680px) {
 
       .subjects-grid,
       .co-grid {
@@ -4931,12 +4988,185 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
         grid-template-columns: 1fr;
       }
 
+      .app-wrap {
+        flex-direction: column;
+      }
+
+      /* Hamburger replaces the always-on sidebar */
+      .mobile-sidebar-toggle {
+        display: flex;
+      }
+
+      /* Sidebar becomes a slide-in drawer instead of vanishing,
+         so navigation stays reachable on small screens */
       .nav-sidebar {
+        position: fixed;
+        top: var(--topbar-h);
+        left: 0;
+        bottom: 0;
+        width: 250px;
+        max-width: 78vw;
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+        z-index: 500;
+        box-shadow: 6px 0 28px rgba(0, 0, 0, .18);
+      }
+
+      .nav-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      /* Restore full labels inside the open drawer (the 900px tier
+         above shrinks these down to icon-only) */
+      .nav-sidebar.mobile-open .sidebar-brand-name,
+      .nav-sidebar.mobile-open .sidebar-nav-label,
+      .nav-sidebar.mobile-open .nav-item-text,
+      .nav-sidebar.mobile-open .nav-item-tag,
+      .nav-sidebar.mobile-open .sidebar-stat-row .ss-text,
+      .nav-sidebar.mobile-open .sidebar-stat-row .ss-val {
+        display: revert;
+      }
+
+      .nav-sidebar.mobile-open .sidebar-brand {
+        padding: 22px 20px 18px;
+        justify-content: flex-start;
+      }
+
+      .nav-sidebar.mobile-open .sidebar-nav-item {
+        justify-content: flex-start;
+        padding: 12px 16px;
+        gap: 12px;
+      }
+
+      .sidebar-backdrop.show {
+        display: block;
+      }
+
+      /* ── Topbar ── */
+      .topbar {
+        padding: 0 10px;
+        gap: 6px;
+      }
+
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+
+      .logo-name {
+        font-size: 16px;
+      }
+
+      .topbar-right {
+        gap: 6px;
+      }
+
+      .storage-badge .storage-bar-wrap {
         display: none;
       }
 
-      .app-wrap {
+      .storage-badge {
+        padding: 6px 10px;
+      }
+
+      .user-chip {
+        padding: 4px 8px 4px 4px;
+        gap: 6px;
+      }
+
+      #authUserName {
+        max-width: 64px !important;
+      }
+
+      #authSyncStatus {
+        display: none;
+      }
+
+      /* ── Toolbars wrap instead of overflowing off-screen ── */
+      .subject-detail-header,
+      .co-detail-header,
+      .present-topbar,
+      .file-topbar {
+        flex-wrap: wrap;
+      }
+
+      .subj-actions {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .co-detail-title,
+      .present-title-area {
+        flex: 1 1 100%;
+        order: 3;
+      }
+
+      .html-upload-btn {
+        font-size: 11.5px;
+        padding: 8px 12px;
+      }
+
+      /* ── Saved Topics cards stack on mobile ── */
+      .topic-item {
         flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .topic-item-actions {
+        width: 100%;
+      }
+
+      .topic-item-actions button {
+        flex: 1;
+      }
+
+      .topic-item-actions .topic-del-btn {
+        flex: 0 0 44px;
+      }
+
+      .stream-inner {
+        padding: 16px 14px;
+      }
+
+      .modal-overlay {
+        padding: 12px;
+      }
+    }
+
+    @media(max-width:480px) {
+      .storage-badge {
+        display: none;
+      }
+
+      .shortcuts-btn {
+        display: none;
+      }
+
+      .user-name-block {
+        display: none;
+      }
+
+      .user-chip {
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+
+      .signout-label {
+        display: none;
+      }
+
+      #gzLogoutBtn {
+        padding: 8px !important;
+      }
+
+      .file-action-btn,
+      .subj-back-btn,
+      .co-back-btn {
+        font-size: 11.5px;
+        padding: 7px 12px;
       }
     }
 
@@ -7586,7 +7816,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
   /* When dashboard is active, let it scroll normally */
   #gz-dashboard.active {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 </style>
 </head>
@@ -8764,6 +8995,7 @@ function amShowSuccess() {
 
   <!-- TOPBAR -->
   <div class="topbar">
+    <button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Open navigation menu" title="Menu">☰</button>
     <div class="logo">
       <div class="logo-icon">🎓</div>
       <span class="logo-name">Gen<em>Zet</em></span>
@@ -8783,7 +9015,7 @@ function amShowSuccess() {
           <div class="storage-bar-fill" id="storageBarFill" style="width:0%"></div>
         </div>
       </div>
-      <button onclick="showShortcuts()"
+      <button onclick="showShortcuts()" class="shortcuts-btn"
         style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--text2);font-family:'Sora',sans-serif;font-weight:600;transition:all .2s;">⌨️</button>
       <label class="theme-toggle">
         <input type="checkbox" id="themeToggle" onchange="toggleTheme(this)" />
@@ -8795,7 +9027,7 @@ function amShowSuccess() {
       <div id="topbarUserPill" style="display:none;align-items:center;gap:8px;">
 
         <!-- User avatar + name chip -->
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
+        <div class="user-chip" style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
              background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
           <!-- Avatar circle with user initial -->
           <div id="authUserAvatar" style="width:28px;height:28px;border-radius:50%;
@@ -8804,7 +9036,7 @@ function amShowSuccess() {
                font-size:12px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0;">
             U
           </div>
-          <div style="display:flex;flex-direction:column;line-height:1.2;">
+          <div class="user-name-block" style="display:flex;flex-direction:column;line-height:1.2;">
             <span id="authUserName" style="font-weight:600;color:var(--text);max-width:110px;
                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;"></span>
             <span id="authSyncStatus" style="color:var(--text3);font-size:10px;"></span>
@@ -8836,7 +9068,7 @@ function amShowSuccess() {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          Sign Out
+          <span class="signout-label">Sign Out</span>
         </button>
       </div>
 
@@ -8860,9 +9092,12 @@ function amShowSuccess() {
         </div>
       </div>
       <div class="present-iframe-wrap">
-        <iframe id="presentIframe" class="present-iframe" sandbox="allow-scripts" title="Present Animation"></iframe>
+        <iframe id="presentIframe" class="present-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups" title="Present Animation"></iframe>
       </div>
     </div>
+
+    <!-- Mobile sidebar drawer backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
 
     <!-- PREMIUM LEFT NAVIGATION SIDEBAR -->
     <nav class="nav-sidebar">
@@ -9541,8 +9776,6 @@ function amShowSuccess() {
         <input type="text" class="modal-text-input teal cs-input-name" id="newSubjectName" placeholder="e.g. Engineering Physics" maxlength="50" />
         <label class="modal-label cs-label">Subject Code (optional)</label>
         <input type="text" class="modal-text-input cs-input-code" id="newSubjectCode" placeholder="e.g. GEA1102 · Sem I" maxlength="40" />
-        <label class="modal-label cs-label">Choose Icon</label>
-        <div class="icon-picker-row cs-icon-row" id="iconPickerRow"></div>
         <label class="modal-label cs-label">Choose Color</label>
         <div class="color-pick-row cs-color-row" id="colorPickerRow"></div>
       </div>
@@ -9683,7 +9916,7 @@ function amShowSuccess() {
       </div>
     </div>
     <div class="html-preview-body">
-      <iframe class="html-pv-iframe" id="htmlPreviewIframe" sandbox="allow-scripts allow-same-origin allow-forms"
+      <iframe class="html-pv-iframe" id="htmlPreviewIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock"
         title="HTML Preview"></iframe>
       <div class="html-pv-code" id="htmlPreviewCodeView">
         <pre id="htmlPreviewCodePre"></pre>
@@ -9796,7 +10029,7 @@ function amShowSuccess() {
     let deleteCOMode = false;
     let modifyMode = false;
     let modifySubjectId = null;
-    let selectedNewIcon = '⚛️';
+    let selectedNewIcon = '';
     let selectedNewColor = '#3b82f6';
     let saveCOStep = 1;
     let saveCOSelectedSubjectId = null;
@@ -10024,9 +10257,35 @@ function amShowSuccess() {
     }
 
     // ═══════════════════════════════════════════════
+    // MOBILE SIDEBAR DRAWER (hamburger menu)
+    // ═══════════════════════════════════════════════
+    function toggleMobileSidebar() {
+      const sb = document.querySelector('.nav-sidebar');
+      const bd = document.getElementById('sidebarBackdrop');
+      if (!sb) return;
+      const opening = !sb.classList.contains('mobile-open');
+      sb.classList.toggle('mobile-open', opening);
+      if (bd) bd.classList.toggle('show', opening);
+    }
+
+    function closeMobileSidebar() {
+      const sb = document.querySelector('.nav-sidebar');
+      const bd = document.getElementById('sidebarBackdrop');
+      if (sb) sb.classList.remove('mobile-open');
+      if (bd) bd.classList.remove('show');
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 680) closeMobileSidebar();
+    });
+
+    // ═══════════════════════════════════════════════
     // MODE SWITCH — UPDATED: Teacher mode removed
     // ═══════════════════════════════════════════════
     function switchMode(mode) {
+      // Close the mobile drawer (no-op on desktop) so picking a
+      // section also dismisses the overlay on phones/tablets
+      closeMobileSidebar();
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
       const modeMap = ['animind', 'library', 'file', 'question', 'simulation'];
@@ -10735,7 +10994,7 @@ function amShowSuccess() {
       if (saveCOStep === 1) {
         const subjectBtns = engineeringCourses.map(s =>
           `<button class="subj-sel-btn ${saveCOSelectedSubjectId === s.id ? 'sel' : ''}" onclick="saveCOSelectSubject('${s.id}')">
-        <span style="font-size:20px;">${s.icon}</span> ${esc(s.name)}
+        ${s.icon ? `<span style="font-size:20px;">${s.icon}</span> ` : ''}${esc(s.name)}
       </button>`).join('');
         body.innerHTML = `
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">Step 1 of 3 — Choose Subject</div>
@@ -10928,7 +11187,7 @@ function amShowSuccess() {
         return `<div class="subject-card" onclick="${deleteSubjectMode ? `deleteSubject('${s.id}')` : modifyMode ? `openModifySubject('${s.id}')` : `openSubject('${s.id}')`}">
       <div class="subject-card-top" style="background:linear-gradient(90deg,${s.color},${s.color}88);"></div>
       <div class="subject-card-inner">
-        <div class="subject-card-icon" style="background:linear-gradient(135deg,${s.color},${s.color}bb);">${s.icon}</div>
+        ${s.icon ? `<div class="subject-card-icon" style="background:linear-gradient(135deg,${s.color},${s.color}bb);">${s.icon}</div>` : ''}
         <div class="subject-card-name">${esc(s.name)}</div>
         <div class="subject-card-code">${esc(s.code || '')}</div>
         <div class="subject-card-stats">
@@ -11370,11 +11629,9 @@ ${text.substring(0, 4500)}`
     // CREATE SUBJECT MODAL
     // ═══════════════════════════════════════════════
     function openCreateSubjectModal() {
-      selectedNewIcon = '⚛️'; selectedNewColor = '#3b82f6';
+      selectedNewIcon = ''; selectedNewColor = '#3b82f6';
       document.getElementById('newSubjectName').value = '';
       document.getElementById('newSubjectCode').value = '';
-      document.getElementById('iconPickerRow').innerHTML = DEFAULT_ICONS.map(ic =>
-        `<div class="icon-pick ${ic === selectedNewIcon ? 'sel' : ''}" onclick="selectNewIcon('${ic}')">${ic}</div>`).join('');
       document.getElementById('colorPickerRow').innerHTML = DEFAULT_COLORS.map(c =>
         `<div class="color-pick ${c === selectedNewColor ? 'sel' : ''}" style="background:${c};" onclick="selectNewColor('${c}')"></div>`).join('');
       document.getElementById('createSubjectModal').classList.add('show');
