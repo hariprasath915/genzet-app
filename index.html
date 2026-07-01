@@ -13727,8 +13727,17 @@ ${text.substring(0, 4500)}`
      * Fetches GET /sync/share/{token} and renders the subject + CO + topic tree.
      */
     async function renderPublicSharePage(token) {
-      // Hide dashboard + landing; show share page
+      // Move share elements to document.body so they aren't hidden by gz-dashboard
       const sharePage = document.getElementById('gz-share-page');
+      const shareViewer = document.getElementById('shareViewerOverlay');
+      if (sharePage && sharePage.parentNode !== document.body) {
+        document.body.appendChild(sharePage);
+      }
+      if (shareViewer && shareViewer.parentNode !== document.body) {
+        document.body.appendChild(shareViewer);
+      }
+
+      // Hide dashboard + landing; show share page
       const dashboard = document.getElementById('gz-dashboard');
       const landing   = document.getElementById('gz-landing');
       const prePaint  = document.getElementById('genzet-pre-paint-gate');
