@@ -741,6 +741,9 @@
   _removeOldGate();
 
   function _boot() {
+    // If this page was opened with ?share=<token>, skip auth entirely.
+    // The public share page renderer (renderPublicSharePage) handles this URL.
+    if (new URLSearchParams(location.search).get('share')) return;
     if (window.__authInitDone) return;
     window.__authInitDone = true;
     setTimeout(_authInit, 80);
@@ -751,6 +754,7 @@
   } else {
     _boot();
   }
+
 
   console.log('[CLOUD] cloud_sync_v3.js loaded — cloud is the single source of truth');
 
