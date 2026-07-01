@@ -10123,7 +10123,6 @@ function amShowSuccess() {
     <div class="share-topbar">
       <span class="share-topbar-logo">GenZET</span>
       <span class="share-topbar-badge">🎓 Course Share</span>
-      <button class="share-topbar-signup" onclick="window.location.href=window.location.pathname">Sign in / Sign up →</button>
     </div>
 
     <!-- Hero: subject info -->
@@ -13708,6 +13707,13 @@ ${text.substring(0, 4500)}`
         frame.src = URL.createObjectURL(blob);
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        
+        // Request fullscreen on the overlay container
+        if (overlay.requestFullscreen) {
+          overlay.requestFullscreen().catch(err => console.log('Fullscreen rejected:', err));
+        } else if (overlay.webkitRequestFullscreen) {
+          overlay.webkitRequestFullscreen();
+        }
       } catch (e) {
         console.error('[SHARE] Failed to open topic:', e);
       }
@@ -13720,6 +13726,15 @@ ${text.substring(0, 4500)}`
       if (overlay) overlay.classList.remove('active');
       if (frame) { frame.src = 'about:blank'; }
       document.body.style.overflow = '';
+      
+      // Exit fullscreen if active
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
     }
 
     /**
