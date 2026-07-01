@@ -2996,6 +2996,392 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       opacity: 1;
     }
 
+    /* ── Share URL row below subject card stats ── */
+    .subject-share-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 7px 10px;
+      background: var(--teal-lt);
+      border-radius: 10px;
+      border: 1.5px solid var(--teal-md);
+      min-width: 0;
+    }
+    .subject-share-icon {
+      font-size: 12px;
+      flex-shrink: 0;
+      color: var(--teal);
+    }
+    .subject-share-link {
+      flex: 1;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--teal);
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      text-decoration: none;
+      min-width: 0;
+    }
+    .subject-share-link:hover {
+      text-decoration: underline;
+    }
+    .subject-share-copy-btn {
+      flex-shrink: 0;
+      background: var(--teal);
+      border: none;
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .15s, background .15s;
+    }
+    .subject-share-copy-btn:hover {
+      background: #0f766e;
+      transform: scale(1.1);
+    }
+    .subject-share-copy-btn.copied {
+      background: var(--green, #22c55e);
+    }
+
+    /* ════════════════════════════════════════════════════════
+       PUBLIC SHARE PAGE  —  shown when ?share=<token> in URL
+       ════════════════════════════════════════════════════════ */
+    #gz-share-page {
+      display: none;
+      min-height: 100vh;
+      background: var(--bg, #0f172a);
+      color: var(--text, #f1f5f9);
+      font-family: 'Sora', 'Inter', sans-serif;
+      padding: 0;
+    }
+    .share-topbar {
+      background: linear-gradient(135deg, #0d948840 0%, #0891b240 100%);
+      border-bottom: 1.5px solid rgba(13,148,136,.25);
+      backdrop-filter: blur(14px);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .share-topbar-logo {
+      font-size: 22px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #0d9488, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.03em;
+      font-family: 'Sora', sans-serif;
+    }
+    .share-topbar-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(13,148,136,.18);
+      border: 1px solid rgba(13,148,136,.35);
+      font-size: 10px;
+      font-weight: 800;
+      color: #5eead4;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .share-topbar-signup {
+      margin-left: auto;
+      padding: 8px 18px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0d9488, #06b6d4);
+      border: none;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: opacity .2s, transform .15s;
+    }
+    .share-topbar-signup:hover {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+    .share-hero {
+      padding: 36px 24px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .share-subject-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(13,148,136,.14);
+      border: 1px solid rgba(13,148,136,.3);
+      font-size: 11px;
+      font-weight: 700;
+      color: #5eead4;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 12px;
+    }
+    .share-subject-name {
+      font-size: 28px;
+      font-weight: 900;
+      color: #f8fafc;
+      margin-bottom: 6px;
+      line-height: 1.2;
+      font-family: 'Sora', sans-serif;
+    }
+    .share-subject-desc {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .share-section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 14px;
+    }
+    .share-co-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+    .share-co-card {
+      background: rgba(255,255,255,.04);
+      border: 1.5px solid rgba(255,255,255,.09);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color .25s, box-shadow .25s;
+    }
+    .share-co-card:hover {
+      border-color: rgba(13,148,136,.4);
+      box-shadow: 0 4px 28px rgba(13,148,136,.12);
+    }
+    .share-co-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .share-co-num {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0d9488, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: .3px;
+    }
+    .share-co-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .share-co-num-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0d9488;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 2px;
+    }
+    .share-co-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .share-co-topic-count {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .share-co-chevron {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: #475569;
+      transition: transform .25s;
+    }
+    .share-co-card.open .share-co-chevron {
+      transform: rotate(90deg);
+    }
+    .share-topic-list {
+      display: none;
+      border-top: 1.5px solid rgba(255,255,255,.07);
+      padding: 12px 16px 16px;
+      gap: 8px;
+      flex-direction: column;
+    }
+    .share-co-card.open .share-topic-list {
+      display: flex;
+    }
+    .share-topic-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .share-topic-item:hover {
+      background: rgba(13,148,136,.1);
+      border-color: rgba(13,148,136,.3);
+      transform: translateX(3px);
+    }
+    .share-topic-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(13,148,136,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .share-topic-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .share-topic-desc {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .share-topic-btn {
+      padding: 7px 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #0d9488, #06b6d4);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: opacity .2s, transform .15s;
+      white-space: nowrap;
+    }
+    .share-topic-btn:hover {
+      opacity: .88;
+      transform: translateY(-2px);
+    }
+    .share-topic-btn.no-content {
+      background: rgba(255,255,255,.08);
+      color: #64748b;
+      cursor: default;
+    }
+    .share-topic-btn.no-content:hover {
+      opacity: 1;
+      transform: none;
+    }
+    /* Full-screen animation viewer overlay */
+    #shareViewerOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: #000;
+      flex-direction: column;
+    }
+    #shareViewerOverlay.active {
+      display: flex;
+    }
+    .share-viewer-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(15,23,42,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+    .share-viewer-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f1f5f9;
+      font-family: 'Sora', sans-serif;
+    }
+    .share-viewer-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      border: 1.5px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.07);
+      color: #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background .2s;
+    }
+    .share-viewer-close:hover {
+      background: rgba(255,255,255,.15);
+    }
+    #shareViewerFrame {
+      flex: 1;
+      border: none;
+      width: 100%;
+    }
+    /* Loading state for share page */
+    .share-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+      color: #64748b;
+    }
+    .share-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(13,148,136,.2);
+      border-top-color: #0d9488;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    .share-empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: #64748b;
+    }
+    @media (max-width: 600px) {
+      .share-subject-name { font-size: 22px; }
+      .share-hero { padding: 24px 16px 16px; }
+      .share-co-grid { padding: 0 16px 32px; }
+      .share-co-name { font-size: 14px; }
+    }
+
     /* Subject Detail */
     .subject-detail-header {
       display: flex;
@@ -9728,7 +10114,41 @@ function amShowSuccess() {
     </div><!-- /main-area -->
   </div><!-- /app-wrap -->
 
+  <!-- ═══════════════════════════════════════════════════════
+       PUBLIC SHARE PAGE — rendered when ?share=<token> is in the URL
+       Hidden by default; JS shows it and hides #gz-dashboard.
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gz-share-page">
+    <!-- Top bar -->
+    <div class="share-topbar">
+      <span class="share-topbar-logo">GenZET</span>
+      <span class="share-topbar-badge">🎓 Course Share</span>
+      <button class="share-topbar-signup" onclick="window.location.href=window.location.pathname">Sign in / Sign up →</button>
+    </div>
+
+    <!-- Hero: subject info -->
+    <div class="share-hero" id="shareHero">
+      <div class="share-loading">
+        <div class="share-spinner"></div>
+        <span>Loading course content…</span>
+      </div>
+    </div>
+
+    <!-- CO + topic grid (populated by JS) -->
+    <div class="share-co-grid" id="shareCOGrid"></div>
+  </div>
+
+  <!-- Full-screen animation viewer (used by share page) -->
+  <div id="shareViewerOverlay">
+    <div class="share-viewer-bar">
+      <span class="share-viewer-title" id="shareViewerTitle">Animation</span>
+      <button class="share-viewer-close" onclick="closeShareViewer()" title="Close">✕</button>
+    </div>
+    <iframe id="shareViewerFrame" sandbox="allow-scripts allow-same-origin" title="Animation Viewer"></iframe>
+  </div>
+
   <!-- ══ MODALS ══ -->
+
 
   <!-- Save to Library -->
   <div class="modal-overlay" id="saveModal">
@@ -11201,6 +11621,18 @@ function amShowSuccess() {
         const totalTopics = s.cos.reduce((sum, co) => sum + co.topics.length, 0);
         const hasPdf = s.syllabus && s.syllabus.modules && s.syllabus.modules.length > 0;
         const totalPickTopics = hasPdf ? s.syllabus.modules.reduce((sum, m) => sum + m.topics.length, 0) : 0;
+        // Build the share URL if the subject has a share_token
+        const shareToken = s.share_token || null;
+        const shareUrl = shareToken
+          ? `${location.origin}${location.pathname}?share=${shareToken}`
+          : null;
+        const shareRowHtml = shareUrl && !deleteSubjectMode && !modifyMode
+          ? `<div class="subject-share-row" onclick="event.stopPropagation()">
+          <span class="subject-share-icon">🔗</span>
+          <a class="subject-share-link" href="${shareUrl}" target="_blank" rel="noopener" title="${shareUrl}">?share=${shareToken}</a>
+          <button class="subject-share-copy-btn" id="cpybtn-${s.id}" onclick="event.stopPropagation();copySubjectShareUrl('${shareUrl}','${s.id}')" title="Copy link">📋</button>
+        </div>`
+          : '';
         return `<div class="subject-card" onclick="${deleteSubjectMode ? `deleteSubject('${s.id}')` : modifyMode ? `openModifySubject('${s.id}')` : `openSubject('${s.id}')`}">
       <div class="subject-card-top" style="background:linear-gradient(90deg,${s.color},${s.color}88);"></div>
       <div class="subject-card-inner">
@@ -11212,6 +11644,7 @@ function amShowSuccess() {
           <span class="sc-stat" style="background:var(--teal-lt);color:var(--teal);border-color:var(--teal-md);">${totalTopics} Topic${totalTopics !== 1 ? 's' : ''}</span>
           ${hasPdf ? `<span class="sc-pdf-badge">📄 ${totalPickTopics} AI Picks</span>` : ''}
         </div>
+        ${shareRowHtml}
         ${deleteSubjectMode ? `<div style="margin-top:10px;padding:6px 12px;background:var(--red-lt);border-radius:8px;font-size:11px;font-weight:700;color:var(--red);text-align:center;">Click to Delete ✕</div>` : ''}
         ${modifyMode ? `<div style="margin-top:10px;padding:6px 12px;background:var(--blue-lt);border-radius:8px;font-size:11px;font-weight:700;color:var(--blue);text-align:center;">Click to Modify ✏️</div>` : ''}
       </div>
@@ -11222,6 +11655,34 @@ function amShowSuccess() {
     <div style="font-size:13px;font-weight:600;opacity:0.5;">New subject</div>
   </div>`;
     }
+
+    /** Copy a subject's share URL to clipboard and flash the button green. */
+    function copySubjectShareUrl(url, subjectId) {
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('cpybtn-' + subjectId);
+        if (btn) {
+          btn.textContent = '✅';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.textContent = '📋';
+            btn.classList.remove('copied');
+          }, 2000);
+        }
+        notify('🔗 Share link copied!', 'success');
+      }).catch(() => {
+        // Fallback for older mobile browsers
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        notify('🔗 Share link copied!', 'success');
+      });
+    }
+
 
     function filterSubjectsGrid(q) { renderSubjectsGrid(); }
 
@@ -13214,11 +13675,159 @@ ${text.substring(0, 4500)}`
     // guessing with a fixed 300ms delay (that timeout was the main cause
     // of the old login-screen flash on refresh: on a slow device/network
     // 300ms wasn't always enough, and even when it was, it left a visible
-    // window where neither the pre-paint CSS guess nor the real auth
-    // state had been reconciled yet). The pre-paint <script> in <head>
-    // already shows the right shell instantly; this just confirms/
-    // corrects it as soon as we genuinely know the answer.
+    // ═══════════════════════════════════════════════════════════════════
+    // PUBLIC SHARE PAGE — renders when ?share=<token> is in the URL
+    // No authentication required; all data fetched from GET /sync/share/{token}
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Escape HTML for safe inline rendering (share page uses untrusted server data).
+     * Re-uses the existing esc() helper already defined in this file.
+     */
+    function _shareEsc(s) {
+      return typeof esc === 'function' ? esc(s) : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    /** Toggle a CO accordion open/closed on the share page. */
+    function toggleShareCO(coId) {
+      const card = document.getElementById('sco-' + coId);
+      if (card) card.classList.toggle('open');
+    }
+
+    /** Open the animation viewer overlay with the given HTML content. */
+    function openShareTopic(topicId, titleText, encodedHtml) {
+      const overlay = document.getElementById('shareViewerOverlay');
+      const frame   = document.getElementById('shareViewerFrame');
+      const titleEl = document.getElementById('shareViewerTitle');
+      if (!overlay || !frame) return;
+      try {
+        const html = decodeURIComponent(encodedHtml);
+        titleEl.textContent = titleText || 'Animation';
+        // Write into blob URL so sandbox restrictions are relaxed (allow-scripts)
+        const blob = new Blob([html], { type: 'text/html' });
+        frame.src = URL.createObjectURL(blob);
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      } catch (e) {
+        console.error('[SHARE] Failed to open topic:', e);
+      }
+    }
+
+    /** Close the animation viewer overlay. */
+    function closeShareViewer() {
+      const overlay = document.getElementById('shareViewerOverlay');
+      const frame   = document.getElementById('shareViewerFrame');
+      if (overlay) overlay.classList.remove('active');
+      if (frame) { frame.src = 'about:blank'; }
+      document.body.style.overflow = '';
+    }
+
+    /**
+     * Main entry point for the public share page.
+     * Fetches GET /sync/share/{token} and renders the subject + CO + topic tree.
+     */
+    async function renderPublicSharePage(token) {
+      // Hide dashboard + landing; show share page
+      const sharePage = document.getElementById('gz-share-page');
+      const dashboard = document.getElementById('gz-dashboard');
+      const landing   = document.getElementById('gz-landing');
+      const prePaint  = document.getElementById('genzet-pre-paint-gate');
+      if (prePaint) prePaint.remove();
+      if (dashboard) { dashboard.style.display = 'none'; }
+      if (landing)   { landing.style.display   = 'none'; }
+      if (sharePage) { sharePage.style.display  = 'block'; }
+
+      const hero   = document.getElementById('shareHero');
+      const coGrid = document.getElementById('shareCOGrid');
+
+      try {
+        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://animind-backend-production.up.railway.app');
+        const res  = await fetch(`${backendBase}/sync/share/${encodeURIComponent(token)}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const { subject, cos } = data;
+
+        // ── Render hero ──────────────────────────────────────────
+        hero.innerHTML = `
+          <div class="share-subject-badge">📚 Engineering Course</div>
+          <div class="share-subject-name">${_shareEsc(subject.name)}</div>
+          ${subject.description ? `<div class="share-subject-desc">${_shareEsc(subject.description)}</div>` : ''}
+          <div class="share-section-title">${cos.length} Course Outcome${cos.length !== 1 ? 's' : ''}</div>`;
+
+        // ── Render CO accordion cards ─────────────────────────────
+        if (!cos || cos.length === 0) {
+          coGrid.innerHTML = `<div class="share-empty-state">
+            <div style="font-size:48px;margin-bottom:12px;">📋</div>
+            <p style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">No Course Outcomes yet</p>
+            <p style="font-size:13px;">The teacher hasn't added any COs to this subject yet.</p>
+          </div>`;
+          return;
+        }
+
+        coGrid.innerHTML = cos.map(co => {
+          const topicsHtml = co.topics.length === 0
+            ? `<div style="padding:12px 16px;font-size:12px;color:#64748b;">No topics saved in this CO yet.</div>`
+            : co.topics.map(t => {
+                const hasContent = t.has_content && t.html_code;
+                const encodedHtml = hasContent ? encodeURIComponent(t.html_code) : '';
+                return `<div class="share-topic-item">
+                  <div class="share-topic-icon">${hasContent ? '🎬' : '📄'}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div class="share-topic-name">${_shareEsc(t.name)}</div>
+                    ${t.description && t.description !== 'Uploaded HTML code' ? `<div class="share-topic-desc">${_shareEsc(t.description.slice(0, 80))}</div>` : ''}
+                  </div>
+                  <button class="share-topic-btn${hasContent ? '' : ' no-content'}"
+                    onclick="${hasContent ? `openShareTopic('${t.id}',${JSON.stringify(t.name)},${JSON.stringify(encodedHtml)})` : 'void(0)'}"
+                    ${hasContent ? '' : 'disabled title="No animation content saved yet"'}>
+                    ${hasContent ? '▶ View' : 'No content'}
+                  </button>
+                </div>`;
+              }).join('');
+
+          return `<div class="share-co-card" id="sco-${co.id}">
+            <div class="share-co-header" onclick="toggleShareCO('${co.id}')">
+              <div class="share-co-num">${_shareEsc(co.coNum)}</div>
+              <div class="share-co-info">
+                <div class="share-co-num-label">${_shareEsc(co.coNum)}</div>
+                <div class="share-co-name">${_shareEsc(co.name)}</div>
+                <div class="share-co-topic-count">${co.topics.length} topic${co.topics.length !== 1 ? 's' : ''} saved</div>
+              </div>
+              <span class="share-co-chevron">▶</span>
+            </div>
+            <div class="share-topic-list">${topicsHtml}</div>
+          </div>`;
+        }).join('');
+
+        // Auto-open first CO if there's only one
+        if (cos.length === 1) {
+          const firstCard = document.getElementById('sco-' + cos[0].id);
+          if (firstCard) firstCard.classList.add('open');
+        }
+
+      } catch (err) {
+        console.error('[SHARE] Error loading share page:', err);
+        if (hero) hero.innerHTML = `<div class="share-empty-state">
+          <div style="font-size:48px;margin-bottom:12px;">😕</div>
+          <p style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Couldn't load this course</p>
+          <p style="font-size:13px;color:#94a3b8;">${_shareEsc(err.message || 'The link may be invalid or expired.')}</p>
+        </div>`;
+        if (coGrid) coGrid.innerHTML = '';
+      }
+    }
+
+    // ── Detect ?share= URL param at page load ────────────────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
+      // Check for share token FIRST — if present, skip normal auth entirely.
+      const _shareParam = new URLSearchParams(location.search).get('share');
+      if (_shareParam) {
+        await renderPublicSharePage(_shareParam);
+        return;   // ← Do NOT call authInit for public share pages
+      }
+
+      // Normal auth flow (unchanged)
       // __dbReadyPromise is now a resolved Promise (IDB removed, Supabase is the store).
       // We still await it so the bootstrap order is deterministic.
       await (window.__dbReadyPromise || Promise.resolve(null));
@@ -13229,6 +13838,7 @@ ${text.substring(0, 4500)}`
       await initFn();
       window.__authInitDone = true;  // signal to override's safety-net: don't double-run
     });
+
   </script>
 
   <!-- ✅ Auth + Cloud Sync override — must be the LAST script (overrides authInit, syncPush, etc.) -->
