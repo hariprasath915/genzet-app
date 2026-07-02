@@ -13694,16 +13694,19 @@ ${text.substring(0, 4500)}`
     }
 
     /** Open the animation viewer overlay with the given HTML content. */
-    function openShareTopic(topicId, titleText, encodedHtml) {
+    function openShareTopic(topicId) {
       const overlay = document.getElementById('shareViewerOverlay');
       const frame   = document.getElementById('shareViewerFrame');
       const titleEl = document.getElementById('shareViewerTitle');
       if (!overlay || !frame) return;
+      
+      const data = window._shareDataCache && window._shareDataCache[topicId];
+      if (!data) return;
+      
       try {
-        const html = decodeURIComponent(encodedHtml);
-        titleEl.textContent = titleText || 'Animation';
+        titleEl.textContent = data.name || 'Animation';
         // Write into blob URL so sandbox restrictions are relaxed (allow-scripts)
-        const blob = new Blob([html], { type: 'text/html' });
+        const blob = new Blob([data.html], { type: 'text/html' });
         frame.src = URL.createObjectURL(blob);
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -13742,6 +13745,8 @@ ${text.substring(0, 4500)}`
      * Fetches GET /sync/share/{token} and renders the subject + CO + topic tree.
      */
     async function renderPublicSharePage(token) {
+      window._shareDataCache = {}; // Initialize cache for HTML animations
+      
       // Move share elements to document.body so they aren't hidden by gz-dashboard
       const sharePage = document.getElementById('gz-share-page');
       const shareViewer = document.getElementById('shareViewerOverlay');
@@ -13796,7 +13801,9 @@ ${text.substring(0, 4500)}`
             ? `<div style="padding:12px 16px;font-size:12px;color:#64748b;">No topics saved in this CO yet.</div>`
             : co.topics.map(t => {
                 const hasContent = t.has_content && t.html_code;
-                const encodedHtml = hasContent ? encodeURIComponent(t.html_code) : '';
+                if (hasContent) {
+                  window._shareDataCache[t.id] = { name: t.name, html: t.html_code };
+                }
                 return `<div class="share-topic-item">
                   <div class="share-topic-icon">${hasContent ? '🎬' : '📄'}</div>
                   <div style="flex:1;min-width:0;">
@@ -13804,7 +13811,7 @@ ${text.substring(0, 4500)}`
                     ${t.description && t.description !== 'Uploaded HTML code' ? `<div class="share-topic-desc">${_shareEsc(t.description.slice(0, 80))}</div>` : ''}
                   </div>
                   <button class="share-topic-btn${hasContent ? '' : ' no-content'}"
-                    onclick="${hasContent ? `openShareTopic('${t.id}',${JSON.stringify(t.name)},${JSON.stringify(encodedHtml)})` : 'void(0)'}"
+                    onclick="${hasContent ? `openShareTopic('${t.id}')` : 'void(0)'}"
                     ${hasContent ? '' : 'disabled title="No animation content saved yet"'}>
                     ${hasContent ? '▶ View' : 'No content'}
                   </button>
