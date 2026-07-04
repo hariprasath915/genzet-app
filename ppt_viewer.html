@@ -1,397 +1,796 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>PPT Viewer — GenZET</title>
-  <meta name="description" content="GenZET PowerPoint Presentation Viewer — slides rendered with full fidelity." />
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- PPTXjs CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/css/pptxjs.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/css/nv.d3.min.css">
-  
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --border: #334155;
-      --text: #f1f5f9;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --teal: #14b8a6;
-      --teal-lt: rgba(20,184,166,.12);
-      --green: #10b981;
-      --green-lt: rgba(16,185,129,.12);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0f172a;--surface:#1e293b;--border:#334155;
+      --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+      --teal:#14b8a6;--teal-lt:rgba(20,184,166,.12);
+      --green:#10b981;--green-lt:rgba(16,185,129,.12);
     }
-
-    body {
-      font-family: 'Sora', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      user-select: none;
-    }
+    body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
     /* ── TOP BAR ── */
-    #topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: var(--surface);
-      border-bottom: 1.5px solid var(--border);
-      flex-shrink: 0;
-      gap: 16px;
-      flex-wrap: wrap;
-      min-height: 56px;
-      z-index: 1000;
-      position: relative;
-    }
+    #topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;background:var(--surface);border-bottom:1.5px solid var(--border);flex-shrink:0;gap:12px;min-height:52px;z-index:100}
+    .tb-logo{font-size:14px;font-weight:800;background:linear-gradient(135deg,#14b8a6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .tb-sep{width:1.5px;height:18px;background:var(--border);border-radius:2px;flex-shrink:0}
+    #pptTitle{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+    #pptSub{font-size:10px;color:var(--text3)}
+    .tb-center{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .nav-btn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;font-family:inherit}
+    .nav-btn:hover:not(:disabled){border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
+    .nav-btn:disabled{opacity:.3;cursor:not-allowed}
+    #slideCounter{font-size:12px;font-weight:700;color:var(--text2);min-width:60px;text-align:center}
+    .tb-right{display:flex;align-items:center;gap:8px}
+    .badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;background:var(--green-lt);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+    .act-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+    .act-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
 
-    #topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    /* ── PROGRESS BAR ── */
+    #progressBar{height:2px;background:var(--border);flex-shrink:0}
+    #progressFill{height:100%;background:linear-gradient(90deg,var(--teal),var(--green));transition:width .3s ease;border-radius:0 2px 2px 0}
 
-    .topbar-logo {
-      font-size: 15px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #14b8a6, #10b981);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.5px;
-    }
+    /* ── SLIDE STAGE ── */
+    #stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at center,#1a2744 0%,#0f172a 100%);position:relative;padding:16px}
 
-    .topbar-sep {
-      width: 1.5px;
-      height: 20px;
-      background: var(--border);
-      border-radius: 2px;
-    }
+    /* The slide element rendered by the engine */
+    #slideWrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+    .gz-slide{position:relative;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.07);border-radius:4px;background:#fff;flex-shrink:0}
+    .gz-slide img{position:absolute;display:block}
+    .gz-slide .gz-shape{position:absolute;overflow:hidden}
+    .gz-slide .gz-shape.gz-text-box{overflow:visible}
 
-    #pptTitle {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 320px;
-    }
+    /* Loading / Error */
+    #loadingState{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--text2)}
+    .spinner{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .85s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #loadingMsg{font-size:13px;font-weight:600}
+    #errorBox{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:12px;color:#f87171;text-align:center;padding:24px;background:rgba(30,41,59,.9);border:1.5px solid #7f1d1d;border-radius:14px;max-width:400px}
+    #errorBox p{font-size:13px;font-weight:600}
 
-    #pptSub {
-      font-size: 11px;
-      color: var(--text3);
-      margin-top: 1px;
-    }
+    /* ── THUMBNAIL BAR ── */
+    #thumbBar{display:flex;align-items:center;gap:5px;padding:8px 18px;background:var(--surface);border-top:1.5px solid var(--border);flex-shrink:0;min-height:46px;overflow-x:auto}
+    .thumb-btn{width:44px;height:28px;border-radius:4px;border:2px solid var(--border);background:#1a2744;cursor:pointer;flex-shrink:0;font-size:9px;font-weight:800;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all .14s;font-family:inherit}
+    .thumb-btn.active{border-color:var(--teal);color:var(--teal);background:var(--teal-lt)}
+    .thumb-btn:hover:not(.active){border-color:var(--text3);color:var(--text2)}
 
-    #topbar-center {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    #topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .act-btn {
-      padding: 7px 14px;
-      border-radius: 9px;
-      border: 1.5px solid var(--border);
-      background: var(--surface);
-      color: var(--text2);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Sora', sans-serif;
-      transition: all .2s;
-      white-space: nowrap;
-    }
-
-    .act-btn:hover {
-      border-color: var(--teal);
-      color: var(--teal);
-      background: var(--teal-lt);
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      background: var(--green-lt);
-      color: var(--green);
-      border: 1px solid rgba(16,185,129,.3);
-    }
-
-    /* ── SLIDE AREA ── */
-    #slideArea {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      padding: 20px;
-      background: radial-gradient(ellipse at center, #1a2744 0%, #0f172a 100%);
-      position: relative;
-    }
-
-    /* Loading & Error states */
-    #loadingState {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      color: var(--text2);
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-    }
-
-    .spinner {
-      width: 44px;
-      height: 44px;
-      border: 3px solid var(--border);
-      border-top-color: var(--teal);
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    #loadingMsg {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    #errorState {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: #f87171;
-      text-align: center;
-      padding: 20px;
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-    }
-
-    #errorIcon {
-      font-size: 48px;
-    }
-
-    #errorMsg {
-      font-size: 14px;
-      font-weight: 600;
-      max-width: 400px;
-    }
-
-    /* PPTX container wrapper */
-    #pptx-wrapper {
-      width: 100%;
-      height: 100%;
-      display: none; /* hidden until loaded */
-      overflow: auto; /* Allow scrolling if zoomed */
-    }
-
-    #pptx-container {
-      margin: 0 auto;
-    }
-
-    /* Override PPTXjs default styles slightly to fit the dark theme */
-    .pptx-wrapper {
-      background-color: transparent !important;
-      padding: 0 !important;
-    }
+    /* Keyboard hint */
+    #kbHint{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.92);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:10px;color:var(--text3);pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap;z-index:999}
+    #kbHint.show{opacity:1}
   </style>
 </head>
 <body>
 
-  <!-- TOP BAR -->
-  <div id="topbar">
-    <div id="topbar-left">
-      <span class="topbar-logo">GenZET</span>
-      <div class="topbar-sep"></div>
-      <div>
-        <div id="pptTitle">PowerPoint Viewer</div>
-        <div id="pptSub">Loading…</div>
-      </div>
-    </div>
-
-    <div id="topbar-right">
-      <span class="badge">📊 PPT Viewer</span>
-      <button class="act-btn" onclick="toggleFullscreen()" id="btnFullscreen">⛶ Fullscreen</button>
+<!-- TOP BAR -->
+<div id="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="tb-logo">GenZET</span>
+    <div class="tb-sep"></div>
+    <div>
+      <div id="pptTitle">PowerPoint Viewer</div>
+      <div id="pptSub">Loading…</div>
     </div>
   </div>
-
-  <!-- SLIDE AREA -->
-  <div id="slideArea">
-    <div id="loadingState">
-      <div class="spinner"></div>
-      <div id="loadingMsg">Loading your presentation…</div>
-    </div>
-    <div id="errorState">
-      <div id="errorIcon">⚠️</div>
-      <div id="errorMsg">Could not load the presentation.</div>
-    </div>
-    
-    <div id="pptx-wrapper">
-      <div id="pptx-container"></div>
-    </div>
+  <div class="tb-center">
+    <button class="nav-btn" id="btnPrev" onclick="prevSlide()" disabled>‹</button>
+    <span id="slideCounter">— / —</span>
+    <button class="nav-btn" id="btnNext" onclick="nextSlide()" disabled>›</button>
   </div>
+  <div class="tb-right">
+    <span class="badge">📊 PPT Viewer</span>
+    <button class="act-btn" id="btnFS" onclick="toggleFS()">⛶ Fullscreen</button>
+  </div>
+</div>
 
-  <!-- Dependencies for PPTXjs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.6.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/filereader/0.25.0/filereader.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
-  
-  <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/pptxjs.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/meshesha/PPTXjs@latest/js/divs2slides.js"></script>
+<!-- PROGRESS -->
+<div id="progressBar"><div id="progressFill" style="width:0%"></div></div>
 
-  <script>
-    // ═══════════════════════════════════════════════
-    // GenZET PPT Viewer (using PPTXjs for full fidelity)
-    // ═══════════════════════════════════════════════
+<!-- STAGE -->
+<div id="stage">
+  <div id="loadingState"><div class="spinner"></div><div id="loadingMsg">Loading…</div></div>
+  <div id="errorBox"><span style="font-size:40px">⚠️</span><p id="errorMsg">Error loading presentation.</p></div>
+  <div id="slideWrap"></div>
+</div>
 
-    // ── Fetch PPTX from IndexedDB ──────────────────
-    function loadFromDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open('GenzET_PPT', 1);
-        req.onupgradeneeded = e => e.target.result.createObjectStore('slides');
-        req.onsuccess = e => {
-          const db = e.target.result;
-          const tx = db.transaction('slides', 'readonly');
-          const getReq = tx.objectStore('slides').get('__gz_ppt_pending__');
-          getReq.onsuccess = () => { db.close(); resolve(getReq.result || null); };
-          getReq.onerror = () => { db.close(); reject(getReq.error); };
-        };
-        req.onerror = () => reject(req.error);
-      });
+<!-- THUMBNAIL BAR -->
+<div id="thumbBar"></div>
+<div id="kbHint">← → to navigate · Space = next · F = fullscreen · Home / End</div>
+
+<!-- JSZip (v3) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// GenZET PPTX Viewer  –  DOM-based renderer (full fidelity)
+// Reads native PPTX XML, renders each slide as a pixel-perfect HTML overlay.
+// EMU unit: 1 inch = 914400 EMU = 96px → scale = 96 / 914400
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const EMU2PT = v => v / 12700;             // EMU → pt
+const EMU2PX = v => (v / 914400) * 96;    // EMU → px at 96dpi
+
+let slides = [];
+let currentIdx = 0;
+let slideW_emu = 9144000;   // default 10 inch
+let slideH_emu = 5143500;   // default 7.5 inch
+let themeFonts = { major: 'Calibri', minor: 'Calibri' };
+let themeColors = {};        // map: name → hex
+let masterBg = null;         // master slide background (if any)
+let slideLayouts = {};       // rId → parsed layout data
+let parsedZip = null;
+
+/* ── Tiny XML helper ─────────────────────────────────────────────────── */
+const xns = '*';
+function xq(el, tag)  { return el.getElementsByTagNameNS(xns, tag)[0]; }
+function xqa(el, tag) { return Array.from(el.getElementsByTagNameNS(xns, tag)); }
+function xattr(el, ...names) {
+  for (const n of names) {
+    const v = el?.getAttribute?.(n);
+    if (v != null) return v;
+  }
+  return null;
+}
+
+/* ── Color resolution ────────────────────────────────────────────────── */
+function resolveColor(el) {
+  if (!el) return null;
+  const srgb = xq(el, 'srgbClr');
+  if (srgb) {
+    let hex = '#' + srgb.getAttribute('val');
+    hex = applyColorMods(hex, srgb);
+    return hex;
+  }
+  const sysClr = xq(el, 'sysClr');
+  if (sysClr) return '#' + (sysClr.getAttribute('lastClr') || '000000');
+  const schemeClr = xq(el, 'schemeClr');
+  if (schemeClr) {
+    const name = schemeClr.getAttribute('val');
+    let hex = themeColors[name] || '#000000';
+    hex = applyColorMods(hex, schemeClr);
+    return hex;
+  }
+  const prstClr = xq(el, 'prstClr');
+  if (prstClr) return prstPreset(prstClr.getAttribute('val'));
+  return null;
+}
+
+function applyColorMods(hex, el) {
+  const lumMod = xq(el, 'lumMod');
+  const lumOff = xq(el, 'lumOff');
+  const shade   = xq(el, 'shade');
+  const tint    = xq(el, 'tint');
+  const alpha   = xq(el, 'alpha');
+  if (!lumMod && !lumOff && !shade && !tint && !alpha) return hex;
+  let [r,g,b] = hexToRgb(hex);
+  if (lumMod) {
+    const f = parseInt(lumMod.getAttribute('val')) / 100000;
+    r=Math.round(r*f); g=Math.round(g*f); b=Math.round(b*f);
+  }
+  if (lumOff) {
+    const o = parseInt(lumOff.getAttribute('val')) / 100000 * 255;
+    r=clamp(r+o); g=clamp(g+o); b=clamp(b+o);
+  }
+  if (shade) {
+    const s = parseInt(shade.getAttribute('val')) / 100000;
+    r=Math.round(r*s); g=Math.round(g*s); b=Math.round(b*s);
+  }
+  if (tint) {
+    const t = parseInt(tint.getAttribute('val')) / 100000;
+    r=Math.round(r+(255-r)*t); g=Math.round(g+(255-g)*t); b=Math.round(b+(255-b)*t);
+  }
+  hex = '#' + [r,g,b].map(v=>clamp(v).toString(16).padStart(2,'0')).join('');
+  if (alpha) {
+    const a = parseInt(alpha.getAttribute('val')) / 100000;
+    hex = hexToRgba(hex, a);
+  }
+  return hex;
+}
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+}
+function hexToRgba(hex, a) {
+  const [r,g,b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+const PRESET_COLORS = {
+  black:'000000', white:'ffffff', red:'ff0000', green:'008000', blue:'0000ff',
+  yellow:'ffff00', cyan:'00ffff', magenta:'ff00ff', orange:'ffa500', purple:'800080',
+  gray:'808080', grey:'808080', brown:'a52a2a', pink:'ffc0cb', navy:'000080',
+  lime:'00ff00', silver:'c0c0c0', gold:'ffd700', indigo:'4b0082', violet:'ee82ee'
+};
+function prstPreset(name) { return '#' + (PRESET_COLORS[name?.toLowerCase()] || '000000'); }
+
+/* ── Fill builder ────────────────────────────────────────────────────── */
+function buildFillStyle(el) {
+  if (!el) return '';
+  const solid = xq(el, 'solidFill');
+  if (solid) {
+    const c = resolveColor(solid);
+    if (c) return `background:${c};`;
+  }
+  const grad = xq(el, 'gradFill');
+  if (grad) {
+    const stops = xqa(grad, 'gs').map(gs => {
+      const pos = parseInt(gs.getAttribute('pos')) / 1000;
+      const c   = resolveColor(gs) || '#000';
+      return `${c} ${pos}%`;
+    });
+    const lin = xq(grad, 'lin');
+    if (lin) {
+      const ang = parseInt(lin.getAttribute('ang') || '0') / 60000;
+      return `background:linear-gradient(${ang}deg,${stops.join(',')});`;
+    }
+    return `background:linear-gradient(${stops.join(',')});`;
+  }
+  const patt = xq(el, 'pattFill');
+  if (patt) {
+    const fg = resolveColor(xq(patt, 'fgClr'));
+    if (fg) return `background:${fg};`;
+  }
+  const noFill = xq(el, 'noFill');
+  if (noFill) return 'background:transparent;';
+  return '';
+}
+
+/* ── Image helpers ───────────────────────────────────────────────────── */
+async function blipToDataUrl(rId, relMap) {
+  if (!rId || !relMap[rId]) return null;
+  const target = relMap[rId];
+  const path = target.startsWith('/') ? target.slice(1) :
+               ('ppt/' + target.replace(/^\.\.\//, ''));
+  const cleaned = path.replace(/\/[^/]+\/\.\.\//g, '/');
+  const f = parsedZip.file(cleaned);
+  if (!f) return null;
+  const ext = cleaned.split('.').pop().toLowerCase();
+  const mime = {png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',
+                bmp:'image/bmp',svg:'image/svg+xml',emf:'image/x-emf',wmf:'image/x-wmf'}[ext] || 'image/png';
+  const b64 = await f.async('base64');
+  return `data:${mime};base64,${b64}`;
+}
+
+/* ── Parse theme ─────────────────────────────────────────────────────── */
+async function parseTheme(zip) {
+  const themeFile = zip.file('ppt/theme/theme1.xml');
+  if (!themeFile) return;
+  const doc = parseXml(await themeFile.async('text'));
+  const fmtScheme = xq(doc, 'fontScheme');
+  if (fmtScheme) {
+    const maj = xq(fmtScheme, 'majorFont');
+    const min = xq(fmtScheme, 'minorFont');
+    if (maj) themeFonts.major = maj.getAttribute('latin') || 'Calibri';
+    if (min) themeFonts.minor = min.getAttribute('latin') || 'Calibri';
+  }
+  const clrScheme = xq(doc, 'clrScheme');
+  if (clrScheme) {
+    for (const child of clrScheme.children) {
+      const name = child.localName;
+      const srgb = xq(child, 'srgbClr') || xq(child, 'sysClr');
+      if (srgb) themeColors[name] = '#' + (srgb.getAttribute('val') || srgb.getAttribute('lastClr') || '000000');
+    }
+  }
+}
+
+/* ── Parse slide rels ────────────────────────────────────────────────── */
+async function parseRels(zip, relPath) {
+  const map = {};
+  const f = zip.file(relPath);
+  if (!f) return map;
+  const doc = parseXml(await f.async('text'));
+  for (const r of xqa(doc, 'Relationship')) {
+    map[r.getAttribute('Id')] = r.getAttribute('Target');
+  }
+  return map;
+}
+
+/* ── Parse paragraph (returns HTML string) ───────────────────────────── */
+function parsePara(paraEl, defFontSz) {
+  const pPr = xq(paraEl, 'pPr');
+  const algn = pPr ? (pPr.getAttribute('algn') || 'l') : 'l';
+  const alignMap = {l:'left', ctr:'center', r:'right', just:'justify', dist:'justify'};
+  const textAlign = alignMap[algn] || 'left';
+  const indent  = pPr ? parseInt(pPr.getAttribute('indent')  || '0') : 0;
+  const marL    = pPr ? parseInt(pPr.getAttribute('marL')    || '0') : 0;
+  const spcBef  = pPr ? parseInt(xattr(xq(pPr,'spcBef'),'val') || '0') : 0;
+
+  const runs = xqa(paraEl, 'r');
+  const fld  = xqa(paraEl, 'fld'); // slide number fields etc
+
+  let html = '';
+  const allRuns = [...runs, ...fld].sort((a,b)=>{
+    const pos = (el) => Array.from(el.parentNode.children).indexOf(el);
+    return pos(a)-pos(b);
+  });
+
+  for (const r of allRuns) {
+    const rPr  = xq(r, 'rPr');
+    const tEl  = xq(r, 't');
+    if (!tEl && r.localName !== 'fld') continue;
+    const text = (tEl ? tEl.textContent : '') || '';
+    if (!text && r.localName !== 'fld') continue;
+
+    const sz      = rPr ? parseInt(rPr.getAttribute('sz') || String(defFontSz*100)) / 100 : defFontSz;
+    const bold    = rPr ? (rPr.getAttribute('b') === '1') : false;
+    const italic  = rPr ? (rPr.getAttribute('i') === '1') : false;
+    const ul      = rPr ? (rPr.getAttribute('u') && rPr.getAttribute('u') !== 'none') : false;
+    const strike  = rPr ? (rPr.getAttribute('strike') === 'sngStrike' || rPr.getAttribute('strike') === 'dblStrike') : false;
+    const latin   = rPr ? xq(rPr, 'latin') : null;
+    const rawFont = latin ? (latin.getAttribute('typeface') || '') : '';
+    const font    = rawFont === '+mj-lt' ? themeFonts.major
+                  : rawFont === '+mn-lt' ? themeFonts.minor
+                  : rawFont || themeFonts.minor;
+
+    let color = '#000000';
+    if (rPr) {
+      const solidFill = xq(rPr, 'solidFill');
+      const c = resolveColor(solidFill);
+      if (c) color = c;
     }
 
-    function showError(msg) {
-      document.getElementById('loadingState').style.display = 'none';
-      document.getElementById('errorState').style.display = 'flex';
-      document.getElementById('errorMsg').textContent = msg;
-    }
+    const styles = [
+      `font-size:${sz}pt`,
+      `color:${color}`,
+      `font-family:"${font}",Calibri,Arial,sans-serif`,
+      bold   ? 'font-weight:bold'   : 'font-weight:normal',
+      italic ? 'font-style:italic'  : '',
+      ul     ? 'text-decoration:underline' : '',
+      strike ? 'text-decoration:line-through' : '',
+    ].filter(Boolean).join(';');
 
-    // ── Fullscreen ─────────────────────────────────
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-        document.getElementById('btnFullscreen').textContent = '⛶ Exit Fullscreen';
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    html += `<span style="${styles}">${escaped}</span>`;
+  }
+
+  const paraStyle = [
+    `text-align:${textAlign}`,
+    marL  ? `margin-left:${EMU2PT(marL)}pt`     : '',
+    indent? `text-indent:${EMU2PT(indent)}pt`    : '',
+    spcBef? `margin-top:${EMU2PT(spcBef)*0.01}pt`: '',
+    'white-space:pre-wrap',
+    'word-break:break-word',
+    'min-height:1em',
+  ].filter(Boolean).join(';');
+
+  return `<div style="${paraStyle}">${html || '&ZeroWidthSpace;'}</div>`;
+}
+
+/* ── Parse a sp (text/shape) element ─────────────────────────────────── */
+async function parseShape(spEl, zip, relMap, slideW, slideH, scale) {
+  const xfrm = xq(spEl, 'xfrm');
+  if (!xfrm) return '';
+  const off = xq(xfrm, 'off');
+  const ext = xq(xfrm, 'ext');
+  if (!off || !ext) return '';
+
+  const rot   = parseFloat(xattr(xfrm, 'rot') || '0') / 60000;
+  const flipH = xattr(xfrm, 'flipH') === '1';
+  const flipV = xattr(xfrm, 'flipV') === '1';
+  const x = EMU2PX(parseInt(off.getAttribute('x'))) * scale;
+  const y = EMU2PX(parseInt(off.getAttribute('y'))) * scale;
+  const w = EMU2PX(parseInt(ext.getAttribute('cx'))) * scale;
+  const h = EMU2PX(parseInt(ext.getAttribute('cy'))) * scale;
+
+  const spPr = xq(spEl, 'spPr');
+  const txBody = xq(spEl, 'txBody');
+  const nvSpPr = xq(spEl, 'nvSpPr');
+  const ph = nvSpPr ? xq(nvSpPr, 'ph') : null;
+  const phType = ph ? (ph.getAttribute('type') || 'body') : null;
+
+  // ── Fill ──
+  let fillStyle = buildFillStyle(spPr) || '';
+  // blip fill (image inside shape)
+  const blipFill = xq(spPr, 'blipFill') || xq(spEl, 'blipFill');
+  let bgImgStyle = '';
+  if (blipFill) {
+    const blip = xq(blipFill, 'blip');
+    const rId  = blip ? (blip.getAttribute('r:embed') ||
+      blip.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','embed')) : null;
+    const url  = await blipToDataUrl(rId, relMap);
+    if (url) {
+      const stretch = xq(blipFill, 'stretch');
+      bgImgStyle = `background-image:url('${url}');background-size:${stretch?'100% 100%':'cover'};background-position:center;background-repeat:no-repeat;`;
+      fillStyle = '';
+    }
+  }
+
+  // ── Border ──
+  const ln = xq(spPr, 'ln');
+  let borderStyle = '';
+  if (ln) {
+    const wAttr = parseInt(ln.getAttribute('w') || '0');
+    const wPx = (wAttr / 12700) * scale;  // EMU/12700 → pt → scale
+    const lnClr = resolveColor(xq(ln, 'solidFill'));
+    if (wPx > 0 && lnClr) borderStyle = `border:${Math.max(1,wPx)}px solid ${lnClr};`;
+  }
+
+  // ── Transform ──
+  let transformStr = '';
+  const transforms = [];
+  if (rot)   transforms.push(`rotate(${rot}deg)`);
+  if (flipH) transforms.push('scaleX(-1)');
+  if (flipV) transforms.push('scaleY(-1)');
+  if (transforms.length) transformStr = `transform:${transforms.join(' ')};transform-origin:center center;`;
+
+  // ── Border radius ──
+  const prstGeom = xq(spPr, 'prstGeom');
+  const prst = prstGeom ? prstGeom.getAttribute('prst') : '';
+  const isOval = prst === 'ellipse' || prst === 'circle';
+  const radiusStr = isOval ? 'border-radius:50%;' : '';
+
+  // ── Text body ──
+  let textHtml = '';
+  if (txBody) {
+    const bodyPr = xq(txBody, 'bodyPr');
+    const anchor     = bodyPr ? (bodyPr.getAttribute('anchor') || 'ctr') : 'ctr';
+    const vertAlign  = anchor === 'b' ? 'flex-end' : anchor === 't' ? 'flex-start' : 'center';
+    const vert       = bodyPr ? bodyPr.getAttribute('vert') : null;
+    const isVertical = vert === 'vert' || vert === 'vert270' || vert === 'eaVert';
+    const lIns  = EMU2PX(parseInt(bodyPr?.getAttribute('lIns') || '91440')) * scale;
+    const rIns  = EMU2PX(parseInt(bodyPr?.getAttribute('rIns') || '91440')) * scale;
+    const tIns  = EMU2PX(parseInt(bodyPr?.getAttribute('tIns') || '45720')) * scale;
+    const bIns  = EMU2PX(parseInt(bodyPr?.getAttribute('bIns') || '45720')) * scale;
+    const wrap  = bodyPr ? bodyPr.getAttribute('wrap') : 'square';
+    const noWrap = wrap === 'none';
+
+    // default font size from list style
+    const lstStyle = xq(txBody, 'lstStyle');
+    const defPPr   = lstStyle ? xq(lstStyle, 'defPPr') : null;
+    const defRPr   = defPPr   ? xq(defPPr, 'defRPr') : null;
+    const defSz    = defRPr   ? parseInt(defRPr.getAttribute('sz') || '1800') / 100 : 18;
+
+    const parasHtml = xqa(txBody, 'p').map(p => parsePara(p, defSz)).join('');
+
+    const rotStyle = isVertical ? 'writing-mode:vertical-rl;text-orientation:mixed;' : '';
+    const wrapStyle = noWrap ? 'white-space:nowrap;overflow:visible;' : '';
+    const padding = `padding:${tIns}px ${rIns}px ${bIns}px ${lIns}px;`;
+
+    textHtml = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:${vertAlign};${padding}${rotStyle}${wrapStyle}overflow:hidden;pointer-events:none">${parasHtml}</div>`;
+  }
+
+  const shapeStyle = [
+    `left:${x}px`, `top:${y}px`, `width:${w}px`, `height:${h}px`,
+    fillStyle, bgImgStyle, borderStyle, transformStr, radiusStr,
+    'position:absolute', 'overflow:hidden'
+  ].filter(Boolean).join(';');
+
+  return `<div style="${shapeStyle}">${textHtml}</div>`;
+}
+
+/* ── Parse a pic element ─────────────────────────────────────────────── */
+async function parsePic(picEl, zip, relMap, scale) {
+  const xfrm = xq(picEl, 'xfrm');
+  if (!xfrm) return '';
+  const off = xq(xfrm, 'off');
+  const ext = xq(xfrm, 'ext');
+  if (!off || !ext) return '';
+
+  const x = EMU2PX(parseInt(off.getAttribute('x'))) * scale;
+  const y = EMU2PX(parseInt(off.getAttribute('y'))) * scale;
+  const w = EMU2PX(parseInt(ext.getAttribute('cx'))) * scale;
+  const h = EMU2PX(parseInt(ext.getAttribute('cy'))) * scale;
+  const rot   = parseFloat(xattr(xfrm, 'rot') || '0') / 60000;
+  const flipH = xattr(xfrm, 'flipH') === '1';
+  const flipV = xattr(xfrm, 'flipV') === '1';
+
+  const blipFill = xq(picEl, 'blipFill');
+  const blip = blipFill ? xq(blipFill, 'blip') : null;
+  const rId  = blip ? (blip.getAttribute('r:embed') ||
+    blip.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','embed')) : null;
+  const url  = await blipToDataUrl(rId, relMap);
+  if (!url) return '';
+
+  const transforms = [];
+  if (rot)   transforms.push(`rotate(${rot}deg)`);
+  if (flipH) transforms.push('scaleX(-1)');
+  if (flipV) transforms.push('scaleY(-1)');
+  const transStr = transforms.length ? `transform:${transforms.join(' ')};transform-origin:center center;` : '';
+
+  // Cropping
+  const srcRect = xq(blipFill, 'srcRect');
+  let clipStyle = '';
+  if (srcRect) {
+    const l = parseInt(srcRect.getAttribute('l')||'0')/1000;
+    const t = parseInt(srcRect.getAttribute('t')||'0')/1000;
+    const r = parseInt(srcRect.getAttribute('r')||'0')/1000;
+    const b = parseInt(srcRect.getAttribute('b')||'0')/1000;
+    if (l||t||r||b) clipStyle = `object-fit:none;object-position:${-l}% ${-t}%;`;
+  }
+
+  return `<img src="${url}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;${transStr}${clipStyle}display:block;" />`;
+}
+
+/* ── Parse a graphicFrame (tables, charts) ───────────────────────────── */
+async function parseGraphicFrame(el, zip, relMap, scale) {
+  const xfrm = xq(el, 'xfrm');
+  if (!xfrm) return '';
+  const off = xq(xfrm, 'off');
+  const ext = xq(xfrm, 'ext');
+  if (!off||!ext) return '';
+  const x = EMU2PX(parseInt(off.getAttribute('x'))) * scale;
+  const y = EMU2PX(parseInt(off.getAttribute('y'))) * scale;
+  const w = EMU2PX(parseInt(ext.getAttribute('cx'))) * scale;
+  const h = EMU2PX(parseInt(ext.getAttribute('cy'))) * scale;
+
+  // Table
+  const tbl = xq(el, 'tbl');
+  if (tbl) {
+    const rows = xqa(tbl, 'tr');
+    let tHtml = `<table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed;">`;
+    for (const tr of rows) {
+      tHtml += '<tr>';
+      for (const tc of xqa(tr, 'tc')) {
+        const tcPr  = xq(tc, 'tcPr');
+        const fill  = buildFillStyle(tcPr);
+        const bdr   = '';
+        const txBody = xq(tc, 'txBody');
+        const cellText = txBody ? xqa(txBody, 'p').map(p => parsePara(p, 14)).join('') : '';
+        tHtml += `<td style="vertical-align:middle;padding:4px;${fill}${bdr}">${cellText}</td>`;
+      }
+      tHtml += '</tr>';
+    }
+    tHtml += '</table>';
+    return `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;">${tHtml}</div>`;
+  }
+  return '';
+}
+
+/* ── Parse a group element ───────────────────────────────────────────── */
+async function parseGroup(grpEl, zip, relMap, slideW, slideH, scale) {
+  let html = '';
+  for (const child of grpEl.children) {
+    const ln = child.localName;
+    if      (ln === 'sp')           html += await parseShape(child, zip, relMap, slideW, slideH, scale);
+    else if (ln === 'pic')          html += await parsePic(child, zip, relMap, scale);
+    else if (ln === 'graphicFrame') html += await parseGraphicFrame(child, zip, relMap, scale);
+    else if (ln === 'grpSp')        html += await parseGroup(child, zip, relMap, slideW, slideH, scale);
+  }
+  return html;
+}
+
+/* ── Parse a single slide ────────────────────────────────────────────── */
+async function parseSlide(zip, slideFile, scale) {
+  const xml   = await zip.file(slideFile).async('text');
+  const doc   = parseXml(xml);
+  const relsPath = slideFile.replace(/\/([^/]+)$/, '/_rels/$1.rels');
+  const relMap   = await parseRels(zip, relsPath);
+
+  // Background
+  let bgHtml = '';
+  const bg = xq(doc, 'bg');
+  if (bg) {
+    const bgPr = xq(bg, 'bgPr');
+    if (bgPr) {
+      const blip = xq(bgPr, 'blip');
+      if (blip) {
+        const rId  = blip.getAttribute('r:embed') ||
+          blip.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','embed');
+        const url  = await blipToDataUrl(rId, relMap);
+        if (url) {
+          const sw = EMU2PX(slideW_emu) * scale;
+          const sh = EMU2PX(slideH_emu) * scale;
+          bgHtml += `<img src="${url}" style="position:absolute;left:0;top:0;width:${sw}px;height:${sh}px;object-fit:cover;z-index:0;pointer-events:none;" />`;
+        }
       } else {
-        document.exitFullscreen();
-        document.getElementById('btnFullscreen').textContent = '⛶ Fullscreen';
+        const fill = buildFillStyle(bgPr);
+        if (fill) bgHtml += `<div style="position:absolute;inset:0;${fill}z-index:0;pointer-events:none;"></div>`;
       }
     }
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement) {
-        document.getElementById('btnFullscreen').textContent = '⛶ Fullscreen';
-      }
-    });
-
-    // ── Main init ──────────────────────────────────
-    async function init() {
-      // Load title/sub from localStorage
-      const name = localStorage.getItem('gz_ppt_pending_name') || 'Presentation';
-      const sub  = localStorage.getItem('gz_ppt_pending_sub')  || '';
-      document.getElementById('pptTitle').textContent = name;
-      document.getElementById('pptSub').textContent   = sub;
-      document.title = name + ' — GenZET PPT Viewer';
-
-      document.getElementById('loadingMsg').textContent = 'Loading "' + name + '"…';
-
-      try {
-        const pptxData = await loadFromDB(); // ArrayBuffer
-        if (!pptxData) throw new Error('No presentation data found. Please go back and click Present again.');
-
-        // Convert ArrayBuffer to Blob, then to Object URL
-        const blob = new Blob([pptxData], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-        const url = URL.createObjectURL(blob);
-
-        document.getElementById('loadingMsg').textContent = 'Rendering slides with full fidelity…';
-
-        // Initialize PPTXjs
-        $("#pptx-container").pptxToHtml({
-          pptxFileUrl: url,
-          slideMode: true,
-          keyBoardShortCut: true,
-          mediaProcess: true,
-          jsZipV2: true,
-          slideModeConfig: {
-            first: 1, 
-            nav: true, 
-            navTitle: true,
-            showPlayPauseBtn: true,
-            keyBoardShortCut: true,
-            showSlideNum: true,
-            showTotalSlideNum: true,
-            autoSlide: false,
-            randomAutoSlide: false, 
-            loop: false,
-            background: 'transparent',
-            transition: 'default',
-            navigationSkip: false
-          }
-        });
-
-        // Hide loading once loaded (PPTXjs emits an event or we can just delay)
-        // pptxToHtml doesn't return a strict promise, but we can hook into its completion if needed,
-        // or just wait a moment. It typically creates .slide elements.
-        const checkReady = setInterval(() => {
-          if ($('.slide').length > 0) {
-            clearInterval(checkReady);
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('pptx-wrapper').style.display = 'block';
-          }
-        }, 300);
-
-        // Timeout fallback
-        setTimeout(() => {
-          clearInterval(checkReady);
-          document.getElementById('loadingState').style.display = 'none';
-          document.getElementById('pptx-wrapper').style.display = 'block';
-        }, 5000);
-
-      } catch (err) {
-        console.error('[PPT Viewer]', err);
-        showError(err.message || 'Failed to load the presentation. Please try again.');
-      }
+    const bgRef = xq(bg, 'bgRef');
+    if (bgRef) {
+      const c = resolveColor(bgRef);
+      if (c) bgHtml += `<div style="position:absolute;inset:0;background:${c};z-index:0;pointer-events:none;"></div>`;
     }
+  }
 
-    $(document).ready(function() {
-      init();
-    });
-  </script>
+  // Shapes
+  const spTree = xq(doc, 'spTree');
+  let shapesHtml = '';
+  if (spTree) {
+    for (const child of spTree.children) {
+      const ln = child.localName;
+      if      (ln === 'sp')           shapesHtml += await parseShape(child, zip, relMap, slideW_emu, slideH_emu, scale);
+      else if (ln === 'pic')          shapesHtml += await parsePic(child, zip, relMap, scale);
+      else if (ln === 'graphicFrame') shapesHtml += await parseGraphicFrame(child, zip, relMap, scale);
+      else if (ln === 'grpSp')        shapesHtml += await parseGroup(child, zip, relMap, slideW_emu, slideH_emu, scale);
+    }
+  }
+
+  const w = Math.round(EMU2PX(slideW_emu) * scale);
+  const h = Math.round(EMU2PX(slideH_emu) * scale);
+  return { html: bgHtml + shapesHtml, w, h };
+}
+
+/* ── XML parser helper ───────────────────────────────────────────────── */
+function parseXml(str) {
+  return new DOMParser().parseFromString(str, 'application/xml');
+}
+
+/* ── Main PPTX parse ─────────────────────────────────────────────────── */
+async function parsePPTX(buf) {
+  const zip = await JSZip.loadAsync(buf);
+  parsedZip = zip;
+  await parseTheme(zip);
+
+  // presentation.xml → slide size + slide order
+  const presXml  = await zip.file('ppt/presentation.xml').async('text');
+  const presDoc  = parseXml(presXml);
+  const sldSz    = xq(presDoc, 'sldSz');
+  if (sldSz) {
+    slideW_emu = parseInt(sldSz.getAttribute('cx')) || 9144000;
+    slideH_emu = parseInt(sldSz.getAttribute('cy')) || 5143500;
+  }
+
+  const presRels = await parseRels(zip, 'ppt/_rels/presentation.xml.rels');
+
+  const sldIdLst = xq(presDoc, 'sldIdLst');
+  const sldIds   = sldIdLst ? xqa(sldIdLst, 'sldId') : [];
+
+  const slideFiles = sldIds.map(el => {
+    const rId    = el.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')
+                || el.getAttribute('r:id');
+    const target = presRels[rId] || '';
+    return target.startsWith('/') ? target.slice(1) : 'ppt/' + target;
+  }).filter(f => f && zip.file(f));
+
+  return slideFiles;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   UI / NAVIGATION
+══════════════════════════════════════════════════════════════════════ */
+let slideFiles = [];
+let renderedCache = {};  // idx → { html, w, h }
+
+function calcScale() {
+  const stage = document.getElementById('stage');
+  const aw = stage.clientWidth  - 32;
+  const ah = stage.clientHeight - 32;
+  const sw = EMU2PX(slideW_emu);
+  const sh = EMU2PX(slideH_emu);
+  const scaleW = aw / sw;
+  const scaleH = ah / sh;
+  return Math.min(scaleW, scaleH, 1.5);
+}
+
+async function renderSlide(idx) {
+  const scale = calcScale();
+  let data = renderedCache[idx];
+  if (!data || Math.abs(data.scale - scale) > 0.01) {
+    data = await parseSlide(parsedZip, slideFiles[idx], scale);
+    data.scale = scale;
+    renderedCache[idx] = data;
+  }
+
+  const wrap = document.getElementById('slideWrap');
+  wrap.innerHTML = `<div class="gz-slide" style="width:${data.w}px;height:${data.h}px;position:relative;overflow:hidden;background:#fff;box-shadow:0 16px 50px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.07);border-radius:4px;">${data.html}</div>`;
+
+  currentIdx = idx;
+  updateNav();
+}
+
+function updateNav() {
+  document.getElementById('slideCounter').textContent = `${currentIdx+1} / ${slideFiles.length}`;
+  document.getElementById('btnPrev').disabled = currentIdx <= 0;
+  document.getElementById('btnNext').disabled = currentIdx >= slideFiles.length - 1;
+  const pct = slideFiles.length > 1 ? (currentIdx / (slideFiles.length - 1)) * 100 : 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.querySelectorAll('.thumb-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === currentIdx);
+    if (i === currentIdx) b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});
+  });
+}
+
+function prevSlide() { if (currentIdx > 0) renderSlide(currentIdx - 1); }
+function nextSlide() { if (currentIdx < slideFiles.length - 1) renderSlide(currentIdx + 1); }
+
+function buildThumbs() {
+  const bar = document.getElementById('thumbBar');
+  bar.innerHTML = '';
+  slideFiles.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'thumb-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = i + 1;
+    btn.title = 'Slide ' + (i + 1);
+    btn.addEventListener('click', () => renderSlide(i));
+    bar.appendChild(btn);
+  });
+}
+
+function toggleFS() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+    document.getElementById('btnFS').textContent = '⛶ Exit Fullscreen';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('btnFS').textContent = '⛶ Fullscreen';
+  }
+}
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) document.getElementById('btnFS').textContent = '⛶ Fullscreen';
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown') { e.preventDefault(); nextSlide(); }
+  else if (e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp') { e.preventDefault(); prevSlide(); }
+  else if (e.key==='f'||e.key==='F') toggleFS();
+  else if (e.key==='Home') renderSlide(0);
+  else if (e.key==='End')  renderSlide(slideFiles.length-1);
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderedCache = {}; renderSlide(currentIdx); }, 250);
+});
+
+/* ── IndexedDB loader ─────────────────────────────────────────────────── */
+function loadFromDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('GenzET_PPT', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('slides');
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('slides', 'readonly');
+      const gr = tx.objectStore('slides').get('__gz_ppt_pending__');
+      gr.onsuccess = () => { db.close(); resolve(gr.result || null); };
+      gr.onerror   = () => { db.close(); reject(gr.error); };
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function showError(msg) {
+  document.getElementById('loadingState').style.display = 'none';
+  const eb = document.getElementById('errorBox');
+  eb.style.display = 'flex';
+  document.getElementById('errorMsg').textContent = msg;
+}
+
+/* ── Boot ─────────────────────────────────────────────────────────────── */
+async function init() {
+  const name = localStorage.getItem('gz_ppt_pending_name') || 'Presentation';
+  const sub  = localStorage.getItem('gz_ppt_pending_sub')  || '';
+  document.getElementById('pptTitle').textContent = name;
+  document.getElementById('pptSub').textContent   = sub;
+  document.title = name + ' — GenZET PPT Viewer';
+  document.getElementById('loadingMsg').textContent = 'Reading "' + name + '"…';
+
+  try {
+    const buf = await loadFromDB();
+    if (!buf) throw new Error('No presentation data found. Please go back and click Present again.');
+
+    document.getElementById('loadingMsg').textContent = 'Parsing slides…';
+    slideFiles = await parsePPTX(buf);
+    if (!slideFiles.length) throw new Error('No slides found in this presentation.');
+
+    buildThumbs();
+    document.getElementById('btnPrev').disabled = false;
+    document.getElementById('btnNext').disabled = false;
+
+    document.getElementById('loadingMsg').textContent = 'Rendering slide 1…';
+    await renderSlide(0);
+
+    document.getElementById('loadingState').style.display = 'none';
+
+    // Flash keyboard hint
+    const kh = document.getElementById('kbHint');
+    kh.classList.add('show');
+    setTimeout(() => kh.classList.remove('show'), 3500);
+
+  } catch(err) {
+    console.error('[PPT Viewer]', err);
+    showError(err.message || 'Failed to load presentation.');
+  }
+}
+
+init();
+</script>
 </body>
 </html>
