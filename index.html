@@ -4536,6 +4536,29 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       box-shadow: 0 4px 14px rgba(124, 58, 237, .25);
     }
 
+    /* ══ PPT UPLOAD BUTTON ══ */
+    .ppt-upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 11px;
+      border: 2px solid #059669;
+      background: #ecfdf5;
+      color: #059669;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+
+    .ppt-upload-btn:hover {
+      background: #d1fae5;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(5, 150, 105, .25);
+    }
+
     .html-mode-tabs {
       display: flex;
       gap: 4px;
@@ -4655,6 +4678,52 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       white-space: nowrap;
     }
 
+    /* PPT Upload Drop Zone */
+    .ppt-file-drop {
+      border: 2px dashed #6ee7b7;
+      border-radius: 12px;
+      background: #ecfdf5;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ppt-file-drop:hover,
+    .ppt-file-drop.drag-over {
+      border-color: #059669;
+      background: #d1fae5;
+    }
+
+    .ppt-file-info {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--green-lt);
+      border: 1.5px solid var(--green-md);
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .ppt-file-info.show {
+      display: flex;
+    }
+
+    .ppt-file-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #15803d;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     /* Topic type badges */
     .topic-type-badge {
       display: inline-flex;
@@ -4678,6 +4747,31 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: var(--purple-lt);
       color: var(--purple);
       border: 1px solid var(--purple-md);
+    }
+
+    .topic-type-badge.ppt-up {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #6ee7b7;
+    }
+
+    /* PPT topic Present button */
+    .topic-ppt-present-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #6ee7b7;
+      background: #ecfdf5;
+      color: #059669;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+
+    .topic-ppt-present-btn:hover {
+      background: #d1fae5;
+      transform: translateY(-1px);
     }
 
     .topic-item-name-row {
@@ -10098,6 +10192,10 @@ function amShowSuccess() {
                     title="Upload any HTML file or paste HTML code as a topic">
                     📤 Upload HTML Code
                   </button>
+                  <button class="ppt-upload-btn" onclick="openUploadPPTModal()"
+                    title="Upload a PowerPoint (.pptx) file as a topic">
+                    📊 Upload PPT
+                  </button>
                 </div>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                   <span style="font-size:14px;font-weight:800;color:var(--text);">Saved Topics</span>
@@ -10312,6 +10410,61 @@ function amShowSuccess() {
             style="background:linear-gradient(135deg,var(--purple),#a855f7);border-color:transparent;box-shadow:0 3px 12px rgba(124,58,237,.3);"
             disabled>💾 Save Topic</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ UPLOAD PPT MODAL ══ -->
+  <div class="modal-overlay" id="pptUploadModal">
+    <div class="modal-box wide">
+      <div class="modal-header"
+        style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-bottom:2px solid #6ee7b7;">
+        <h3 style="color:#059669;">📊 Upload PowerPoint as Topic</h3>
+        <button class="modal-close-btn" onclick="closeUploadPPTModal()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Topic name -->
+        <div>
+          <label class="modal-label">Topic / Subtopic Name *</label>
+          <input type="text" class="modal-text-input" id="pptUploadTopicName"
+            placeholder="e.g. Introduction to Thermodynamics, Chapter 3 Slides…" maxlength="60"
+            oninput="updatePPTSaveBtns()" />
+        </div>
+        <!-- Drop zone -->
+        <div>
+          <label class="modal-label">Upload PowerPoint File (.pptx)</label>
+          <div class="ppt-file-drop" id="pptFileDrop"
+            ondragover="pptDragOver(event)" ondragleave="pptDragLeave(event)" ondrop="pptDrop(event)"
+            onclick="document.getElementById('pptFileInput').click()">
+            <span style="font-size:36px;">📊</span>
+            <span class="drop-text" style="color:#059669;">Drag &amp; drop or click to browse</span>
+            <span class="drop-sub">.pptx files · Max 50 MB</span>
+          </div>
+          <input type="file" id="pptFileInput" accept=".pptx" style="display:none"
+            onchange="handlePPTFileInput(event)" />
+          <div class="ppt-file-info" id="pptFileInfo">
+            <span style="font-size:18px;">✅</span>
+            <span class="ppt-file-name" id="pptFileName">file.pptx</span>
+            <span id="pptFileSize" style="font-size:10.5px;color:var(--text3);flex-shrink:0;"></span>
+            <button onclick="clearPPTFile()"
+              style="padding:4px 10px;border-radius:7px;border:1.5px solid #fca5a5;background:var(--red-lt);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;">✕
+              Remove</button>
+          </div>
+        </div>
+        <!-- Info note -->
+        <div style="font-size:11px;color:var(--text3);background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;">
+          📌 Your PPT will be stored and presented slide-by-slide in a dedicated viewer, preserving fonts, layout &amp; design.
+        </div>
+        <!-- Error -->
+        <div id="pptUploadError"
+          style="display:none;font-size:12px;font-weight:700;color:var(--red);background:var(--red-lt);border:1.5px solid #fca5a5;border-radius:8px;padding:9px 13px;">
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <button class="modal-cancel-btn" onclick="closeUploadPPTModal()">Cancel</button>
+        <button class="modal-save-btn" id="pptSaveBtn" onclick="saveUploadedPPT()"
+          style="background:linear-gradient(135deg,#059669,#10b981);border-color:transparent;box-shadow:0 3px 12px rgba(5,150,105,.3);"
+          disabled>💾 Save Topic</button>
       </div>
     </div>
   </div>
@@ -11810,20 +11963,25 @@ function amShowSuccess() {
         list.innerHTML = `<div class="co-topic-empty">
       <div style="font-size:36px;margin-bottom:10px;">🎬</div>
       <p style="font-size:14px;font-weight:700;color:var(--text);">No topics saved here yet</p>
-      <p style="font-size:12px;margin-top:6px;">Generate an animation in <strong>AI Creator</strong> → "Save in Engineering Courses"<br>or click <strong>"📤 Upload HTML Code"</strong> above to upload any HTML page.</p>
+      <p style="font-size:12px;margin-top:6px;">Generate an animation in <strong>AI Creator</strong> → "Save in Engineering Courses"<br>or click <strong>"📤 Upload HTML Code"</strong> or <strong>"📊 Upload PPT"</strong> above.</p>
     </div>`;
         return;
       }
       list.innerHTML = co.topics.map(t => {
         const isHtml = t.type === 'html_upload';
+        const isPPT  = t.type === 'ppt_upload';
         const badge = isHtml
           ? `<span class="topic-type-badge html-up">💻 HTML Upload</span>`
-          : `<span class="topic-type-badge anim">🎬 Animation</span>`;
-        const icon = isHtml ? '💻' : '🎬';
-        const actionBtns = isHtml
-          ? `<button class="topic-html-preview-btn" onclick="previewCOHTMLTopic('${t.id}')">👁 Preview</button>
+          : isPPT
+            ? `<span class="topic-type-badge ppt-up">📊 PPT Upload</span>`
+            : `<span class="topic-type-badge anim">🎬 Animation</span>`;
+        const icon = isHtml ? '💻' : isPPT ? '📊' : '🎬';
+        const actionBtns = isPPT
+          ? `<button class="topic-ppt-present-btn" onclick="presentCOPPTTopic('${t.id}')">🖥 Present</button>`
+          : isHtml
+            ? `<button class="topic-html-preview-btn" onclick="previewCOHTMLTopic('${t.id}')">👁 Preview</button>
          <button class="topic-view-btn" onclick="viewCOTopic('${t.id}')">🖥 Teach</button>`
-          : `<button class="topic-view-btn" onclick="viewCOTopic('${t.id}')">▶ View</button>
+            : `<button class="topic-view-btn" onclick="viewCOTopic('${t.id}')">▶ View</button>
          ${t.animCode ? `<button class="topic-present-btn" onclick="presentCOTopic('${t.id}')">📺 Present</button>` : ''}`;
         return `
     <div class="topic-item">
@@ -11834,7 +11992,7 @@ function amShowSuccess() {
             <span class="topic-item-name">${esc(t.name)}</span>
             ${badge}
           </div>
-          <div class="topic-item-meta">${fmtDate(t.created_at)}${t.explanation && t.explanation !== 'Uploaded HTML code' ? ' · ' + esc(t.explanation.slice(0, 50)) : ''}</div>
+          <div class="topic-item-meta">${fmtDate(t.created_at)}${t.explanation && t.explanation !== 'Uploaded HTML code' && t.explanation !== 'Uploaded PPT file' ? ' · ' + esc(t.explanation.slice(0, 50)) : ''}</div>
         </div>
       </div>
       <div class="topic-item-actions">
@@ -12558,9 +12716,230 @@ ${text.substring(0, 4500)}`
       const subLabel = (s?.name || '') + ' › ' + (co?.coNum || '') + ' — ' + (co?.name || '');
       _openHTMLPreviewOverlay(t.animCode, t.name, subLabel);
     }
+
     // ═══════════════════════════════════════════════
-    // QUESTION ANIMATION
+    // PPT UPLOAD FEATURE
     // ═══════════════════════════════════════════════
+    let pptUploadData = null;    // holds ArrayBuffer of the pptx file
+    let pptUploadFileName = '';  // original filename
+
+    function openUploadPPTModal() {
+      const s = engineeringCourses.find(x => x.id === currentSubjectId);
+      const co = s?.cos.find(c => c.id === currentCOId);
+      if (!s || !co) { notify('Open a CO first before uploading!', 'error'); return; }
+      // Reset state
+      pptUploadData = null;
+      pptUploadFileName = '';
+      document.getElementById('pptUploadTopicName').value = '';
+      document.getElementById('pptFileInfo').classList.remove('show');
+      document.getElementById('pptFileDrop').style.display = '';
+      document.getElementById('pptFileInput').value = '';
+      document.getElementById('pptUploadError').style.display = 'none';
+      document.getElementById('pptSaveBtn').disabled = true;
+      document.getElementById('pptUploadModal').classList.add('show');
+      setTimeout(() => document.getElementById('pptUploadTopicName').focus(), 120);
+    }
+
+    function closeUploadPPTModal() {
+      document.getElementById('pptUploadModal').classList.remove('show');
+      pptUploadData = null;
+    }
+
+    function updatePPTSaveBtns() {
+      const hasFile = !!pptUploadData;
+      const hasName = (document.getElementById('pptUploadTopicName').value || '').trim().length > 0;
+      document.getElementById('pptSaveBtn').disabled = !(hasFile && hasName);
+    }
+
+    function handlePPTFileInput(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      _loadPPTFile(file);
+    }
+
+    function pptDragOver(e) {
+      e.preventDefault();
+      document.getElementById('pptFileDrop').classList.add('drag-over');
+    }
+    function pptDragLeave(e) {
+      document.getElementById('pptFileDrop').classList.remove('drag-over');
+    }
+    function pptDrop(e) {
+      e.preventDefault();
+      document.getElementById('pptFileDrop').classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      _loadPPTFile(file);
+    }
+
+    function _loadPPTFile(file) {
+      if (!file.name.match(/\.pptx$/i)) {
+        _showPPTError('Only .pptx files are accepted. Please select a valid PowerPoint file.');
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        _showPPTError('File too large. Maximum size is 50 MB.');
+        return;
+      }
+      _hidePPTError();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        pptUploadData = e.target.result;  // ArrayBuffer
+        pptUploadFileName = file.name;
+        document.getElementById('pptFileName').textContent = file.name;
+        document.getElementById('pptFileSize').textContent = fmtBytes(file.size);
+        document.getElementById('pptFileInfo').classList.add('show');
+        document.getElementById('pptFileDrop').style.display = 'none';
+        // Auto-fill topic name if blank
+        const nameInput = document.getElementById('pptUploadTopicName');
+        if (!nameInput.value.trim()) {
+          nameInput.value = file.name.replace(/\.pptx$/i, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        updatePPTSaveBtns();
+      };
+      reader.onerror = () => _showPPTError('Failed to read file. Please try again.');
+      reader.readAsArrayBuffer(file);
+    }
+
+    function clearPPTFile() {
+      pptUploadData = null;
+      pptUploadFileName = '';
+      document.getElementById('pptFileInput').value = '';
+      document.getElementById('pptFileInfo').classList.remove('show');
+      document.getElementById('pptFileDrop').style.display = '';
+      updatePPTSaveBtns();
+    }
+
+    function _showPPTError(msg) {
+      const el = document.getElementById('pptUploadError');
+      el.textContent = '⚠️ ' + msg;
+      el.style.display = 'block';
+    }
+    function _hidePPTError() {
+      document.getElementById('pptUploadError').style.display = 'none';
+    }
+
+    // Stores pptx ArrayBuffer in IndexedDB for the viewer tab to read
+    function _storePPTInDB(key, arrayBuffer) {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('GenzET_PPT', 1);
+        req.onupgradeneeded = e => e.target.result.createObjectStore('slides');
+        req.onsuccess = e => {
+          const db = e.target.result;
+          const tx = db.transaction('slides', 'readwrite');
+          tx.objectStore('slides').put(arrayBuffer, key);
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveUploadedPPT() {
+      _hidePPTError();
+      const name = (document.getElementById('pptUploadTopicName').value || '').trim();
+      if (!name) { _showPPTError('Please enter a topic name.'); document.getElementById('pptUploadTopicName').focus(); return; }
+      if (!pptUploadData) { _showPPTError('Please upload a .pptx file first.'); return; }
+
+      const subjIndex = engineeringCourses.findIndex(x => x.id === currentSubjectId);
+      if (subjIndex === -1) { notify('Subject not found!', 'error'); return; }
+      const coIndex = engineeringCourses[subjIndex].cos.findIndex(c => c.id === currentCOId);
+      if (coIndex === -1) { notify('CO not found!', 'error'); return; }
+
+      const btn = document.getElementById('pptSaveBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saving…';
+
+      const newTopicId = 'ppt_' + Date.now().toString();
+
+      // Convert ArrayBuffer to base64 for storage in engineeringCourses (localStorage-compatible)
+      const uint8 = new Uint8Array(pptUploadData);
+      let binary = '';
+      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+      const base64 = btoa(binary);
+
+      const newTopic = {
+        id: newTopicId,
+        name,
+        animCode: base64,       // base64-encoded pptx binary
+        explanation: 'Uploaded PPT file',
+        prompt: '[PPT Upload]',
+        type: 'ppt_upload',
+        fileName: pptUploadFileName,
+        created_at: new Date().toISOString()
+      };
+
+      // Also store the raw ArrayBuffer in IndexedDB for the viewer (no base64 decode lag)
+      try {
+        await _storePPTInDB(newTopicId, pptUploadData);
+      } catch(e) {
+        console.warn('[PPT] IndexedDB store failed:', e);
+      }
+
+      engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
+      await saveECourses();
+
+      closeUploadPPTModal();
+      renderTopicList();
+      syncLibraryToFolders();
+      showFolders();
+      updateActiveCount();
+      updateStorageBadge();
+      notify('✅ "' + name + '" saved as PPT topic!');
+    }
+
+    // Opens the PPT viewer in a new tab
+    async function presentCOPPTTopic(topicId) {
+      const s = engineeringCourses.find(x => x.id === currentSubjectId);
+      const co = s?.cos.find(c => c.id === currentCOId);
+      const t = co?.topics.find(x => x.id === topicId);
+      if (!t || t.type !== 'ppt_upload') { notify('PPT topic not found!', 'error'); return; }
+
+      // Try to get ArrayBuffer from IndexedDB first, else decode from base64
+      let arrayBuffer = null;
+      try {
+        arrayBuffer = await new Promise((resolve, reject) => {
+          const req = indexedDB.open('GenzET_PPT', 1);
+          req.onupgradeneeded = e => e.target.result.createObjectStore('slides');
+          req.onsuccess = e => {
+            const db = e.target.result;
+            const tx = db.transaction('slides', 'readonly');
+            const getReq = tx.objectStore('slides').get(topicId);
+            getReq.onsuccess = () => { db.close(); resolve(getReq.result || null); };
+            getReq.onerror = () => { db.close(); reject(getReq.error); };
+          };
+          req.onerror = () => reject(req.error);
+        });
+      } catch(e) { console.warn('[PPT] IndexedDB read failed:', e); }
+
+      if (!arrayBuffer && t.animCode) {
+        // Decode from base64
+        try {
+          const binary = atob(t.animCode);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          arrayBuffer = bytes.buffer;
+        } catch(e) {
+          notify('Failed to decode PPT data!', 'error'); return;
+        }
+      }
+
+      if (!arrayBuffer) { notify('No PPT data found for this topic!', 'error'); return; }
+
+      // Store in IndexedDB under a well-known "pending" key for the viewer tab
+      try {
+        await _storePPTInDB('__gz_ppt_pending__', arrayBuffer);
+        localStorage.setItem('gz_ppt_pending_name', t.name);
+        localStorage.setItem('gz_ppt_pending_sub', (s?.name || '') + ' › ' + (co?.coNum || ''));
+      } catch(e) {
+        notify('Failed to prepare PPT for presentation!', 'error'); return;
+      }
+
+      // Open the viewer in a new tab
+      window.open('ppt_viewer.html', '_blank');
+    }
+
+
     let currentQuestionAnim = null;
     let qaShowingCode = false;
 
