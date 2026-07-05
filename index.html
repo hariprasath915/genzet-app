@@ -11977,7 +11977,7 @@ function amShowSuccess() {
             : `<span class="topic-type-badge anim">🎬 Animation</span>`;
         const icon = isHtml ? '💻' : isPPT ? '📊' : '🎬';
         const actionBtns = isPPT
-          ? `<button class="topic-ppt-present-btn" onclick="presentCOPPTTopic('${t.id}')">🖥 Present</button>`
+          ? `<button class="topic-ppt-present-btn" onclick="downloadCOPPTTopic('${t.id}')">📥 Download</button>`
           : isHtml
             ? `<button class="topic-html-preview-btn" onclick="previewCOHTMLTopic('${t.id}')">👁 Preview</button>
          <button class="topic-view-btn" onclick="viewCOTopic('${t.id}')">🖥 Teach</button>`
@@ -12888,8 +12888,8 @@ ${text.substring(0, 4500)}`
       notify('✅ "' + name + '" saved as PPT topic!');
     }
 
-    // Opens the PPT viewer in a new tab
-    async function presentCOPPTTopic(topicId) {
+    // Downloads the PPT file to the user's device
+    async function downloadCOPPTTopic(topicId) {
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId);
       const t = co?.topics.find(x => x.id === topicId);
@@ -12926,17 +12926,20 @@ ${text.substring(0, 4500)}`
 
       if (!arrayBuffer) { notify('No PPT data found for this topic!', 'error'); return; }
 
-      // Store in IndexedDB under a well-known "pending" key for the viewer tab
-      try {
-        await _storePPTInDB('__gz_ppt_pending__', arrayBuffer);
-        localStorage.setItem('gz_ppt_pending_name', t.name);
-        localStorage.setItem('gz_ppt_pending_sub', (s?.name || '') + ' › ' + (co?.coNum || ''));
-      } catch(e) {
-        notify('Failed to prepare PPT for presentation!', 'error'); return;
-      }
-
-      // Open the viewer in a new tab
-      window.open('ppt_viewer.html', '_blank');
+      // Trigger download
+      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = t.fileName || (t.name.replace(/[^a-z0-9\s]/gi, '_').trim() + '.pptx');
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 150);
+      
+      notify('Downloading PowerPoint file...', 'success');
     }
 
 
