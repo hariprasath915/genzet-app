@@ -13295,6 +13295,7 @@ ${text.substring(0, 4500)}`
     function vaultRenderGrid() {
       const grid = document.getElementById('vaultVideoGrid');
       const countEl = document.getElementById('vaultCount');
+      if (!grid || !countEl) return; // Prevent Uncaught TypeError if elements don't exist
       countEl.textContent = vaultVideos.length;
       if (vaultVideos.length === 0) {
         grid.innerHTML = `
@@ -13462,7 +13463,9 @@ ${text.substring(0, 4500)}`
 
     // ── Configuration ─────────────────────────────────────────────────────
     // Change this to your deployed backend URL in production.
-    const BACKEND_URL = 'https://animind-backend-production.up.railway.app';
+    const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://127.0.0.1:8000'
+      : 'https://animind-backend-production-2.up.railway.app';
 
     // ── Supabase stub (frontend does NOT call Supabase directly) ──────────
     // All DB operations go through the backend (which holds the service_role
@@ -14193,7 +14196,10 @@ ${text.substring(0, 4500)}`
       const coGrid = document.getElementById('shareCOGrid');
 
       try {
-        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://animind-backend-production.up.railway.app');
+        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 
+          ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://127.0.0.1:8000'
+            : 'https://animind-backend-production-2.up.railway.app'));
         const res  = await fetch(`${backendBase}/sync/share/${encodeURIComponent(token)}`);
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
