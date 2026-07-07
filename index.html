@@ -9032,6 +9032,12 @@ function navigateToAuth() { openAuthModal(); }
 </div>
 
 <script>
+// ── Global backend URL — used by all login/register/Google auth fetch calls ──
+window.BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : 'https://animind-backend-production-2.up.railway.app';
+var BACKEND_URL = window.BACKEND_URL; // also expose as var for block-scoped access
+
 // ── Modal open/close ─────────────────────────────────────────────
 function openAuthModal() {
   document.getElementById('authModal').classList.add('open');
