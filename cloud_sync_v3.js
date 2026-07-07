@@ -220,8 +220,26 @@
     /**
      * subjects from /sync/all is already in engineeringCourses shape:
      * [{ id, name, description, cos: [{ id, coNum, description, topics: [...] }] }]
+     * Topics now include: type, pptUrl, pptStoragePath, fileName
      */
     if (!subjects.length) return;
+    // Normalise each topic so the frontend always has the fields it expects
+    subjects.forEach(s =>
+      (s.cos || []).forEach(co =>
+        (co.topics || []).forEach(t => {
+          // Ensure backward-compat fields exist
+          if (!t.type) {
+            t.type = t.animCode && t.animCode.trim().startsWith('<!DOCTYPE')
+              ? 'html_upload' : 'animation';
+          }
+          // pptUrl comes from backend as pptUrl already, but guard both names
+          t.pptUrl        = t.pptUrl        || t.ppt_public_url   || null;
+          t.pptStoragePath= t.pptStoragePath|| t.ppt_storage_path || null;
+          t.fileName      = t.fileName      || t.ppt_file_name    || null;
+          t.explanation   = t.explanation   || (t.type === 'ppt_upload' ? 'Uploaded PPT file' : '');
+        })
+      )
+    );
     if (typeof engineeringCourses !== 'undefined') {
       engineeringCourses = subjects;
     }
@@ -373,6 +391,57 @@
     const r = await _api('DELETE', `/sync/topics/${topicId}`);
     if (!r.ok) console.warn('[SYNC] deleteTopic failed:', r.error);
     return r.ok;
+  }
+
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PPT UPLOAD  —  POST /sync/ppt/upload  (multipart)
+  // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * _uploadPPT(coId, subjectId, name, arrayBuffer, fileName)
+   *
+   * Sends the .pptx binary as multipart/form-data to POST /sync/ppt/upload.
+   * The backend uploads it to Supabase Storage (ppt-files bucket) and
+   * inserts a course_topics row with topic_type='ppt_upload'.
+   *
+   * Returns: { success, topic } where topic.id is the DB UUID,
+   *          topic.pptUrl is the Supabase Storage public URL.
+   * Returns null on failure.
+   */
+  async function _uploadPPT(coId, subjectId, name, arrayBuffer, fileName) {
+    const token = window.authToken;
+    if (!token) return null;
+
+    const fd = new FormData();
+    fd.append('file',       new Blob([arrayBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    }), fileName || 'upload.pptx');
+    fd.append('co_id',      coId);
+    fd.append('subject_id', subjectId);
+    fd.append('name',       name);
+
+    try {
+      const res  = await fetch(`${BACKEND}/sync/ppt/upload`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        // Note: do NOT set Content-Type header — browser sets it
+        //       automatically with the correct multipart boundary.
+        body:    fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.warn('[PPT] Upload failed:', res.status, data);
+        window._cloudOffline = (res.status === 0);
+        return null;
+      }
+      console.log('[PPT] ✅ Uploaded to cloud:', data.topic?.id);
+      return data;  // { success: true, topic: { id, name, type, pptUrl, ... } }
+    } catch (err) {
+      console.warn('[PPT] Network error during upload:', err.message);
+      window._cloudOffline = true;
+      return null;
+    }
   }
 
 
@@ -708,6 +777,7 @@
   window.syncCreateTopic     = _createTopic;     // (coId, subjectId, name, html?, prompt?) → topic|null
   window.syncUpdateTopic     = _updateTopic;     // (id, patch) → bool
   window.syncDeleteTopic     = _deleteTopic;     // (id) → bool
+  window.syncUploadPPT       = _uploadPPT;       // (coId, subjectId, name, arrayBuffer, fileName) → {success, topic}|null
 
   // ── Legacy course sync (called by existing index.html saveECourses()) ─────
   window.syncCoursesToCloud       = _legacySaveCourses;
