@@ -12848,36 +12848,59 @@ ${text.substring(0, 4500)}`
 
       const btn = document.getElementById('pptSaveBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ Saving…';
+      btn.textContent = '⏳ Uploading…';
 
-      const newTopicId = 'ppt_' + Date.now().toString();
-
-      // Convert ArrayBuffer to base64 for storage in engineeringCourses (localStorage-compatible)
-      const uint8 = new Uint8Array(pptUploadData);
-      let binary = '';
-      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-      const base64 = btoa(binary);
-
-      const newTopic = {
-        id: newTopicId,
-        name,
-        animCode: base64,       // base64-encoded pptx binary
-        explanation: 'Uploaded PPT file',
-        prompt: '[PPT Upload]',
-        type: 'ppt_upload',
-        fileName: pptUploadFileName,
-        created_at: new Date().toISOString()
-      };
-
-      // Also store the raw ArrayBuffer in IndexedDB for the viewer (no base64 decode lag)
-      try {
-        await _storePPTInDB(newTopicId, pptUploadData);
-      } catch(e) {
-        console.warn('[PPT] IndexedDB store failed:', e);
+      // ── Step 1: Try cloud upload (Supabase Storage + DB row) ──────────
+      let cloudTopic = null;
+      if (typeof window.syncUploadPPT === 'function' && window.authToken) {
+        try {
+          const result = await window.syncUploadPPT(
+            currentCOId,
+            currentSubjectId,
+            name,
+            pptUploadData,      // ArrayBuffer
+            pptUploadFileName   // original filename
+          );
+          if (result && result.success && result.topic) {
+            cloudTopic = result.topic;
+          }
+        } catch(e) {
+          console.warn('[PPT] Cloud upload error:', e);
+        }
       }
 
+      if (!cloudTopic) {
+        // Cloud upload failed — show error and stop (don't silently drop to local-only)
+        btn.disabled = false;
+        btn.textContent = '💾 Save Topic';
+        _showPPTError('Upload failed — check your connection and try again. The file was NOT saved.');
+        notify('⚠️ PPT cloud upload failed. Please retry.', 'error');
+        return;
+      }
+
+      // ── Step 2: Also cache raw binary in IndexedDB for instant offline download ──
+      const topicId = cloudTopic.id || ('ppt_' + Date.now());
+      try {
+        await _storePPTInDB(topicId, pptUploadData);
+      } catch(e) {
+        console.warn('[PPT] IndexedDB cache failed (non-critical):', e);
+      }
+
+      // ── Step 3: Add topic to in-memory engineeringCourses ──────────────
+      const newTopic = {
+        id:          topicId,
+        name,
+        type:        'ppt_upload',
+        topic_type:  'ppt_upload',
+        explanation: 'Uploaded PPT file',
+        prompt:      '[PPT Upload]',
+        fileName:    pptUploadFileName,
+        pptUrl:      cloudTopic.pptUrl      || null,
+        pptStoragePath: cloudTopic.pptStoragePath || null,
+        animCode:    null,
+        created_at:  cloudTopic.created_at  || new Date().toISOString(),
+      };
       engineeringCourses[subjIndex].cos[coIndex].topics.push(newTopic);
-      await saveECourses();
 
       closeUploadPPTModal();
       renderTopicList();
@@ -12885,17 +12908,40 @@ ${text.substring(0, 4500)}`
       showFolders();
       updateActiveCount();
       updateStorageBadge();
-      notify('✅ "' + name + '" saved as PPT topic!');
+      notify('✅ "' + name + '" saved as PPT topic and synced to cloud!');
     }
 
     // Downloads the PPT file to the user's device
     async function downloadCOPPTTopic(topicId) {
-      const s = engineeringCourses.find(x => x.id === currentSubjectId);
+      // Find topic in active CO
+      const s  = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === currentCOId);
-      const t = co?.topics.find(x => x.id === topicId);
+      const t  = co?.topics.find(x => x.id === topicId);
       if (!t || t.type !== 'ppt_upload') { notify('PPT topic not found!', 'error'); return; }
 
-      // Try to get ArrayBuffer from IndexedDB first, else decode from base64
+      const dlName = t.fileName || (t.name.replace(/[^a-z0-9\s]/gi, '_').trim() + '.pptx');
+
+      // ── Priority 1: Download directly from Supabase Storage URL ────────
+      if (t.pptUrl) {
+        try {
+          notify('⏳ Downloading from cloud…', 'info');
+          const resp = await fetch(t.pptUrl);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url; a.download = dlName;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+            notify('✅ Download started!', 'success');
+            return;
+          }
+        } catch(e) {
+          console.warn('[PPT] Cloud download failed, trying fallback:', e);
+        }
+      }
+
+      // ── Priority 2: IndexedDB cache ──────────────────────────────────
       let arrayBuffer = null;
       try {
         arrayBuffer = await new Promise((resolve, reject) => {
@@ -12906,17 +12952,17 @@ ${text.substring(0, 4500)}`
             const tx = db.transaction('slides', 'readonly');
             const getReq = tx.objectStore('slides').get(topicId);
             getReq.onsuccess = () => { db.close(); resolve(getReq.result || null); };
-            getReq.onerror = () => { db.close(); reject(getReq.error); };
+            getReq.onerror  = () => { db.close(); reject(getReq.error); };
           };
           req.onerror = () => reject(req.error);
         });
       } catch(e) { console.warn('[PPT] IndexedDB read failed:', e); }
 
+      // ── Priority 3: Decode from base64 animCode (legacy) ─────────────
       if (!arrayBuffer && t.animCode) {
-        // Decode from base64
         try {
           const binary = atob(t.animCode);
-          const bytes = new Uint8Array(binary.length);
+          const bytes  = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           arrayBuffer = bytes.buffer;
         } catch(e) {
@@ -12924,22 +12970,17 @@ ${text.substring(0, 4500)}`
         }
       }
 
-      if (!arrayBuffer) { notify('No PPT data found for this topic!', 'error'); return; }
+      if (!arrayBuffer) { notify('No PPT data found. Please re-upload.', 'error'); return; }
 
-      // Trigger download
-      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const blob = new Blob([arrayBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = t.fileName || (t.name.replace(/[^a-z0-9\s]/gi, '_').trim() + '.pptx');
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 150);
-      
-      notify('Downloading PowerPoint file...', 'success');
+      const a   = document.createElement('a');
+      a.href = url; a.download = dlName;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+      notify('Downloading PowerPoint file…', 'success');
     }
 
 
