@@ -9032,12 +9032,6 @@ function navigateToAuth() { openAuthModal(); }
 </div>
 
 <script>
-// ── Global backend URL — used by all login/register/Google auth fetch calls ──
-window.BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://127.0.0.1:8000'
-  : 'https://animind-backend-production-2.up.railway.app';
-var BACKEND_URL = window.BACKEND_URL; // also expose as var for block-scoped access
-
 // ── Modal open/close ─────────────────────────────────────────────
 function openAuthModal() {
   document.getElementById('authModal').classList.add('open');
@@ -13468,7 +13462,8 @@ ${text.substring(0, 4500)}`
     // ═══════════════════════════════════════════════════════════════════════
 
     // ── Configuration ─────────────────────────────────────────────────────
-    // BACKEND_URL is now declared globally at the top of the file.
+    // Change this to your deployed backend URL in production.
+    const BACKEND_URL = 'https://animind-backend-production.up.railway.app';
 
     // ── Supabase stub (frontend does NOT call Supabase directly) ──────────
     // All DB operations go through the backend (which holds the service_role
@@ -14199,10 +14194,7 @@ ${text.substring(0, 4500)}`
       const coGrid = document.getElementById('shareCOGrid');
 
       try {
-        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 
-          ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? 'http://127.0.0.1:8000'
-            : 'https://animind-backend-production-2.up.railway.app'));
+        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://animind-backend-production.up.railway.app');
         const res  = await fetch(`${backendBase}/sync/share/${encodeURIComponent(token)}`);
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -14290,6 +14282,20 @@ ${text.substring(0, 4500)}`
         return;   // ← Do NOT call authInit for public share pages
       }
 
+      // ── BUGFIX: claim the boot flag SYNCHRONOUSLY, before any `await` ──────
+      // cloud_sync_v3.js registers its own DOMContentLoaded listener (_boot)
+      // that checks window.__authInitDone before running _authInit itself.
+      // The old code only set this flag *after* awaiting initFn() below —
+      // but browsers call every DOMContentLoaded listener in registration
+      // order without waiting for an earlier async listener to finish, so
+      // cloud_sync_v3.js's _boot() was reading the flag while it was still
+      // false and scheduling a SECOND call to _authInit() ~80ms later.
+      // Net effect: /auth/verify and /sync/all were both firing twice on
+      // every page load. Setting the flag here — before the first await —
+      // guarantees _boot() sees it as already claimed.
+      if (window.__authInitDone) return;
+      window.__authInitDone = true;
+
       // Normal auth flow (unchanged)
       // __dbReadyPromise is now a resolved Promise (IDB removed, Supabase is the store).
       // We still await it so the bootstrap order is deterministic.
@@ -14299,7 +14305,6 @@ ${text.substring(0, 4500)}`
       // This ensures there is ONE single auth entry point — no race conditions.
       const initFn = window.authInit || authInit;
       await initFn();
-      window.__authInitDone = true;  // signal to override's safety-net: don't double-run
     });
 
   </script>
