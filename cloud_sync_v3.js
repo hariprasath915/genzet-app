@@ -621,34 +621,21 @@
    *      then redirects back to '/'
    *   5. _authInit() reads the JWT and enters the dashboard automatically
    */
-  async function _googleLogin() {
+  function _googleLogin() {
+    // ── Direct browser redirect — no fetch(), so zero CORS exposure ──────────
+    // A full-page navigation is never blocked by CORS; only XHR/fetch are.
+    // The backend /auth/google endpoint receives the redirect_to param, builds
+    // the Supabase OAuth URL (including PKCE verifier), and immediately responds
+    // with HTTP 302 → Google.  The PKCE verifier travels back to the frontend
+    // inside the oauth_callback.html hash/query that Supabase appends, so we
+    // don't need to pre-fetch it here.
     var origin = window.location.origin;
     if (!origin || origin === 'null') {
       origin = 'https://genzet-app.vercel.app';
     }
     var callbackUrl = origin + '/oauth_callback.html';
-
-    try {
-      var res = await fetch(
-        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl)
-      );
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var data = await res.json();
-      if (!data.url) throw new Error('No OAuth URL returned');
-      if (!data.verifier) throw new Error('No PKCE verifier returned');
-
-      // ✅ Save the PKCE verifier so the callback page can use it
-      localStorage.setItem('oauth_verifier', data.verifier);
-
-      // ✅ Full-page redirect — no popup, no postMessage, no CORS issues
-      window.location.href = data.url;
-
-    } catch (err) {
-      console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
-      if (typeof window.amShowErr === 'function') {
-        window.amShowErr('Google sign-in is unavailable right now. Please try email/password.');
-      }
-    }
+    window.location.href =
+      BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
   }
 
 
