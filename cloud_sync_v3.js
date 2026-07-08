@@ -29,13 +29,34 @@
 
   const BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000'
-    : 'https://animind-backend-production-2.up.railway.app';
+    : 'https://animind-backend-production.up.railway.app';
   const TOKEN_KEY = 'genzet_jwt';
   const USER_KEY  = 'genzet_user';
 
   // Expose on window immediately so inline handlers can call them
   window.authToken = window.authToken || null;
   window.authUser  = window.authUser  || null;
+
+  // ── BUGFIX: distinguish "server rejected the request" from "the request
+  // never made it there at all" ───────────────────────────────────────────
+  // A plain `catch (err) { ... err.message ... }` shows the raw browser
+  // string "Failed to fetch" for BOTH a dead backend and a CORS rejection —
+  // that's why the UI and console gave no clue which one was happening.
+  // fetch() only ever throws a TypeError for network/CORS-level failures
+  // (a real HTTP error, even a 500, resolves normally and is handled by the
+  // `!res.ok` branch instead) — so `err instanceof TypeError` reliably
+  // identifies this case and lets us log something actionable.
+  function _isNetworkFailure(err) {
+    return err instanceof TypeError;
+  }
+  function _logNetworkFailure(label) {
+    console.error(
+      `[CLOUD] ${label} could not reach ${BACKEND} — this is a connectivity ` +
+      `or CORS problem, not a login/password/data problem. Check: (1) is the ` +
+      `backend actually up — open ${BACKEND}/docs directly, (2) does the ` +
+      `backend's CORS config allow-list this exact origin (${window.location.origin}).`
+    );
+  }
 
   // ── Low-level fetch helper ──────────────────────────────────────────────
   async function _api(method, path, body) {
@@ -59,6 +80,7 @@
       return { ok: true, data };
     } catch (err) {
       console.warn(`[SYNC] ${method} ${path} network error:`, err.message);
+      if (_isNetworkFailure(err)) _logNetworkFailure(`${method} ${path}`);
       window._cloudOffline = true;
       return { ok: false, error: err.message };
     }
@@ -621,21 +643,35 @@
    *      then redirects back to '/'
    *   5. _authInit() reads the JWT and enters the dashboard automatically
    */
-  function _googleLogin() {
-    // ── Direct browser redirect — no fetch(), so zero CORS exposure ──────────
-    // A full-page navigation is never blocked by CORS; only XHR/fetch are.
-    // The backend /auth/google endpoint receives the redirect_to param, builds
-    // the Supabase OAuth URL (including PKCE verifier), and immediately responds
-    // with HTTP 302 → Google.  The PKCE verifier travels back to the frontend
-    // inside the oauth_callback.html hash/query that Supabase appends, so we
-    // don't need to pre-fetch it here.
+  async function _googleLogin() {
     var origin = window.location.origin;
     if (!origin || origin === 'null') {
       origin = 'https://genzet-app.vercel.app';
     }
     var callbackUrl = origin + '/oauth_callback.html';
-    window.location.href =
-      BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
+
+    try {
+      var res = await fetch(
+        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl)
+      );
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      if (!data.url) throw new Error('No OAuth URL returned');
+      if (!data.verifier) throw new Error('No PKCE verifier returned');
+
+      // ✅ Save the PKCE verifier so the callback page can use it
+      localStorage.setItem('oauth_verifier', data.verifier);
+
+      // ✅ Full-page redirect — no popup, no postMessage, no CORS issues
+      window.location.href = data.url;
+
+    } catch (err) {
+      console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
+      if (_isNetworkFailure(err)) _logNetworkFailure('GET /auth/google');
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr('Google sign-in is unavailable right now. Please try email/password.');
+      }
+    }
   }
 
 
@@ -684,6 +720,7 @@
 
     } catch (err) {
       console.warn('[AUTH] Backend unreachable:', err.message);
+      if (_isNetworkFailure(err)) _logNetworkFailure('GET /auth/verify');
       let cached = null;
       try { cached = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch (_) {}
       if (cached) {
@@ -795,26 +832,30 @@
 
 
   // ════════════════════════════════════════════════════════════════════════
-  // BOOTSTRAP  —  run exactly once
+  // BOOTSTRAP
   // ════════════════════════════════════════════════════════════════════════
+  // ── BUGFIX (paired with the index.html fix) ─────────────────────────────
+  // This used to register its OWN 'DOMContentLoaded' listener that called
+  // _authInit() via setTimeout(..., 80) — completely independent of the
+  // 'DOMContentLoaded' listener in index.html that ALSO calls _authInit()
+  // (via window.authInit). Browsers fire every listener for the same event
+  // in registration order without waiting for an earlier async listener to
+  // finish, so both listeners ran on every page load: /auth/verify and
+  // /sync/all were each firing twice.
+  //
+  // cloud_sync_v3.js's own header comment says index.html is meant to own
+  // bootstrapping ("window.* API surface IDENTICAL to v2 — zero changes
+  // needed in index.html"), and index.html's listener already does
+  // `const initFn = window.authInit || authInit; await initFn();` on
+  // DOMContentLoaded. So the fix here is to stop self-triggering entirely —
+  // this file only *exposes* _authInit as window.authInit; index.html is
+  // solely responsible for calling it, exactly once.
+  //
+  // _removeOldGate() is still run immediately below since it's a cheap,
+  // idempotent DOM/CSS cleanup that doesn't touch the network and doesn't
+  // need to wait for DOMContentLoaded.
   _removeOldGate();
 
-  function _boot() {
-    // If this page was opened with ?share=<token>, skip auth entirely.
-    // The public share page renderer (renderPublicSharePage) handles this URL.
-    if (new URLSearchParams(location.search).get('share')) return;
-    if (window.__authInitDone) return;
-    window.__authInitDone = true;
-    setTimeout(_authInit, 80);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _boot);
-  } else {
-    _boot();
-  }
-
-
-  console.log('[CLOUD] cloud_sync_v3.js loaded — cloud is the single source of truth');
+  console.log('[CLOUD] cloud_sync_v3.js loaded — window.authInit is ready; index.html triggers it on DOMContentLoaded');
 
 })();
