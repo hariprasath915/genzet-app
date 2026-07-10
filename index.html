@@ -14194,7 +14194,14 @@ ${text.substring(0, 4500)}`
       const coGrid = document.getElementById('shareCOGrid');
 
       try {
-        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://animind-backend-production.up.railway.app');
+        // BUGFIX: this used to fall back to a DIFFERENT hardcoded hostname
+        // ('...production.up.railway.app', no "-2") than the one BACKEND_URL
+        // actually points to ('...production-2.up.railway.app'). Two
+        // hardcoded backend hostnames drifting apart is exactly the class of
+        // bug that caused the Google-login "Server Not Found" crash — so
+        // this fallback now reuses the single canonical constant instead of
+        // a second, stale copy of the URL.
+        const backendBase = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin);
         const res  = await fetch(`${backendBase}/sync/share/${encodeURIComponent(token)}`);
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
