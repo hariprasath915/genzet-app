@@ -632,57 +632,245 @@
   // GOOGLE OAUTH  —  full-page redirect flow  (like Claude.ai / Gemini)
   // ════════════════════════════════════════════════════════════════════════
 
+  // ── Call-deduplication lock: prevents triple-click / re-mount firing ──
+  var _googleLoginInProgress = false;
+
   /**
    * _googleLogin()
    *
-   * ── EXACT ERROR (from browser console / Network tab) ──────────────────
-   * "Cross-Origin Request Blocked: The Same Origin Policy disallows reading
-   *  the remote resource at …/auth/google… (Reason: CORS request did not
-   *  succeed). Status code: (null)."
+   * ── ROOT CAUSE (seen in Network tab) ──────────────────────────────────
+   * 1. NS_ERROR_UNKNOWN (×3 calls): The backend /auth/google endpoint returns
+   *    JSON {url, verifier}, NOT a 302 redirect.  Pointing window.location.href
+   *    at it navigated the browser to a JSON document — the browser couldn't
+   *    render it as a page and threw NS_ERROR_UNKNOWN.  Additionally the button
+   *    click handler was firing 3×, causing 3 duplicate navigation attempts.
    *
-   * ROOT CAUSE:
-   *   The previous implementation called fetch() to retrieve the OAuth
-   *   redirect URL from the backend.  fetch() is a cross-origin XMLHttpRequest-
-   *   style request and REQUIRES the server to send correct CORS headers
-   *   (Access-Control-Allow-Origin etc.).  Railway's backend was NOT sending
-   *   those headers for this public endpoint, so every browser blocked the
-   *   response — status code (null) means blocked before any response arrived.
+   * ── FIX ───────────────────────────────────────────────────────────────
+   * a) Add a _googleLoginInProgress lock so only ONE call runs at a time.
+   * b) fetch() the JSON properly with mode:'cors' to get {url, verifier}.
+   * c) Store the verifier, THEN redirect to the real Google OAuth URL.
+   * d) If fetch() is still CORS-blocked, fall back to direct navigation
+   *    (which works if the backend later changes to a 302-redirect approach).
    *
-   * FIX:
-   *   Don't fetch() at all.  Use window.location.href to navigate DIRECTLY to
-   *   the backend's OAuth endpoint.  Browser page-navigations are NEVER subject
-   *   to CORS restrictions — the browser simply follows the redirect chain:
-   *
-   *     genzet-app.vercel.app  →  railway backend /auth/google
-   *       →  (302) Google OAuth consent page
-   *       →  (after consent) Supabase callback
-   *       →  (302) our oauth_callback.html?code=...
-   *
-   *   No fetch, no preflight, no CORS error possible.
-   *
-   * Flow (unchanged from user's perspective):
-   *   1. Navigate page to BACKEND/auth/google?redirect_to=...
-   *   2. Backend (Supabase) issues the Google OAuth redirect
-   *   3. Google → Supabase → oauth_callback.html?code=...
-   *   4. oauth_callback.html exchanges code for JWT, saves to localStorage,
-   *      then redirects back to '/'
-   *   5. _authInit() reads the JWT and enters the dashboard automatically
+   * Flow:
+   *   1. fetch() BACKEND/auth/google → {url, verifier}
+   *   2. localStorage.setItem('oauth_verifier', verifier)
+   *   3. window.location.href = url  (Google OAuth consent page)
+   *   4. Google → Supabase → oauth_callback.html?code=...
+   *   5. oauth_callback.html exchanges code → JWT → redirects to '/'
+   *   6. _authInit() reads JWT → enters dashboard
    */
-  function _googleLogin() {
-    var origin = window.location.origin;
-    if (!origin || origin === 'null') {
-      origin = 'https://genzet-app.vercel.app';
+  async function _googleLogin() {
+    // ── Deduplication guard ────────────────────────────────────────────
+    if (_googleLoginInProgress) {
+      console.warn('[AUTH] _googleLogin() called while already in progress — ignoring duplicate call.');
+      return;
     }
-    var callbackUrl = origin + '/oauth_callback.html';
+    _googleLoginInProgress = true;
 
-    // ── THE FIX: page navigation instead of fetch() ──────────────────────
-    // window.location.href is never blocked by CORS.
-    // The backend /auth/google endpoint responds with a 302 redirect to
-    // Google's OAuth consent URL — the browser follows it automatically.
-    // No fetch(), no preflight OPTIONS, no CORS header dependency.
-    var oauthUrl = BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
-    console.log('[AUTH] Redirecting to Google OAuth via backend:', oauthUrl);
-    window.location.href = oauthUrl;
+    var origin = window.location.origin;
+    if (!origin || origin === 'null') origin = 'https://genzet-app.vercel.app';
+    var callbackUrl = origin + '/oauth_callback.html';
+    var apiUrl = BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
+
+    // ── Show loading state on the Google button ────────────────────────
+    var googleBtn = document.querySelector('[onclick*="GoogleLogin"], [onclick*="googleLogin"], #googleSignInBtn, .google-btn');
+    var originalBtnText = googleBtn ? googleBtn.textContent : null;
+    if (googleBtn) googleBtn.textContent = 'Connecting to Google…';
+
+    try {
+      // Step 1: fetch the OAuth URL as JSON (the backend returns {url, verifier})
+      var controller = new AbortController();
+      var tid = setTimeout(function () { controller.abort(); }, 12000);
+
+      var res = await fetch(apiUrl, {
+        method: 'GET',
+        mode:   'cors',      // explicit CORS — browser sends Origin header
+        signal: controller.signal,
+        // No Authorization header on this public endpoint
+        // No Content-Type — avoids an unnecessary preflight
+      });
+      clearTimeout(tid);
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      var data = await res.json();
+
+      if (data.url) {
+        // Step 2: store PKCE verifier if returned
+        if (data.verifier) localStorage.setItem('oauth_verifier', data.verifier);
+        // Step 3: redirect to the REAL Google OAuth URL (not the backend URL)
+        console.log('[AUTH] ✅ Got OAuth URL — redirecting to Google consent page');
+        window.location.href = data.url;
+      } else {
+        throw new Error('Backend returned no OAuth URL in response');
+      }
+
+    } catch (err) {
+      _googleLoginInProgress = false; // release lock on error
+      if (googleBtn && originalBtnText) googleBtn.textContent = originalBtnText;
+
+      if (err.name === 'AbortError') {
+        console.warn('[AUTH] Google OAuth fetch timed out — backend may be starting up (Railway cold-start).');
+        // Fallback: navigate directly; works if backend later issues a 302
+        console.warn('[AUTH] Falling back to direct navigation to:', apiUrl);
+        window.location.href = apiUrl;
+        return;
+      }
+
+      if (_isNetworkFailure(err)) {
+        // TypeError = CORS blocked — the backend's CORS allow-list must include this origin
+        console.error(
+          '[AUTH] Google OAuth CORS error.\n' +
+          'Backend must add "' + window.location.origin + '" to CORS allow_origins for GET /auth/google.\n' +
+          'Falling back to direct navigation (works if backend issues a 302 redirect instead of JSON).'
+        );
+        // Fallback: direct page navigation bypasses CORS entirely
+        window.location.href = apiUrl;
+        return;
+      }
+
+      console.error('[AUTH] Google OAuth failed:', err.message);
+      if (typeof window.amShowErr === 'function') {
+        window.amShowErr('Google sign-in unavailable — please try email/password.');
+      }
+    }
+  }
+
+
+  // ════════════════════════════════════════════════════════════════════════
+  // EMAIL / PASSWORD AUTH  —  CORS-safe login & signup
+  // ════════════════════════════════════════════════════════════════════════
+  /**
+   * ── ROOT CAUSE (seen in Network tab) ──────────────────────────────────
+   * POST /auth/login with Content-Type: application/json triggers a CORS
+   * OPTIONS preflight.  Railway backend does NOT respond to OPTIONS with
+   * Access-Control-Allow-Origin, so the browser fails BEFORE the POST even
+   * sends.  The Network tab shows: "OPTI... login  CORS Failed  0B  0ms".
+   *
+   * ── FIX ───────────────────────────────────────────────────────────────
+   * Send credentials as application/x-www-form-urlencoded.
+   * The Fetch spec classifies this as a "simple request" — NO preflight
+   * OPTIONS is sent.  The browser sends the POST directly.  The backend
+   * must accept form-encoded bodies (FastAPI / Flask do by default with
+   * Form() parameters, or the JSON body can be parsed from a form string).
+   *
+   * These functions are exposed as window.amHandleLogin / window.amHandleSignup
+   * so index.html's inline onclick handlers automatically use this CORS-safe
+   * version instead of their own fetch() calls.
+   */
+  async function _amLogin(email, password) {
+    if (!email || !password) {
+      if (typeof window.amShowErr === 'function') window.amShowErr('Please enter email and password.');
+      return;
+    }
+    try {
+      // Try JSON first (works if CORS is correctly configured on backend)
+      var res = await fetch(BACKEND + '/auth/login', {
+        method:  'POST',
+        mode:    'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        var data = await res.json();
+        if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(data);
+        return;
+      }
+
+      // HTTP error (wrong password, etc.) — show backend message
+      var errData = await res.json().catch(function () { return {}; });
+      var msg = errData.detail || errData.message || ('Login failed (HTTP ' + res.status + ')');
+      if (typeof window.amShowErr === 'function') window.amShowErr(msg);
+
+    } catch (err) {
+      // Likely CORS preflight failure (TypeError) — try form-encoded fallback
+      if (_isNetworkFailure(err)) {
+        console.warn('[AUTH] /auth/login JSON fetch CORS-blocked — retrying as form-encoded (simple request, no preflight)');
+        try {
+          var formRes = await fetch(BACKEND + '/auth/login', {
+            method:  'POST',
+            mode:    'cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password),
+          });
+          if (formRes.ok) {
+            var formData = await formRes.json();
+            if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(formData);
+            return;
+          }
+          var formErr = await formRes.json().catch(function () { return {}; });
+          var formMsg = formErr.detail || formErr.message || ('Login failed (HTTP ' + formRes.status + ')');
+          if (typeof window.amShowErr === 'function') window.amShowErr(formMsg);
+        } catch (formEx) {
+          console.error('[AUTH] /auth/login form-encoded also failed:', formEx.message);
+          _logNetworkFailure('POST /auth/login');
+          if (typeof window.amShowErr === 'function') {
+            window.amShowErr('Cannot reach the server. Check your connection and try again.');
+          }
+        }
+      } else {
+        console.error('[AUTH] /auth/login error:', err.message);
+        if (typeof window.amShowErr === 'function') window.amShowErr('Login error: ' + err.message);
+      }
+    }
+  }
+
+  async function _amSignup(name, email, password) {
+    if (!email || !password) {
+      if (typeof window.amShowErr === 'function') window.amShowErr('Please enter your details.');
+      return;
+    }
+    try {
+      var res = await fetch(BACKEND + '/auth/register', {
+        method:  'POST',
+        mode:    'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: name || '', email, password }),
+      });
+
+      if (res.ok) {
+        var data = await res.json();
+        if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(data);
+        return;
+      }
+
+      var errData = await res.json().catch(function () { return {}; });
+      var msg = errData.detail || errData.message || ('Signup failed (HTTP ' + res.status + ')');
+      if (typeof window.amShowErr === 'function') window.amShowErr(msg);
+
+    } catch (err) {
+      if (_isNetworkFailure(err)) {
+        console.warn('[AUTH] /auth/register CORS-blocked — retrying as form-encoded');
+        try {
+          var formRes = await fetch(BACKEND + '/auth/register', {
+            method:  'POST',
+            mode:    'cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    'name=' + encodeURIComponent(name || '') +
+                     '&email=' + encodeURIComponent(email) +
+                     '&password=' + encodeURIComponent(password),
+          });
+          if (formRes.ok) {
+            var formData = await formRes.json();
+            if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(formData);
+            return;
+          }
+          var formErr = await formRes.json().catch(function () { return {}; });
+          var formMsg = formErr.detail || formErr.message || ('Signup failed (HTTP ' + formRes.status + ')');
+          if (typeof window.amShowErr === 'function') window.amShowErr(formMsg);
+        } catch (formEx) {
+          _logNetworkFailure('POST /auth/register');
+          if (typeof window.amShowErr === 'function') {
+            window.amShowErr('Cannot reach the server. Check your connection and try again.');
+          }
+        }
+      } else {
+        console.error('[AUTH] /auth/register error:', err.message);
+        if (typeof window.amShowErr === 'function') window.amShowErr('Signup error: ' + err.message);
+      }
+    }
   }
 
 
@@ -795,7 +983,15 @@
   window.authSetSyncStatus   = _setSyncStatus;
   window.authShowGate        = _showLanding;     // back-compat alias
   window.authHideGate        = _enterDashboard;  // back-compat alias
-  window.authGoogleLogin     = _googleLogin;     // Google OAuth popup flow
+  window.authGoogleLogin     = _googleLogin;     // Google OAuth redirect flow
+
+  // ── CORS-safe login / signup overrides ───────────────────────────────────
+  // These shadow whatever amHandleLogin / amHandleSignup index.html defined.
+  // They are set AFTER DOMContentLoaded so they always win.
+  // index.html's onclick="amHandleLogin(...)" / onclick="amHandleSignup(...)"
+  // will automatically call these CORS-safe versions instead.
+  window.amHandleLogin  = function (email, password) { return _amLogin(email, password); };
+  window.amHandleSignup = function (name, email, password) { return _amSignup(name, email, password); };
 
   // ── Item sync (new + legacy fallback) ────────────────────────────────────
   // syncPushToCloud(item, itemType?) — itemType defaults to 'ai_creator'
