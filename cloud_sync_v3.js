@@ -650,10 +650,28 @@
     }
     var callbackUrl = origin + '/oauth_callback.html';
 
+    // ── BUGFIX: explicit CORS mode + timeout ─────────────────────────────
+    // Without `mode: 'cors'`, some browsers send the preflight without the
+    // expected Origin header framing, causing Railway's CORS middleware to
+    // reject it with a NetworkError that is indistinguishable from "server
+    // is down". We also add a 10-second AbortController timeout so the UI
+    // never hangs indefinitely waiting for a stalled connection.
+    var controller = new AbortController();
+    var timeoutId  = setTimeout(function () { controller.abort(); }, 10000);
+
     try {
       var res = await fetch(
-        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl)
+        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl),
+        {
+          method:  'GET',
+          mode:    'cors',
+          signal:  controller.signal,
+          // No Authorization header here — this endpoint is public (unauthenticated)
+          // Adding Content-Type would trigger a CORS preflight unnecessarily, so omit it.
+        }
       );
+      clearTimeout(timeoutId);
+
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
       if (!data.url) throw new Error('No OAuth URL returned');
@@ -666,8 +684,25 @@
       window.location.href = data.url;
 
     } catch (err) {
-      console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
-      if (_isNetworkFailure(err)) _logNetworkFailure('GET /auth/google');
+      clearTimeout(timeoutId);
+
+      // Distinguish abort (timeout) from CORS/network failure
+      if (err.name === 'AbortError') {
+        console.warn('[AUTH] Google OAuth URL fetch timed out after 10 s — backend may be slow or unreachable.');
+      } else {
+        console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
+        if (_isNetworkFailure(err)) {
+          // TypeError = CORS preflight blocked OR no network — log actionable detail
+          _logNetworkFailure('GET /auth/google');
+          console.warn(
+            '[AUTH] CORS fix checklist: (1) Ensure the Railway backend CORS allow-list ' +
+            'includes "' + window.location.origin + '", ' +
+            '(2) Check that /auth/google responds to OPTIONS preflight with ' +
+            'Access-Control-Allow-Origin and Access-Control-Allow-Methods headers.'
+          );
+        }
+      }
+
       if (typeof window.amShowErr === 'function') {
         window.amShowErr('Google sign-in is unavailable right now. Please try email/password.');
       }
