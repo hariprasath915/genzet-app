@@ -638,38 +638,19 @@
   /**
    * _googleLogin()
    *
-   * ── ROOT CAUSE #1 (fixed previously) ───────────────────────────────────
-   * The backend /auth/google endpoint returns JSON {url, verifier}, NOT a
-   * 302 redirect. Pointing window.location.href straight at it navigated the
-   * browser to a JSON document instead of rendering a page.
-   *
-   * ── ROOT CAUSE #2 (this bug — seen in the Firefox screenshot) ──────────
-   * fetch(apiUrl, {mode:'cors'}) failed. Firefox's console labelled this
-   * "CORS request did not succeed" — but that message is Firefox's generic
-   * wording for ANY failed cross-origin request, including ones that never
-   * reached a server at all (DNS failure, connection refused, TLS error).
-   * It does NOT mean the server responded without the right CORS headers.
-   * The OLD code treated every such failure as "must be CORS" and blindly
-   * did `window.location.href = apiUrl` as a fallback. When the real problem
-   * is that BACKEND itself can't be resolved/reached (exactly what the
-   * screenshot shows: address bar → "Server Not Found", console →
-   * NS_ERROR_UNKNOWN_HOST), that fallback navigation just fails again, this
-   * time as a full page load — dumping the user on the browser's native
-   * "Server Not Found" error page with no way back except the Back button.
+   * ── ROOT CAUSE (seen in Network tab) ──────────────────────────────────
+   * 1. NS_ERROR_UNKNOWN (×3 calls): The backend /auth/google endpoint returns
+   *    JSON {url, verifier}, NOT a 302 redirect.  Pointing window.location.href
+   *    at it navigated the browser to a JSON document — the browser couldn't
+   *    render it as a page and threw NS_ERROR_UNKNOWN.  Additionally the button
+   *    click handler was firing 3×, causing 3 duplicate navigation attempts.
    *
    * ── FIX ───────────────────────────────────────────────────────────────
-   * Before falling back to a direct navigation, PROBE whether the backend
-   * host is reachable at all using a `mode:'no-cors'` fetch:
-   *   - no-cors requests are never blocked by CORS — they resolve to an
-   *     opaque response as long as SOMETHING answers at the network level.
-   *   - If that probe also throws, the host is genuinely unreachable
-   *     (DNS/connection failure) — do NOT navigate away; show an in-app
-   *     error instead, so the user stays on the app and can retry or use
-   *     email/password.
-   *   - If the probe succeeds, the server IS reachable and the original
-   *     failure really was a CORS/header issue — a full-page navigation is
-   *     safe (top-level navigations aren't subject to CORS) and remains a
-   *     legitimate fallback in that case.
+   * a) Add a _googleLoginInProgress lock so only ONE call runs at a time.
+   * b) fetch() the JSON properly with mode:'cors' to get {url, verifier}.
+   * c) Store the verifier, THEN redirect to the real Google OAuth URL.
+   * d) If fetch() is still CORS-blocked, fall back to direct navigation
+   *    (which works if the backend later changes to a 302-redirect approach).
    *
    * Flow:
    *   1. fetch() BACKEND/auth/google → {url, verifier}
@@ -679,21 +660,6 @@
    *   5. oauth_callback.html exchanges code → JWT → redirects to '/'
    *   6. _authInit() reads JWT → enters dashboard
    */
-  async function _isBackendReachable() {
-    try {
-      var c = new AbortController();
-      var t = setTimeout(function () { c.abort(); }, 5000);
-      // no-cors: resolves as an opaque response if ANYTHING answers at the
-      // network level, regardless of CORS headers. Throws only on a real
-      // network-level failure (DNS, connection refused, TLS, timeout).
-      await fetch(BACKEND + '/health', { mode: 'no-cors', signal: c.signal });
-      clearTimeout(t);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   async function _googleLogin() {
     // ── Deduplication guard ────────────────────────────────────────────
     if (_googleLoginInProgress) {
@@ -741,187 +707,37 @@
       }
 
     } catch (err) {
-      // ── Shared handling for "fetch failed" (timeout OR network/CORS error) ──
-      // In BOTH cases we no longer assume the cause and blindly navigate.
-      // We first PROBE reachability with a no-cors request:
-      //   • Probe succeeds → server is up, this really was a CORS/header
-      //     issue → a full-page navigation is safe and can legitimately
-      //     recover (top-level navigations aren't subject to CORS).
-      //   • Probe fails    → server is genuinely unreachable (dead deploy,
-      //     wrong/expired hostname, DNS failure, etc.) → do NOT navigate;
-      //     surface an in-app error instead of crashing to the browser's
-      //     native "Server Not Found" page.
-      var reason = (err.name === 'AbortError')
-        ? 'timed out — backend may be starting up (Railway cold-start) or may be down'
-        : (_isNetworkFailure(err)
-            ? 'a network-level failure (this may be CORS, but may also be DNS/connection failure — the two look identical from here)'
-            : err.message);
-
-      console.warn('[AUTH] Google OAuth request failed: ' + reason + '. Probing backend reachability…');
-
-      var reachable = await _isBackendReachable();
       _googleLoginInProgress = false; // release lock on error
       if (googleBtn && originalBtnText) googleBtn.textContent = originalBtnText;
 
-      if (reachable) {
-        console.warn(
-          '[AUTH] Backend host IS reachable — this is a genuine CORS issue.\n' +
-          'Backend must add "' + window.location.origin + '" to CORS allow_origins for GET /auth/google.\n' +
-          'Falling back to direct navigation (top-level navigations bypass CORS).'
-        );
+      if (err.name === 'AbortError') {
+        console.warn('[AUTH] Google OAuth fetch timed out — backend may be starting up (Railway cold-start).');
+        // Fallback: navigate directly; works if backend later issues a 302
+        console.warn('[AUTH] Falling back to direct navigation to:', apiUrl);
         window.location.href = apiUrl;
         return;
       }
 
-      console.error(
-        '[AUTH] Backend host is NOT reachable at all: ' + BACKEND + '\n' +
-        'This is a DNS/connectivity problem, not CORS — double-check that this ' +
-        'hostname is the current, live backend URL (Railway domains change if a ' +
-        'service is redeployed, renamed, or its domain is regenerated).'
-      );
+      if (_isNetworkFailure(err)) {
+        // TypeError = CORS blocked — the backend's CORS allow-list must include this origin
+        console.error(
+          '[AUTH] Google OAuth CORS error.\n' +
+          'Backend must add "' + window.location.origin + '" to CORS allow_origins for GET /auth/google.\n' +
+          'Falling back to direct navigation (works if backend issues a 302 redirect instead of JSON).'
+        );
+        // Fallback: direct page navigation bypasses CORS entirely
+        window.location.href = apiUrl;
+        return;
+      }
+
+      console.error('[AUTH] Google OAuth failed:', err.message);
       if (typeof window.amShowErr === 'function') {
-        window.amShowErr('Can\u2019t reach the sign-in server right now. Please try again shortly, or use email/password.');
-      } else {
-        alert('Can\u2019t reach the sign-in server right now. Please try again shortly, or use email/password.');
+        window.amShowErr('Google sign-in unavailable — please try email/password.');
       }
     }
   }
 
 
-  // ════════════════════════════════════════════════════════════════════════
-  // EMAIL / PASSWORD AUTH  —  CORS-safe login & signup
-  // ════════════════════════════════════════════════════════════════════════
-  /**
-   * ── ROOT CAUSE (seen in Network tab) ──────────────────────────────────
-   * POST /auth/login with Content-Type: application/json triggers a CORS
-   * OPTIONS preflight.  Railway backend does NOT respond to OPTIONS with
-   * Access-Control-Allow-Origin, so the browser fails BEFORE the POST even
-   * sends.  The Network tab shows: "OPTI... login  CORS Failed  0B  0ms".
-   *
-   * ── FIX ───────────────────────────────────────────────────────────────
-   * Send credentials as application/x-www-form-urlencoded.
-   * The Fetch spec classifies this as a "simple request" — NO preflight
-   * OPTIONS is sent.  The browser sends the POST directly.  The backend
-   * must accept form-encoded bodies (FastAPI / Flask do by default with
-   * Form() parameters, or the JSON body can be parsed from a form string).
-   *
-   * These functions are exposed as window.amHandleLogin / window.amHandleSignup
-   * so index.html's inline onclick handlers automatically use this CORS-safe
-   * version instead of their own fetch() calls.
-   */
-  async function _amLogin(email, password) {
-    if (!email || !password) {
-      if (typeof window.amShowErr === 'function') window.amShowErr('Please enter email and password.');
-      return;
-    }
-    try {
-      // Try JSON first (works if CORS is correctly configured on backend)
-      var res = await fetch(BACKEND + '/auth/login', {
-        method:  'POST',
-        mode:    'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, password }),
-      });
-
-      if (res.ok) {
-        var data = await res.json();
-        if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(data);
-        return;
-      }
-
-      // HTTP error (wrong password, etc.) — show backend message
-      var errData = await res.json().catch(function () { return {}; });
-      var msg = errData.detail || errData.message || ('Login failed (HTTP ' + res.status + ')');
-      if (typeof window.amShowErr === 'function') window.amShowErr(msg);
-
-    } catch (err) {
-      // Likely CORS preflight failure (TypeError) — try form-encoded fallback
-      if (_isNetworkFailure(err)) {
-        console.warn('[AUTH] /auth/login JSON fetch CORS-blocked — retrying as form-encoded (simple request, no preflight)');
-        try {
-          var formRes = await fetch(BACKEND + '/auth/login', {
-            method:  'POST',
-            mode:    'cors',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body:    'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password),
-          });
-          if (formRes.ok) {
-            var formData = await formRes.json();
-            if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(formData);
-            return;
-          }
-          var formErr = await formRes.json().catch(function () { return {}; });
-          var formMsg = formErr.detail || formErr.message || ('Login failed (HTTP ' + formRes.status + ')');
-          if (typeof window.amShowErr === 'function') window.amShowErr(formMsg);
-        } catch (formEx) {
-          console.error('[AUTH] /auth/login form-encoded also failed:', formEx.message);
-          _logNetworkFailure('POST /auth/login');
-          if (typeof window.amShowErr === 'function') {
-            window.amShowErr('Cannot reach the server. Check your connection and try again.');
-          }
-        }
-      } else {
-        console.error('[AUTH] /auth/login error:', err.message);
-        if (typeof window.amShowErr === 'function') window.amShowErr('Login error: ' + err.message);
-      }
-    }
-  }
-
-  async function _amSignup(name, email, password) {
-    if (!email || !password) {
-      if (typeof window.amShowErr === 'function') window.amShowErr('Please enter your details.');
-      return;
-    }
-    try {
-      var res = await fetch(BACKEND + '/auth/register', {
-        method:  'POST',
-        mode:    'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: name || '', email, password }),
-      });
-
-      if (res.ok) {
-        var data = await res.json();
-        if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(data);
-        return;
-      }
-
-      var errData = await res.json().catch(function () { return {}; });
-      var msg = errData.detail || errData.message || ('Signup failed (HTTP ' + res.status + ')');
-      if (typeof window.amShowErr === 'function') window.amShowErr(msg);
-
-    } catch (err) {
-      if (_isNetworkFailure(err)) {
-        console.warn('[AUTH] /auth/register CORS-blocked — retrying as form-encoded');
-        try {
-          var formRes = await fetch(BACKEND + '/auth/register', {
-            method:  'POST',
-            mode:    'cors',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body:    'name=' + encodeURIComponent(name || '') +
-                     '&email=' + encodeURIComponent(email) +
-                     '&password=' + encodeURIComponent(password),
-          });
-          if (formRes.ok) {
-            var formData = await formRes.json();
-            if (typeof window.authOnLoginSuccess === 'function') await window.authOnLoginSuccess(formData);
-            return;
-          }
-          var formErr = await formRes.json().catch(function () { return {}; });
-          var formMsg = formErr.detail || formErr.message || ('Signup failed (HTTP ' + formRes.status + ')');
-          if (typeof window.amShowErr === 'function') window.amShowErr(formMsg);
-        } catch (formEx) {
-          _logNetworkFailure('POST /auth/register');
-          if (typeof window.amShowErr === 'function') {
-            window.amShowErr('Cannot reach the server. Check your connection and try again.');
-          }
-        }
-      } else {
-        console.error('[AUTH] /auth/register error:', err.message);
-        if (typeof window.amShowErr === 'function') window.amShowErr('Signup error: ' + err.message);
-      }
-    }
-  }
 
 
   // ════════════════════════════════════════════════════════════════════════
@@ -1035,13 +851,7 @@
   window.authHideGate        = _enterDashboard;  // back-compat alias
   window.authGoogleLogin     = _googleLogin;     // Google OAuth redirect flow
 
-  // ── CORS-safe login / signup overrides ───────────────────────────────────
-  // These shadow whatever amHandleLogin / amHandleSignup index.html defined.
-  // They are set AFTER DOMContentLoaded so they always win.
-  // index.html's onclick="amHandleLogin(...)" / onclick="amHandleSignup(...)"
-  // will automatically call these CORS-safe versions instead.
-  window.amHandleLogin  = function (email, password) { return _amLogin(email, password); };
-  window.amHandleSignup = function (name, email, password) { return _amSignup(name, email, password); };
+
 
   // ── Item sync (new + legacy fallback) ────────────────────────────────────
   // syncPushToCloud(item, itemType?) — itemType defaults to 'ai_creator'
