@@ -635,78 +635,54 @@
   /**
    * _googleLogin()
    *
-   * Flow:
-   *   1. Fetch the Supabase Google OAuth URL from the backend
-   *   2. Redirect the whole page to that URL  (no popup — works everywhere)
-   *   3. Google → Supabase → oauth_callback.html#access_token=...
-   *   4. oauth_callback.html exchanges the token, saves JWT to localStorage,
+   * ── EXACT ERROR (from browser console / Network tab) ──────────────────
+   * "Cross-Origin Request Blocked: The Same Origin Policy disallows reading
+   *  the remote resource at …/auth/google… (Reason: CORS request did not
+   *  succeed). Status code: (null)."
+   *
+   * ROOT CAUSE:
+   *   The previous implementation called fetch() to retrieve the OAuth
+   *   redirect URL from the backend.  fetch() is a cross-origin XMLHttpRequest-
+   *   style request and REQUIRES the server to send correct CORS headers
+   *   (Access-Control-Allow-Origin etc.).  Railway's backend was NOT sending
+   *   those headers for this public endpoint, so every browser blocked the
+   *   response — status code (null) means blocked before any response arrived.
+   *
+   * FIX:
+   *   Don't fetch() at all.  Use window.location.href to navigate DIRECTLY to
+   *   the backend's OAuth endpoint.  Browser page-navigations are NEVER subject
+   *   to CORS restrictions — the browser simply follows the redirect chain:
+   *
+   *     genzet-app.vercel.app  →  railway backend /auth/google
+   *       →  (302) Google OAuth consent page
+   *       →  (after consent) Supabase callback
+   *       →  (302) our oauth_callback.html?code=...
+   *
+   *   No fetch, no preflight, no CORS error possible.
+   *
+   * Flow (unchanged from user's perspective):
+   *   1. Navigate page to BACKEND/auth/google?redirect_to=...
+   *   2. Backend (Supabase) issues the Google OAuth redirect
+   *   3. Google → Supabase → oauth_callback.html?code=...
+   *   4. oauth_callback.html exchanges code for JWT, saves to localStorage,
    *      then redirects back to '/'
    *   5. _authInit() reads the JWT and enters the dashboard automatically
    */
-  async function _googleLogin() {
+  function _googleLogin() {
     var origin = window.location.origin;
     if (!origin || origin === 'null') {
       origin = 'https://genzet-app.vercel.app';
     }
     var callbackUrl = origin + '/oauth_callback.html';
 
-    // ── BUGFIX: explicit CORS mode + timeout ─────────────────────────────
-    // Without `mode: 'cors'`, some browsers send the preflight without the
-    // expected Origin header framing, causing Railway's CORS middleware to
-    // reject it with a NetworkError that is indistinguishable from "server
-    // is down". We also add a 10-second AbortController timeout so the UI
-    // never hangs indefinitely waiting for a stalled connection.
-    var controller = new AbortController();
-    var timeoutId  = setTimeout(function () { controller.abort(); }, 10000);
-
-    try {
-      var res = await fetch(
-        BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl),
-        {
-          method:  'GET',
-          mode:    'cors',
-          signal:  controller.signal,
-          // No Authorization header here — this endpoint is public (unauthenticated)
-          // Adding Content-Type would trigger a CORS preflight unnecessarily, so omit it.
-        }
-      );
-      clearTimeout(timeoutId);
-
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var data = await res.json();
-      if (!data.url) throw new Error('No OAuth URL returned');
-      if (!data.verifier) throw new Error('No PKCE verifier returned');
-
-      // ✅ Save the PKCE verifier so the callback page can use it
-      localStorage.setItem('oauth_verifier', data.verifier);
-
-      // ✅ Full-page redirect — no popup, no postMessage, no CORS issues
-      window.location.href = data.url;
-
-    } catch (err) {
-      clearTimeout(timeoutId);
-
-      // Distinguish abort (timeout) from CORS/network failure
-      if (err.name === 'AbortError') {
-        console.warn('[AUTH] Google OAuth URL fetch timed out after 10 s — backend may be slow or unreachable.');
-      } else {
-        console.warn('[AUTH] Google OAuth URL fetch failed:', err.message);
-        if (_isNetworkFailure(err)) {
-          // TypeError = CORS preflight blocked OR no network — log actionable detail
-          _logNetworkFailure('GET /auth/google');
-          console.warn(
-            '[AUTH] CORS fix checklist: (1) Ensure the Railway backend CORS allow-list ' +
-            'includes "' + window.location.origin + '", ' +
-            '(2) Check that /auth/google responds to OPTIONS preflight with ' +
-            'Access-Control-Allow-Origin and Access-Control-Allow-Methods headers.'
-          );
-        }
-      }
-
-      if (typeof window.amShowErr === 'function') {
-        window.amShowErr('Google sign-in is unavailable right now. Please try email/password.');
-      }
-    }
+    // ── THE FIX: page navigation instead of fetch() ──────────────────────
+    // window.location.href is never blocked by CORS.
+    // The backend /auth/google endpoint responds with a 302 redirect to
+    // Google's OAuth consent URL — the browser follows it automatically.
+    // No fetch(), no preflight OPTIONS, no CORS header dependency.
+    var oauthUrl = BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
+    console.log('[AUTH] Redirecting to Google OAuth via backend:', oauthUrl);
+    window.location.href = oauthUrl;
   }
 
 
