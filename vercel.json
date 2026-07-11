@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://animind-backend-production-2.up.railway.app/$1"
+    }
+  ]
+}
