@@ -1177,7 +1177,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .stream-inner {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px 24px;
+      padding: 8px 24px 20px;
     }
 
     .panel {
@@ -1214,7 +1214,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: var(--shadow-md);
-      height: calc(100vh - var(--topbar-h) - 48px);
+      height: calc(100vh - var(--topbar-h) - 12px);
       background: var(--surface);
       transition: box-shadow var(--transition), border-color var(--transition);
     }
@@ -2028,7 +2028,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 22px;
+      margin-bottom: 10px;
       flex-wrap: wrap;
       gap: 12px;
     }
@@ -2668,10 +2668,10 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       flex-wrap: wrap;
       gap: 12px;
-      padding: 18px 22px;
+      padding: 14px 22px;
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 18px;
@@ -5649,7 +5649,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       }
 
       .stream-inner {
-        padding: 16px 14px;
+        padding: 6px 14px 16px;
       }
 
       .modal-overlay {
@@ -5732,8 +5732,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     @keyframes panelSlideIn {
       from {
         opacity: 0;
-        transform: translateY(12px) scale(0.99);
-        filter: blur(3px);
+        transform: translateY(4px) scale(0.998);
+        filter: blur(1px);
       }
 
       to {
@@ -9855,7 +9855,10 @@ function amShowSuccess() {
                   <h2 style="font-size:22px;font-weight:800;color:var(--text);">📚 My Library</h2>
                   <p style="font-size:12px;color:var(--text2);margin-top:4px;">AI animations stored here</p>
                 </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                  <!-- Upload Global button: only shown to main user via JS -->
+                  <button class="lib-export-btn" id="uploadGlobalBtn" onclick="uploadGlobalAnimationFlow()"
+                    style="display:none;background:linear-gradient(135deg,#0d9488,#14b8a6);color:#fff;border:none;" title="Upload animation as global (visible to all users)">🌐 Share Globally</button>
                   <button class="lib-export-btn" onclick="exportLibraryCSV()">📋 Export CSV</button>
                   <button class="lib-create-btn" onclick="switchMode('animind')">+ Create Animation</button>
                 </div>
@@ -9869,6 +9872,7 @@ function amShowSuccess() {
               <div class="lib-tabs">
                 <button class="lib-tab active" id="tabAll" onclick="setLibTab('all')">All</button>
                 <button class="lib-tab" id="tabAnimations" onclick="setLibTab('animations')">🎬 Animations</button>
+                <button class="lib-tab" id="tabGlobal" onclick="setLibTab('global')">🌐 Global</button>
               </div>
               <div class="playlist-filters" id="playlistFilters"></div>
               <div class="lib-grid" id="libraryGrid"></div>
@@ -12060,16 +12064,24 @@ function amShowSuccess() {
     // ═══════════════════════════════════════════════
     // LIBRARY
     // ═══════════════════════════════════════════════
+    // Global animations loaded from backend (visible to all users)
+    var globalAnimations = [];
+
     async function renderLibrary() {
       // animindLibrary is already in-memory from cloud pull — no IDB read needed
-      const aP = animindLibrary.map(a => a.playlist || 'General');
+      const isGlobalTab = activeLibTab === 'global';
+      const sourceLib = isGlobalTab ? globalAnimations : animindLibrary;
+
+      const aP = sourceLib.map(a => a.playlist || (isGlobalTab ? 'Global' : 'General'));
       const allPl = ['all', ...new Set(aP)];
       document.getElementById('playlistFilters').innerHTML = allPl.map(p => {
-        const cnt = p === 'all' ? animindLibrary.length : animindLibrary.filter(a => (a.playlist || 'General') === p).length;
+        const cnt = p === 'all' ? sourceLib.length : sourceLib.filter(a => (a.playlist || (isGlobalTab ? 'Global' : 'General')) === p).length;
         return `<button class="pf-tag ${p === activePlaylist ? 'active' : ''}" onclick="filterPlaylist('${esc(p)}')">${p === 'all' ? '📂 All' : p} (${cnt})</button>`;
       }).join('');
       const showA = activeLibTab === 'all' || activeLibTab === 'animations';
-      let fA = showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : [];
+      let fA = isGlobalTab
+        ? globalAnimations.filter(a => activePlaylist === 'all' || (a.playlist || 'Global') === activePlaylist)
+        : (showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : []);
 
       // ── Search: filter + sort by relevance ──────────────────────────────
       const sq = (libSearchQuery || '').toLowerCase().trim();
@@ -12106,13 +12118,19 @@ function amShowSuccess() {
         return;
       }
 
-      grid.innerHTML = paginated.map(a =>
-        `<div class="lib-anim-card" onclick="openLibAnim('${a.id}')"><button class="lac-delete" onclick="event.stopPropagation();deleteAI('${a.id}')">✕</button>
-    <div class="lac-type">🎬 Animation</div>
+      grid.innerHTML = paginated.map(a => {
+        const isGlobal = !!a.is_global;
+        const canDelete = !isGlobal || isMainUser();
+        const deleteBtn = canDelete
+          ? `<button class="lac-delete" onclick="event.stopPropagation();${isGlobal ? `deleteGlobalAnim('${a.id}')` : `deleteAI('${a.id}')`}">✕</button>`
+          : '';
+        const badge = isGlobal ? `<span style="font-size:10px;background:linear-gradient(135deg,#0d9488,#14b8a6);color:#fff;padding:2px 7px;border-radius:20px;margin-left:6px;">🌐 Shared</span>` : '';
+        return `<div class="lib-anim-card" onclick="openLibAnim('${a.id}')">${deleteBtn}
+    <div class="lac-type">🎬 Animation${badge}</div>
     <div class="lac-title">${esc(a.title)}</div>
     <div class="lac-desc">${esc((a.explanation || a.prompt || '').substring(0, 90))}…</div>
-    <div class="lac-footer"><span class="lac-date">${fmtDate(a.created_at)}</span><span class="lac-playlist">🗂 ${esc(a.playlist || 'General')}</span></div></div>`
-      ).join('');
+    <div class="lac-footer"><span class="lac-date">${fmtDate(a.created_at)}</span><span class="lac-playlist">🗂 ${esc(a.playlist || 'General')}</span></div></div>`;
+      }).join('');
 
       // ── Pagination controls ───────────────────────────────────────────────
       if (totalPages > 1) {
@@ -12137,11 +12155,21 @@ function amShowSuccess() {
       }
     }
     function libGoPage(page) { libSearchPage = page; renderLibrary(); const grid = document.getElementById('libraryGrid'); if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    function setLibTab(tab) { activeLibTab = tab; document.querySelectorAll('.lib-tab').forEach(b => b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1))); renderLibrary(); }
+    function setLibTab(tab) {
+      activeLibTab = tab;
+      document.querySelectorAll('.lib-tab').forEach(b => b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1)));
+      // When switching to Global tab, ensure global anims are loaded
+      if (tab === 'global' && typeof globalAnimations !== 'undefined' && globalAnimations.length === 0) {
+        fetchGlobalAnimations();
+      }
+      renderLibrary();
+    }
     function filterPlaylist(p) { activePlaylist = p; renderLibrary(); }
     function openLibAnim(id) {
-      const a = animindLibrary.find(x => String(x.id) === String(id)); if (!a) return;
-      // UPDATED: Teacher mode removed — open animation directly in Present Mode
+      // Check personal library first, then global
+      const a = animindLibrary.find(x => String(x.id) === String(id))
+             || (typeof globalAnimations !== 'undefined' ? globalAnimations.find(x => String(x.id) === String(id)) : null);
+      if (!a) return;
       openPresentMode(a.animation_code, a.title, 'AI Generated · ' + (a.playlist || 'General'));
     }
     async function deleteAI(id) {
@@ -12164,6 +12192,129 @@ function amShowSuccess() {
       const u = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = u; a.download = 'genzet_library.csv'; a.click(); URL.revokeObjectURL(u);
       notify('📋 CSV exported!');
+    }
+
+    // ═══════════════════════════════════════════════
+    // GLOBAL ANIMATIONS — helpers
+    // ═══════════════════════════════════════════════
+
+    const MAIN_USER_EMAIL = 'genzet@gmail.com'; // must match MAIN_USER_EMAIL backend env var
+
+    function isMainUser() {
+      const user = window.currentUser || {};
+      return (user.email || '').toLowerCase().trim() === MAIN_USER_EMAIL.toLowerCase();
+    }
+
+    // Show/hide the "🌐 Share Globally" button based on who is logged in
+    function updateGlobalUploadBtn() {
+      const btn = document.getElementById('uploadGlobalBtn');
+      if (btn) btn.style.display = isMainUser() ? '' : 'none';
+    }
+
+    // Fetch all global animations from backend and store in globalAnimations[]
+    async function fetchGlobalAnimations() {
+      const authToken = window.authToken;
+      if (!authToken) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/sync/global-animations`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          globalAnimations = data.animations || [];
+          console.log(`[GLOBAL] ✅ Loaded ${globalAnimations.length} global animations.`);
+          // If Library is open on Global tab, re-render
+          if (typeof activeLibTab !== 'undefined' && activeLibTab === 'global') renderLibrary();
+        } else {
+          console.warn('[GLOBAL] Failed to fetch global animations:', res.status);
+        }
+      } catch (err) {
+        console.warn('[GLOBAL] Fetch error:', err.message);
+      }
+    }
+
+    // Main user: pick an animation from their personal library and share it globally
+    function uploadGlobalAnimationFlow() {
+      if (!isMainUser()) { notify('Only the main user can share globally.', 'error'); return; }
+      if (animindLibrary.length === 0) {
+        notify('No personal animations to share. Create one first!', 'error'); return;
+      }
+      // Build a quick picker modal overlay
+      const existing = document.getElementById('_globalPickerOverlay');
+      if (existing) existing.remove();
+      const overlay = document.createElement('div');
+      overlay.id = '_globalPickerOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+      overlay.innerHTML = `
+        <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:28px 28px 20px;max-width:500px;width:90%;max-height:80vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3 style="font-size:17px;font-weight:800;color:var(--text);">🌐 Share Animation Globally</h3>
+            <button onclick="document.getElementById('_globalPickerOverlay').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);">✕</button>
+          </div>
+          <p style="font-size:12px;color:var(--text3);">Select an animation from your library to share with all users.</p>
+          <div style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;">
+            ${animindLibrary.map(a => `
+              <div onclick="confirmGlobalUpload('${a.id}')" style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+                <div style="font-size:13px;font-weight:700;color:var(--text);">${esc(a.title)}</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px;">${esc((a.prompt || '').substring(0, 60))}…</div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+
+    async function confirmGlobalUpload(animId) {
+      const anim = animindLibrary.find(x => String(x.id) === String(animId));
+      if (!anim) return;
+      document.getElementById('_globalPickerOverlay')?.remove();
+      const authToken = window.authToken;
+      if (!authToken) { notify('Not logged in.', 'error'); return; }
+      notify('⏳ Sharing animation globally…');
+      try {
+        const res = await fetch(`${BACKEND_URL}/sync/global-animations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            id: anim.id,
+            title: anim.title || 'Untitled',
+            prompt: anim.prompt || '',
+            explanation: anim.explanation || '',
+            animation_code: anim.animation_code || '',
+            playlist: 'Global',
+            created_at: anim.created_at || new Date().toISOString(),
+          })
+        });
+        if (res.ok) {
+          notify('✅ Animation is now visible to all users!');
+          await fetchGlobalAnimations();
+        } else {
+          const err = await res.json();
+          notify('❌ ' + (err.detail || 'Upload failed'), 'error');
+        }
+      } catch (err) {
+        notify('❌ Network error: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteGlobalAnim(animId) {
+      if (!isMainUser()) { notify('Only the main user can delete global animations.', 'error'); return; }
+      if (!confirm('Remove this animation from the global library?')) return;
+      const authToken = window.authToken;
+      try {
+        const res = await fetch(`${BACKEND_URL}/sync/global-animations/${encodeURIComponent(animId)}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          globalAnimations = globalAnimations.filter(a => String(a.id) !== String(animId));
+          renderLibrary();
+          notify('🗑️ Removed from global library.');
+        } else {
+          notify('❌ Delete failed.', 'error');
+        }
+      } catch (err) {
+        notify('❌ ' + err.message, 'error');
+      }
     }
 
     // ═══════════════════════════════════════════════
@@ -13949,6 +14100,9 @@ ${text.substring(0, 4500)}`
           if (typeof window.syncPullFromCloud === 'function') {
             await window.syncPullFromCloud();
           }
+          // Load global animations + show/hide main-user Share button
+          if (typeof fetchGlobalAnimations === 'function') fetchGlobalAnimations();
+          if (typeof updateGlobalUploadBtn === 'function') updateGlobalUploadBtn();
           authSetSyncStatus('');
 
         } else {
@@ -14167,6 +14321,9 @@ ${text.substring(0, 4500)}`
           // Always call via window so cloud_sync_v3.js override is used
           // This pulls animations + courses + vault in the correct order
           if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
+          // Load global animations + show/hide the main-user Share button
+          if (typeof fetchGlobalAnimations === 'function') fetchGlobalAnimations();
+          if (typeof updateGlobalUploadBtn === 'function') updateGlobalUploadBtn();
           authSetSyncStatus('');
         }, 1200);
 
@@ -14212,6 +14369,8 @@ ${text.substring(0, 4500)}`
         email:   data.email   || '',
         name:    data.name    || (data.email || '').split('@')[0] || 'Student',
       };
+      // Expose as currentUser so isMainUser() can check email
+      window.currentUser = window.authUser;
       localStorage.setItem(TOKEN_KEY, window.authToken);
       localStorage.setItem(USER_KEY,  JSON.stringify(window.authUser));
       // Clear any legacy local-session flags that might confuse authInit
