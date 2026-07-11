@@ -1192,6 +1192,42 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       animation: panelIn .32s cubic-bezier(.4, 0, .2, 1) forwards;
     }
 
+    /* Simulation panel needs its own flex/height layout, but ONLY while
+       active -- see fix note at the #simulationPanel element in the HTML. */
+    #simulationPanel.active {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--topbar-h) - 48px);
+      overflow: hidden;
+    }
+
+    /* FIX: Ensure the QAnim panel's animind-wrap renders as grid immediately
+       when the panel becomes active. Without this, the am-prev-header and
+       am-sid-header can appear missing on first open because the grid
+       hasn't been computed yet from display:block. */
+    #questionPanel.active {
+      display: block;
+    }
+    #questionPanel.active .animind-wrap {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+    }
+    #questionPanel.active .animind-sidebar {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #questionPanel.active .am-sid-header {
+      flex-shrink: 0;
+    }
+    #questionPanel.active .animind-preview {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
     @keyframes panelIn {
       from {
         opacity: 0;
@@ -1239,6 +1275,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: linear-gradient(135deg, var(--blue-lt) 0%, var(--indigo-lt) 50%, var(--orange-lt) 100%);
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .am-sid-header::before {
@@ -1445,6 +1482,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .am-section {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
     .am-section-label {
@@ -1819,6 +1857,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       gap: 3px;
       padding: 14px 14px 0;
+      flex-shrink: 0;
     }
 
     .am-mode-tab {
@@ -9903,7 +9942,7 @@ function amShowSuccess() {
                     </div>
                     <div class="am-error" id="qaError"></div>
                   </div>
-                  <div class="am-section" style="flex:1;overflow-y:auto;">
+                  <div class="am-section" style="flex:1;overflow-y:auto;flex-shrink:1;min-height:60px;">
                     <div class="am-section-label">Try these questions</div>
                     <button class="am-example-btn"
                       onclick="qaSetPrompt('What is photosynthesis and how does it work?')"><span>→</span> What is
@@ -9990,7 +10029,12 @@ function amShowSuccess() {
             </div>
 
             <!-- SIMULATION PANEL -->
-            <div class="panel" id="simulationPanel" style="display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
+            <!-- FIX: display/height moved to CSS (#simulationPanel.active) below --
+                 the inline style here used to override .panel{display:none} even
+                 when this panel was NOT active, permanently occupying ~full
+                 viewport height and pushing every other panel (Library, File,
+                 QAnim, AI Creator) down out of view until the user scrolled. -->
+            <div class="panel" id="simulationPanel">
 
               <!-- ── Top 3 Main Tabs ─────────────────────────────────── -->
               <div class="sim-top-tabs">
@@ -11051,6 +11095,13 @@ function amShowSuccess() {
       if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
       if (mode === 'simulation') simInit();
+      // Scroll QAnim sidebar to top so the header + input are always visible
+      if (mode === 'question') {
+        requestAnimationFrame(() => {
+          const qSidebar = document.querySelector('#questionPanel .animind-sidebar');
+          if (qSidebar) qSidebar.scrollTop = 0;
+        });
+      }
     }
 
     // ═══════════════════════════════════════════════
@@ -11665,8 +11716,18 @@ function amShowSuccess() {
       }, 3000);
       try {
         const res = await fetch(`${BACKEND_URL}/generate-animation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
-        const data = await res.json();
+        // ── FIX: always parse response body as text first, then attempt JSON.
+        // When Railway/backend crashes or times out it can return HTTP 200 with
+        // a plain-text exception string instead of JSON, causing a
+        // "Unexpected token ... is not valid JSON" crash here.
+        const rawText = await res.text();
+        let data;
+        try { data = JSON.parse(rawText); }
+        catch (_) { throw new Error(rawText.slice(0, 200) || 'Server returned non-JSON response'); }
+        if (!res.ok) throw new Error(data.detail || 'Generation failed');
+        // ── FIX: backend now returns {"error":true,"detail":"..."} on timeout/error
+        // even with HTTP 200, so we must check this field explicitly.
+        if (data.error) throw new Error(data.detail || 'Generation failed');
         const patchedCode = patchAnimHTML(data.animation_code);
         currentAnimation = { id: Date.now().toString(), title: data.title, prompt, explanation: data.explanation, animation_code: patchedCode, created_at: new Date().toISOString(), playlist: null };
         clearInterval(pt); clearInterval(mt);
@@ -11843,12 +11904,18 @@ function amShowSuccess() {
           // NOTE: Do NOT set Content-Type manually — browser sets it with boundary
         });
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({ detail: 'Unknown error' }));
-          throw new Error(errData.detail || 'Generation failed');
-        }
+        // ── FIX: always parse as text first to avoid "not valid JSON" crash
+        // when backend returns a plain-text error body on timeout/crash.
+        const rawBookText = await res.text();
+        let data;
+        try { data = JSON.parse(rawBookText); }
+        catch (_) { throw new Error(rawBookText.slice(0, 200) || 'Server returned non-JSON response'); }
 
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Generation failed');
+        }
+        if (data.error) throw new Error(data.detail || 'Generation failed');
+
         const patchedCode = patchAnimHTML(data.animation_code);
 
         currentAnimation = {
@@ -13557,7 +13624,7 @@ ${text.substring(0, 4500)}`
 
     function qaSetPrompt(t) {
       document.getElementById('qaPrompt').value = t;
-      document.getElementById('qaCharCount').textContent = t.length + '/500';
+      document.getElementById('qaCharCount').textContent = t.length + '/1000';
     }
 
     async function generateQuestionAnim() {
@@ -13612,8 +13679,14 @@ ${text.substring(0, 4500)}`
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: rawQ })
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
-        const data = await res.json();
+        // ── FIX: parse as text first so a plain-text error body (HTTP 499
+        // or backend crash) never throws "Unexpected token ... not valid JSON".
+        const rawText = await res.text();
+        let data;
+        try { data = JSON.parse(rawText); }
+        catch (_) { throw new Error(rawText.slice(0, 200) || 'Server returned non-JSON response'); }
+        if (!res.ok) throw new Error(data.detail || 'Generation failed');
+        if (data.error) throw new Error(data.detail || 'Generation failed');
 
         // ✅ ENHANCED CLEANING: Handle all backend escape sequences
         let _animCode = data.animation_code || '';
