@@ -13597,7 +13597,17 @@ ${text.substring(0, 4500)}`
 
       try {
 
-        const res = await fetch(`${BACKEND_URL}/generate-question-animation`, {
+        // FIX: the shared BACKEND_URL ('/api') is proxied through Vercel, which
+        // has a hard execution/proxy timeout well under the 1-3 minutes this
+        // pipeline can take for a complex question. That mismatch was causing
+        // Vercel to drop the connection to Railway mid-generation (Railway
+        // logs this as HTTP 499 "client closed request"), which the frontend
+        // then saw as a broken, non-JSON response.
+        // Calling the Railway backend directly here bypasses Vercel's proxy
+        // entirely, so the browser just waits as long as the backend needs.
+        // (Safe: this backend's CORS allow-list already includes this origin.)
+        const QANIM_DIRECT_BACKEND_URL = 'https://animind-backend-production-2.up.railway.app';
+        const res = await fetch(`${QANIM_DIRECT_BACKEND_URL}/generate-question-animation`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: rawQ })
