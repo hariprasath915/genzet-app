@@ -29,7 +29,7 @@
 
   const BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000'
-    : 'https://animind-backend-production-2.up.railway.app';
+    : '/api';
   const TOKEN_KEY = 'genzet_jwt';
   const USER_KEY  = 'genzet_user';
 
