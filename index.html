@@ -6415,140 +6415,250 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     /* ══════════════════════════════════════
-       SIMULATION PANEL
+       SIMULATION PANEL — 3-TAB SYSTEM
     ══════════════════════════════════════ */
 
-    .sim-wrap {
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - var(--topbar-h) - 48px);
-      overflow: hidden;
-    }
-
-    /* Header */
-    .sim-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 22px 28px 18px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(135deg, #f0fdf9 0%, #eff6ff 50%, #fdf4ff 100%);
-      flex-shrink: 0;
-    }
-
-    [data-theme="dark"] .sim-header {
-      background: linear-gradient(135deg, rgba(13,148,136,.08), rgba(99,102,241,.06));
-    }
-
-    .sim-header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .sim-header-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #0d9488, #6366f1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 18px rgba(13,148,136,.30);
-      flex-shrink: 0;
-    }
-
-    .sim-header-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -.3px;
-      margin-bottom: 3px;
-    }
-
-    .sim-header-sub {
-      font-size: 12.5px;
-      color: var(--text2);
-    }
-
-    .sim-header-badge {
-      padding: 5px 14px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #0d9488, #6366f1);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      box-shadow: 0 2px 10px rgba(13,148,136,.25);
-    }
-
-    /* Mode tabs */
-    .sim-mode-tabs {
+    /* ── Top 3-tab navigation ───────────────────────────────── */
+    .sim-top-tabs {
       display: flex;
       gap: 0;
-      padding: 14px 28px 0;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      padding: 0 28px;
+      background: linear-gradient(135deg, #f0fdf9 0%, #eff6ff 50%, #fdf4ff 100%);
+      border-bottom: 1.5px solid var(--border);
       flex-shrink: 0;
       overflow-x: auto;
     }
-
-    .sim-mode-tab {
+    [data-theme="dark"] .sim-top-tabs {
+      background: linear-gradient(135deg, rgba(13,148,136,.09), rgba(99,102,241,.07));
+    }
+    .sim-top-tab {
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 10px 20px;
+      gap: 9px;
+      padding: 16px 24px 14px;
       background: none;
       border: none;
-      border-bottom: 2.5px solid transparent;
-      color: var(--text3);
+      border-bottom: 3px solid transparent;
+      color: var(--text2);
       font-family: 'Sora', sans-serif;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
       transition: all .2s;
       white-space: nowrap;
-      margin-bottom: -1px;
+      margin-bottom: -1.5px;
+      position: relative;
     }
-
-    .sim-mode-tab:hover {
+    .sim-top-tab:hover {
       color: var(--text);
-      background: var(--blue-lt);
-      border-radius: 8px 8px 0 0;
+      background: rgba(13,148,136,.05);
+      border-radius: 10px 10px 0 0;
     }
-
-    .sim-mode-tab.active {
+    .sim-top-tab.active {
       color: #0d9488;
       border-bottom-color: #0d9488;
+      font-weight: 800;
+    }
+    .sim-top-tab .sim-ttab-icon {
+      font-size: 18px;
+      transition: transform .2s;
+    }
+    .sim-top-tab:hover .sim-ttab-icon,
+    .sim-top-tab.active .sim-ttab-icon {
+      transform: scale(1.15);
+    }
+    .sim-ttab-badge {
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
       font-weight: 700;
+      background: linear-gradient(135deg, #0d9488, #6366f1);
+      color: #fff;
+      letter-spacing: .3px;
     }
 
-    .sim-tab-icon {
-      font-size: 15px;
-    }
+    /* ── Tab content panels ─────────────────────────────────── */
+    .sim-tab-panel { display: none; flex: 1; overflow: hidden; }
+    .sim-tab-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 
-    /* Main content split */
-    .sim-content {
+    /* ── Library (Topics / Experiments) layout ──────────────── */
+    .sim-lib-layout {
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 1fr 1.4fr;
       flex: 1;
       overflow: hidden;
-      gap: 0;
     }
 
-    /* Left sidebar */
-    .sim-sidebar {
+    /* Left: card grid */
+    .sim-lib-left {
+      border-right: 1.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sim-lib-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      gap: 10px;
+    }
+    .sim-lib-toolbar-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+    .sim-lib-refresh-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border2);
       background: var(--bg);
-      border-right: 1px solid var(--border);
+      color: var(--text3);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      transition: all .2s;
+    }
+    .sim-lib-refresh-btn:hover {
+      border-color: #0d9488;
+      color: #0d9488;
+    }
+    .sim-lib-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      align-content: start;
+    }
+
+    /* Individual card */
+    .sim-lib-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all .25s var(--spring);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .sim-lib-card:hover {
+      border-color: #0d9488;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(13,148,136,.18);
+    }
+    .sim-lib-card.active-card {
+      border-color: #0d9488;
+      background: rgba(13,148,136,.06);
+      box-shadow: 0 0 0 3px rgba(13,148,136,.2);
+    }
+    .sim-lib-card-thumb {
+      background: linear-gradient(135deg, #0d9488 0%, #6366f1 100%);
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .sim-lib-card-thumb::after {
+      content: '▶';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: rgba(255,255,255,.9);
+      background: rgba(0,0,0,.35);
+      opacity: 0;
+      transition: opacity .2s;
+      border-radius: inherit;
+    }
+    .sim-lib-card:hover .sim-lib-card-thumb::after { opacity: 1; }
+    .sim-lib-card-body {
+      padding: 10px 11px 12px;
+    }
+    .sim-lib-card-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 5px;
+    }
+    .sim-lib-card-cat {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--blue-lt);
+      color: var(--blue);
+      letter-spacing: .3px;
+    }
+
+    /* Empty state for library */
+    .sim-lib-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      height: 100%;
+      color: var(--text3);
+    }
+    .sim-lib-empty-icon { font-size: 52px; filter: grayscale(.4); }
+    .sim-lib-empty-title { font-size: 15px; font-weight: 700; color: var(--text2); }
+    .sim-lib-empty-sub { font-size: 12px; line-height: 1.6; max-width: 280px; }
+
+    /* Library loading state */
+    .sim-lib-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      height: 100%;
+      color: var(--text3);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Right: preview area (shared across all 3 tabs) */
+    .sim-lib-right {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Create with AI (existing layout, preserved) ────────── */
+    .sim-ai-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+    .sim-ai-sidebar {
+      background: var(--bg);
+      border-right: 1.5px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       padding: 18px 16px;
       gap: 14px;
     }
-
     .sim-input-card {
       background: var(--surface);
       border: 1.5px solid var(--border);
@@ -6556,7 +6666,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       padding: 16px;
       box-shadow: var(--shadow);
     }
-
     .sim-input-label {
       font-size: 11px;
       font-weight: 800;
@@ -6568,7 +6677,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       align-items: center;
       gap: 7px;
     }
-
     .sim-input-label-dot {
       width: 3px;
       height: 12px;
@@ -6576,7 +6684,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: linear-gradient(to bottom, #0d9488, #6366f1);
       flex-shrink: 0;
     }
-
     .sim-textarea {
       width: 100%;
       background: var(--bg);
@@ -6591,32 +6698,27 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       font-family: 'Sora', sans-serif;
       transition: border-color .2s, box-shadow .2s;
     }
-
     .sim-textarea:focus {
       border-color: #0d9488;
       box-shadow: 0 0 0 3px rgba(13,148,136,.10);
     }
-
     .sim-input-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-top: 10px;
     }
-
     .sim-char-count {
       font-size: 11px;
       color: var(--text3);
       font-family: 'JetBrains Mono', monospace;
     }
-
     .sim-gen-btn {
       display: flex;
       align-items: center;
       gap: 7px;
       padding: 10px 20px;
       background: linear-gradient(135deg, #0d9488, #6366f1);
-      background-size: 300% 300%;
       border: none;
       border-radius: 11px;
       color: #fff;
@@ -6626,25 +6728,10 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       font-family: 'Sora', sans-serif;
       box-shadow: 0 3px 14px rgba(13,148,136,.35);
       transition: all .25s var(--spring);
-      animation: gradientShift 4s ease infinite;
     }
-
-    .sim-gen-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 22px rgba(13,148,136,.45);
-    }
-
-    .sim-gen-btn:active {
-      transform: translateY(0) scale(.98);
-    }
-
-    .sim-gen-btn:disabled {
-      opacity: .4;
-      cursor: not-allowed;
-      transform: none;
-      animation: none;
-    }
-
+    .sim-gen-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(13,148,136,.45); }
+    .sim-gen-btn:active { transform: translateY(0) scale(.98); }
+    .sim-gen-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
     .sim-error {
       display: none;
       margin-top: 8px;
@@ -6656,15 +6743,12 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       font-size: 12px;
       line-height: 1.5;
     }
-
-    /* Examples */
     .sim-examples {
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 14px;
       padding: 14px 14px 10px;
     }
-
     .sim-examples-label {
       font-size: 10px;
       font-weight: 800;
@@ -6673,7 +6757,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       color: var(--text3);
       margin-bottom: 10px;
     }
-
     .sim-example-btn {
       width: 100%;
       text-align: left;
@@ -6692,247 +6775,106 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       align-items: center;
       gap: 7px;
     }
-
-    .sim-example-btn:hover {
-      border-color: #0d9488;
-      color: #0d9488;
-      background: #f0fdf9;
-      transform: translateX(4px);
-    }
-
-    .sim-example-btn .sim-ex-arrow {
-      color: #0d9488;
-      transition: transform .2s;
-    }
-
-    .sim-example-btn:hover .sim-ex-arrow {
-      transform: translateX(3px);
-    }
-
-    /* Save section */
-    .sim-save-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
+    .sim-example-btn:hover { border-color: #0d9488; color: #0d9488; background: #f0fdf9; transform: translateX(4px); }
+    .sim-example-btn .sim-ex-arrow { color: #0d9488; transition: transform .2s; }
+    .sim-example-btn:hover .sim-ex-arrow { transform: translateX(3px); }
+    .sim-save-section { display: flex; flex-direction: column; gap: 8px; }
     .sim-save-btn {
-      width: 100%;
-      padding: 11px;
-      border-radius: 10px;
-      border: 2px solid var(--blue-md);
-      background: var(--blue-lt);
-      color: var(--blue);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Sora', sans-serif;
-      transition: all .2s;
+      width: 100%; padding: 11px; border-radius: 10px;
+      border: 2px solid var(--blue-md); background: var(--blue-lt);
+      color: var(--blue); font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: 'Sora', sans-serif; transition: all .2s;
     }
-
-    .sim-save-btn:hover {
-      background: var(--blue-md);
-      transform: translateY(-1px);
-    }
-
+    .sim-save-btn:hover { background: var(--blue-md); transform: translateY(-1px); }
     .sim-dl-btn {
-      width: 100%;
-      padding: 10px;
-      border-radius: 9px;
-      border: 2px solid var(--border2);
-      background: var(--bg);
-      color: var(--text2);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Sora', sans-serif;
-      transition: all .2s;
+      width: 100%; padding: 10px; border-radius: 9px;
+      border: 2px solid var(--border2); background: var(--bg);
+      color: var(--text2); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'Sora', sans-serif; transition: all .2s;
     }
+    .sim-dl-btn:hover { border-color: #0d9488; color: #0d9488; background: #f0fdf9; }
 
-    .sim-dl-btn:hover {
-      border-color: #0d9488;
-      color: #0d9488;
-      background: #f0fdf9;
-    }
-
-    /* Right preview */
-    .sim-preview {
-      display: flex;
-      flex-direction: column;
+    /* Subject sub-tabs (for AI mode only) */
+    .sim-mode-tabs {
+      display: flex; gap: 0; padding: 10px 16px 0;
+      border-bottom: 1px solid var(--border);
       background: var(--surface);
-      overflow: hidden;
+      flex-shrink: 0; overflow-x: auto;
     }
+    .sim-mode-tab {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 16px; background: none; border: none;
+      border-bottom: 2.5px solid transparent;
+      color: var(--text3); font-family: 'Sora', sans-serif;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all .2s; white-space: nowrap; margin-bottom: -1px;
+    }
+    .sim-mode-tab:hover { color: var(--text); background: var(--blue-lt); border-radius: 8px 8px 0 0; }
+    .sim-mode-tab.active { color: #0d9488; border-bottom-color: #0d9488; font-weight: 700; }
+    .sim-tab-icon { font-size: 14px; }
 
+    /* Shared preview panel (used by all 3 tabs) */
     .sim-preview-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      background: var(--bg);
-      border-bottom: 2px solid var(--border);
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; background: var(--bg);
+      border-bottom: 2px solid var(--border); flex-shrink: 0;
     }
-
-    .sim-preview-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .sim-preview-actions {
-      display: flex;
-      gap: 8px;
-    }
-
+    .sim-preview-title { font-size: 14px; font-weight: 800; color: var(--text); }
+    .sim-preview-actions { display: flex; gap: 8px; }
     .sim-act-btn {
-      padding: 7px 14px;
-      border-radius: 9px;
-      border: 1.5px solid var(--border2);
-      background: var(--surface);
-      color: var(--text2);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Sora', sans-serif;
-      transition: all .2s;
+      padding: 7px 14px; border-radius: 9px;
+      border: 1.5px solid var(--border2); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'Sora', sans-serif; transition: all .2s;
     }
-
-    .sim-act-btn:hover {
-      border-color: #0d9488;
-      color: #0d9488;
-      background: #f0fdf9;
-    }
-
-    .sim-preview-body {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Empty state */
+    .sim-act-btn:hover { border-color: #0d9488; color: #0d9488; background: #f0fdf9; }
+    .sim-preview-body { flex: 1; overflow: hidden; position: relative; }
     .sim-empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 10px;
-      padding: 40px;
-      text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%;
+      gap: 10px; padding: 40px; text-align: center;
     }
-
-    .sim-empty-icon {
-      font-size: 52px;
-      line-height: 1;
-      animation: gentleFloat 3s ease-in-out infinite;
-      filter: grayscale(.3);
-    }
-
-    .sim-empty-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .sim-empty-sub {
-      font-size: 12.5px;
-      color: var(--text3);
-    }
-
-    /* Loading */
+    .sim-empty-icon { font-size: 52px; line-height: 1; animation: gentleFloat 3s ease-in-out infinite; filter: grayscale(.3); }
+    .sim-empty-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .sim-empty-sub { font-size: 12.5px; color: var(--text3); }
     .sim-loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 14px;
-      padding: 40px;
-      text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%;
+      gap: 14px; padding: 40px; text-align: center;
     }
-
-    .sim-spin-wrap {
-      position: relative;
-      width: 72px;
-      height: 72px;
-    }
-
+    .sim-spin-wrap { position: relative; width: 72px; height: 72px; }
     .sim-spinner {
-      position: absolute;
-      inset: 0;
-      border: 3px solid rgba(13,148,136,.15);
-      border-top-color: #0d9488;
-      border-radius: 50%;
-      animation: simSpin 1s linear infinite;
+      position: absolute; inset: 0;
+      border: 3px solid rgba(13,148,136,.15); border-top-color: #0d9488;
+      border-radius: 50%; animation: simSpin 1s linear infinite;
     }
-
-    @keyframes simSpin {
-      to { transform: rotate(360deg); }
-    }
-
+    @keyframes simSpin { to { transform: rotate(360deg); } }
     .sim-spin-icon {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
     }
-
-    .sim-load-msg {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0d9488;
-    }
-
-    .sim-load-sub {
-      font-size: 11.5px;
-      color: var(--text3);
-    }
-
+    .sim-load-msg { font-size: 14px; font-weight: 700; color: #0d9488; }
+    .sim-load-sub { font-size: 11.5px; color: var(--text3); }
     .sim-progress-bar {
-      width: 220px;
-      height: 5px;
-      background: var(--border);
-      border-radius: 5px;
-      overflow: hidden;
+      width: 220px; height: 5px; background: var(--border);
+      border-radius: 5px; overflow: hidden;
     }
-
     .sim-progress-fill {
-      height: 100%;
-      width: 0;
+      height: 100%; width: 0;
       background: linear-gradient(90deg, #0d9488, #6366f1);
-      border-radius: 5px;
-      transition: width .3s ease;
+      border-radius: 5px; transition: width .3s ease;
     }
-
-    /* iframe */
-    .sim-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
+    .sim-iframe { width: 100%; height: 100%; border: none; display: block; }
 
     /* Responsive */
     @media (max-width: 900px) {
-      .sim-content {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-      }
-      .sim-sidebar {
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        max-height: 340px;
-      }
+      .sim-lib-layout, .sim-ai-layout { grid-template-columns: 1fr; grid-template-rows: 260px 1fr; }
+      .sim-lib-left, .sim-ai-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 260px; }
+      .sim-lib-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
     }
-
     @media (max-width: 600px) {
-      .sim-header { padding: 14px 16px; }
-      .sim-header-title { font-size: 16px; }
-      .sim-header-badge { display: none; }
-      .sim-mode-tabs { padding: 10px 12px 0; }
-      .sim-mode-tab { padding: 8px 12px; font-size: 12px; }
+      .sim-top-tabs { padding: 0 12px; }
+      .sim-top-tab { padding: 12px 14px 10px; font-size: 12px; }
     }
 
     /* ══ END SIMULATION PANEL ══ */
@@ -9990,21 +9932,120 @@ function amShowSuccess() {
             </div>
 
             <!-- SIMULATION PANEL -->
-            <div class="panel" id="simulationPanel">
-              <div class="animind-wrap">
+            <div class="panel" id="simulationPanel" style="display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
 
-                <!-- LEFT: Controls (sidebar) -->
-                <div class="animind-sidebar">
+              <!-- ── Top 3 Main Tabs ─────────────────────────────────── -->
+              <div class="sim-top-tabs">
+                <button class="sim-top-tab active" id="simTopTab-topics" onclick="simSwitchTopTab('topics')">
+                  <span class="sim-ttab-icon">🔬</span>
+                  Topics Simulations
+                </button>
+                <button class="sim-top-tab" id="simTopTab-experiments" onclick="simSwitchTopTab('experiments')">
+                  <span class="sim-ttab-icon">🧪</span>
+                  Experiments
+                </button>
+                <button class="sim-top-tab" id="simTopTab-ai" onclick="simSwitchTopTab('ai')">
+                  <span class="sim-ttab-icon">✨</span>
+                  Create with AI
+                  <span class="sim-ttab-badge">AI</span>
+                </button>
+              </div>
 
-                  <!-- Header -->
-                  <div class="am-sid-header" style="background:linear-gradient(135deg,#f0fdf9,#eff6ff);">
-                    <h3>⚙️ Simulation Studio</h3>
-                    <p>Generate interactive physics, chemistry, math &amp; biology simulations</p>
+              <!-- ── Panel 1: Topics Simulations ────────────────────── -->
+              <div class="sim-tab-panel active" id="simPanel-topics">
+                <div class="sim-lib-layout">
+                  <!-- Left: card grid -->
+                  <div class="sim-lib-left">
+                    <div class="sim-lib-toolbar">
+                      <span class="sim-lib-toolbar-title">🔬 Topics Simulations</span>
+                      <button class="sim-lib-refresh-btn" onclick="simLoadLibrary('topics')">↺ Refresh</button>
+                    </div>
+                    <div class="sim-lib-grid" id="simLibGrid-topics">
+                      <div class="sim-lib-loading" id="simLibLoading-topics">
+                        <span style="font-size:28px">⏳</span>
+                        Loading simulations…
+                      </div>
+                    </div>
                   </div>
+                  <!-- Right: preview -->
+                  <div class="sim-lib-right">
+                    <div class="sim-preview-header">
+                      <span class="sim-preview-title" id="simLibPreviewTitle-topics">Simulation Preview</span>
+                      <div class="sim-preview-actions">
+                        <button class="sim-act-btn" onclick="simLibRestart('topics')">↺ Restart</button>
+                        <button class="sim-act-btn" onclick="simLibFullscreen('topics')">⛶ Fullscreen</button>
+                      </div>
+                    </div>
+                    <div class="sim-preview-body" id="simLibPreviewBody-topics">
+                      <div class="sim-empty" id="simLibEmpty-topics">
+                        <div class="sim-empty-icon">🔬</div>
+                        <p class="sim-empty-title">Select a Topic Simulation</p>
+                        <p class="sim-empty-sub">Click any card on the left to launch it</p>
+                      </div>
+                      <iframe id="simLibIframe-topics" class="sim-iframe" sandbox="allow-scripts allow-same-origin" title="Topic Simulation" style="display:none;"></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
+              <!-- ── Panel 2: Experiments ────────────────────────────── -->
+              <div class="sim-tab-panel" id="simPanel-experiments">
+                <div class="sim-lib-layout">
+                  <!-- Left: card grid -->
+                  <div class="sim-lib-left">
+                    <div class="sim-lib-toolbar">
+                      <span class="sim-lib-toolbar-title">🧪 Experiments</span>
+                      <button class="sim-lib-refresh-btn" onclick="simLoadLibrary('experiments')">↺ Refresh</button>
+                    </div>
+                    <div class="sim-lib-grid" id="simLibGrid-experiments">
+                      <div class="sim-lib-loading" id="simLibLoading-experiments">
+                        <span style="font-size:28px">⏳</span>
+                        Loading experiments…
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Right: preview -->
+                  <div class="sim-lib-right">
+                    <div class="sim-preview-header">
+                      <span class="sim-preview-title" id="simLibPreviewTitle-experiments">Experiment Preview</span>
+                      <div class="sim-preview-actions">
+                        <button class="sim-act-btn" onclick="simLibRestart('experiments')">↺ Restart</button>
+                        <button class="sim-act-btn" onclick="simLibFullscreen('experiments')">⛶ Fullscreen</button>
+                      </div>
+                    </div>
+                    <div class="sim-preview-body" id="simLibPreviewBody-experiments">
+                      <div class="sim-empty" id="simLibEmpty-experiments">
+                        <div class="sim-empty-icon">🧪</div>
+                        <p class="sim-empty-title">Select an Experiment</p>
+                        <p class="sim-empty-sub">Click any card on the left to launch it</p>
+                      </div>
+                      <iframe id="simLibIframe-experiments" class="sim-iframe" sandbox="allow-scripts allow-same-origin" title="Experiment Simulation" style="display:none;"></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                  <div class="sim-sidebar-inner" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:14px;gap:14px;">
+              <!-- ── Panel 3: Create with AI ──────────────────────────── -->
+              <div class="sim-tab-panel" id="simPanel-ai">
+                <!-- Subject sub-tabs -->
+                <div class="sim-mode-tabs">
+                  <button class="sim-mode-tab active" data-sim-mode="physics" onclick="simSetMode('physics')">
+                    <span class="sim-tab-icon">⚛️</span> Physics
+                  </button>
+                  <button class="sim-mode-tab" data-sim-mode="chemistry" onclick="simSetMode('chemistry')">
+                    <span class="sim-tab-icon">🧪</span> Chemistry
+                  </button>
+                  <button class="sim-mode-tab" data-sim-mode="math" onclick="simSetMode('math')">
+                    <span class="sim-tab-icon">📐</span> Mathematics
+                  </button>
+                  <button class="sim-mode-tab" data-sim-mode="biology" onclick="simSetMode('biology')">
+                    <span class="sim-tab-icon">🔬</span> Biology
+                  </button>
+                </div>
 
+                <div class="sim-ai-layout">
+                  <!-- Left sidebar: input -->
+                  <div class="sim-ai-sidebar">
                     <div class="sim-input-card">
                       <div class="sim-input-label">
                         <span class="sim-input-label-dot"></span>
@@ -10032,7 +10073,7 @@ function amShowSuccess() {
                     <div class="sim-examples">
                       <div class="sim-examples-label">Quick examples</div>
                       <div class="sim-example-list" id="simExampleList">
-                        <!-- Filled by JS based on active tab -->
+                        <!-- Filled by JS -->
                       </div>
                     </div>
 
@@ -10041,50 +10082,50 @@ function amShowSuccess() {
                       <button class="sim-save-btn" onclick="saveSimulation()">📚 Save to Library</button>
                       <button class="sim-dl-btn" onclick="downloadSimulation()">⬇️ Download HTML</button>
                     </div>
-
-                  </div><!-- end sim-sidebar-inner -->
-                </div><!-- end animind-sidebar -->
-
-                <!-- RIGHT: Preview -->
-                <div class="animind-preview" style="display:flex;flex-direction:column;">
-                  <div class="sim-preview-header">
-                    <span class="sim-preview-title" id="simPreviewTitle">Simulation Preview</span>
-                    <div class="sim-preview-actions">
-                      <button class="sim-act-btn" onclick="simRestart()">↺ Restart</button>
-                      <button class="sim-act-btn" onclick="simFullscreen()">⛶ Fullscreen</button>
-                    </div>
                   </div>
-                  <div class="sim-preview-body" id="simPreviewBody" style="flex:1;">
-                    <!-- Empty state -->
-                    <div class="sim-empty" id="simEmpty">
-                      <div class="sim-empty-icon">⚙️</div>
-                      <p class="sim-empty-title">Your simulation appears here</p>
-                      <p class="sim-empty-sub">Describe a concept and click Generate</p>
-                    </div>
-                    <!-- Loading -->
-                    <div class="sim-loading" id="simLoading" style="display:none;">
-                      <div class="sim-spin-wrap">
-                        <div class="sim-spinner"></div>
-                        <span class="sim-spin-icon">⚙️</span>
-                      </div>
-                      <p class="sim-load-msg" id="simLoadMsg">Building your simulation…</p>
-                      <small class="sim-load-sub">This usually takes 10–20 seconds</small>
-                      <div class="sim-progress-bar">
-                        <div class="sim-progress-fill" id="simProgFill"></div>
+
+                  <!-- Right: Preview -->
+                  <div style="display:flex;flex-direction:column;overflow:hidden;">
+                    <div class="sim-preview-header">
+                      <span class="sim-preview-title" id="simPreviewTitle">Simulation Preview</span>
+                      <div class="sim-preview-actions">
+                        <button class="sim-act-btn" onclick="simRestart()">↺ Restart</button>
+                        <button class="sim-act-btn" onclick="simFullscreen()">⛶ Fullscreen</button>
                       </div>
                     </div>
-                    <!-- Result iframe -->
-                    <iframe
-                      id="simIframe"
-                      class="sim-iframe"
-                      sandbox="allow-scripts"
-                      title="Simulation"
-                      style="display:none;"></iframe>
+                    <div class="sim-preview-body" id="simPreviewBody" style="flex:1;">
+                      <!-- Empty state -->
+                      <div class="sim-empty" id="simEmpty">
+                        <div class="sim-empty-icon">✨</div>
+                        <p class="sim-empty-title">Your simulation appears here</p>
+                        <p class="sim-empty-sub">Describe a concept and click Generate</p>
+                      </div>
+                      <!-- Loading -->
+                      <div class="sim-loading" id="simLoading" style="display:none;">
+                        <div class="sim-spin-wrap">
+                          <div class="sim-spinner"></div>
+                          <span class="sim-spin-icon">⚡</span>
+                        </div>
+                        <p class="sim-load-msg" id="simLoadMsg">Building your simulation…</p>
+                        <small class="sim-load-sub">This usually takes 10–20 seconds</small>
+                        <div class="sim-progress-bar">
+                          <div class="sim-progress-fill" id="simProgFill"></div>
+                        </div>
+                      </div>
+                      <!-- Result iframe -->
+                      <iframe
+                        id="simIframe"
+                        class="sim-iframe"
+                        sandbox="allow-scripts"
+                        title="Simulation"
+                        style="display:none;"></iframe>
+                    </div>
                   </div>
-                </div><!-- end animind-preview -->
+                </div>
+              </div><!-- end panel-ai -->
 
-              </div><!-- end animind-wrap -->
-            </div>
+            </div><!-- end simulationPanel -->
+
 
             <!-- VIDEO VAULT PANEL -->
             <!-- FILE PANEL — ENGINEERING COURSES -->
@@ -10877,12 +10918,16 @@ function amShowSuccess() {
     }
 
     // ═══════════════════════════════════════════════
-    // SIMULATION PANEL
+    // SIMULATION PANEL — 3-TAB SYSTEM
     // ═══════════════════════════════════════════════
     var simCurrentMode = 'physics';
     var simCurrentAnimation = null;
     var simProgTimer = null;
     var simInitDone = false;
+
+    // State for the library tabs
+    var simLibData = { topics: null, experiments: null };        // null = not yet loaded
+    var simLibCurrent = { topics: null, experiments: null };     // currently active filename
 
     var SIM_EXAMPLES = {
       physics: [
@@ -10923,12 +10968,151 @@ function amShowSuccess() {
       '🚀 Almost ready…'
     ];
 
+    // ── Init: called once when user first opens Simulation mode ──────────
     function simInit() {
       if (simInitDone) return;
       simInitDone = true;
       simRenderExamples();
+      // Eagerly load both libraries in background so they appear instantly
+      simLoadLibrary('topics');
+      simLoadLibrary('experiments');
     }
 
+    // ── Top 3-tab switcher ───────────────────────────────────────────────
+    function simSwitchTopTab(tab) {
+      // Update tab button styles
+      document.querySelectorAll('.sim-top-tab').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      var activeBtn = document.getElementById('simTopTab-' + tab);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Show/hide content panels
+      document.querySelectorAll('.sim-tab-panel').forEach(function(panel) {
+        panel.classList.remove('active');
+      });
+      var activePanel = document.getElementById('simPanel-' + tab);
+      if (activePanel) activePanel.classList.add('active');
+
+      // If switching to a library tab that hasn't been loaded yet, load it now
+      if ((tab === 'topics' || tab === 'experiments') && !simLibData[tab]) {
+        simLoadLibrary(tab);
+      }
+    }
+
+    // ── Load file list from backend ──────────────────────────────────────
+    async function simLoadLibrary(type) {
+      var grid = document.getElementById('simLibGrid-' + type);
+      if (!grid) return;
+
+      // Show loading state
+      grid.innerHTML = '<div class="sim-lib-loading"><span style="font-size:28px">⏳</span>Loading…</div>';
+
+      try {
+        var res = await fetch(BACKEND_URL + '/simulations/list?type=' + type);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        simLibData[type] = data.items || [];
+        simRenderLibraryGrid(type);
+      } catch (err) {
+        console.error('[SimLib] Failed to load', type, err);
+        grid.innerHTML = '<div class="sim-lib-empty">' +
+          '<div class="sim-lib-empty-icon">⚠️</div>' +
+          '<div class="sim-lib-empty-title">Could not load ' + type + '</div>' +
+          '<div class="sim-lib-empty-sub">Make sure the backend is running and try refreshing.</div>' +
+          '</div>';
+      }
+    }
+
+    // ── Render the card grid ─────────────────────────────────────────────
+    function simRenderLibraryGrid(type) {
+      var grid = document.getElementById('simLibGrid-' + type);
+      if (!grid) return;
+      var items = simLibData[type] || [];
+
+      if (items.length === 0) {
+        var emptyMsg = type === 'topics'
+          ? 'Upload HTML files to the <code>topics_simulations/</code> folder on the backend.'
+          : 'Upload HTML files to the <code>simulation_experiments/</code> folder on the backend.';
+        grid.innerHTML = '<div class="sim-lib-empty">' +
+          '<div class="sim-lib-empty-icon">' + (type === 'topics' ? '🔬' : '🧪') + '</div>' +
+          '<div class="sim-lib-empty-title">No simulations yet</div>' +
+          '<div class="sim-lib-empty-sub">' + emptyMsg + '</div>' +
+          '</div>';
+        return;
+      }
+
+      grid.innerHTML = items.map(function(item) {
+        var isActive = simLibCurrent[type] === item.filename;
+        return '<div class="sim-lib-card' + (isActive ? ' active-card' : '') + '" ' +
+          'id="simCard-' + type + '-' + item.filename.replace(/\./g, '_') + '" ' +
+          'onclick="simOpenFile(' + JSON.stringify(type) + ',' + JSON.stringify(item.filename) + ',' + JSON.stringify(item.name) + ')">' +
+          '<div class="sim-lib-card-thumb">' + item.icon + '</div>' +
+          '<div class="sim-lib-card-body">' +
+          '<div class="sim-lib-card-name">' + item.name + '</div>' +
+          '<span class="sim-lib-card-cat">' + item.category + '</span>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ── Open a simulation file from the library ──────────────────────────
+    async function simOpenFile(type, filename, name) {
+      var iframe = document.getElementById('simLibIframe-' + type);
+      var emptyEl = document.getElementById('simLibEmpty-' + type);
+      var titleEl = document.getElementById('simLibPreviewTitle-' + type);
+      if (!iframe) return;
+
+      // Mark active card
+      simLibCurrent[type] = filename;
+      document.querySelectorAll('#simLibGrid-' + type + ' .sim-lib-card').forEach(function(c) {
+        c.classList.remove('active-card');
+      });
+      var cardId = 'simCard-' + type + '-' + filename.replace(/\./g, '_');
+      var card = document.getElementById(cardId);
+      if (card) card.classList.add('active-card');
+
+      // Show loading title
+      if (titleEl) titleEl.textContent = '⏳ Loading ' + name + '…';
+      if (emptyEl) emptyEl.style.display = 'none';
+      iframe.style.display = 'none';
+
+      try {
+        var res = await fetch(BACKEND_URL + '/simulations/file?type=' + type + '&file=' + encodeURIComponent(filename));
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+
+        iframe.srcdoc = data.html;
+        iframe.style.display = 'block';
+        if (titleEl) titleEl.textContent = name;
+      } catch (err) {
+        console.error('[SimLib] Failed to load file', filename, err);
+        if (emptyEl) {
+          emptyEl.style.display = 'flex';
+          emptyEl.querySelector('.sim-empty-title').textContent = 'Failed to load simulation';
+          emptyEl.querySelector('.sim-empty-sub').textContent = err.message;
+        }
+        if (titleEl) titleEl.textContent = 'Error';
+      }
+    }
+
+    // ── Library tab: Restart / Fullscreen ─────────────────────────────
+    function simLibRestart(type) {
+      var iframe = document.getElementById('simLibIframe-' + type);
+      if (!iframe || !iframe.srcdoc) return;
+      var src = iframe.srcdoc;
+      iframe.srcdoc = '';
+      setTimeout(function() { iframe.srcdoc = src; }, 80);
+    }
+
+    function simLibFullscreen(type) {
+      var iframe = document.getElementById('simLibIframe-' + type);
+      if (!iframe) return;
+      if (iframe.requestFullscreen) iframe.requestFullscreen();
+      else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+    }
+
+    // ── Subject mode (for AI tab) ───────────────────────────────────────
     function simSetMode(mode) {
       simCurrentMode = mode;
       document.querySelectorAll('.sim-mode-tab').forEach(function(t) {
@@ -10936,7 +11120,6 @@ function amShowSuccess() {
       });
       simRenderExamples();
 
-      // Update textarea placeholder
       var placeholders = {
         physics: 'e.g. Projectile motion with adjustable angle and initial velocity…',
         chemistry: 'e.g. Titration curve with HCl and NaOH…',
@@ -10966,6 +11149,7 @@ function amShowSuccess() {
       }
     }
 
+    // ── AI Generate Simulation (preserved) ─────────────────────────────
     async function generateSimulation() {
       var prompt = (document.getElementById('simPrompt').value || '').trim();
       if (!prompt) {
@@ -10973,37 +11157,30 @@ function amShowSuccess() {
         return;
       }
 
-      // Hide error, disable button
       simHideError();
       var genBtn = document.getElementById('simGenBtn');
       genBtn.disabled = true;
       document.getElementById('simBtnIcon').textContent = '⏳';
-      document.getElementById('simBtnText').textContent = 'Searching…';
+      document.getElementById('simBtnText').textContent = 'Generating…';
 
-      // Show loading, hide empty/iframe/save
       document.getElementById('simEmpty').style.display = 'none';
       document.getElementById('simLoading').style.display = 'flex';
       document.getElementById('simIframe').style.display = 'none';
       document.getElementById('simSaveSection').style.display = 'none';
-      document.getElementById('simLoadMsg').textContent = '📂 Checking experiment library…';
-      document.getElementById('simPreviewTitle').textContent = 'Searching experiment library…';
+      document.getElementById('simLoadMsg').textContent = '📂 Checking library…';
+      document.getElementById('simPreviewTitle').textContent = 'Generating simulation…';
 
-      // Animate progress bar — will be overridden quickly on a cache hit
       var pct = 0;
       var msgIdx = 0;
       simProgTimer = setInterval(function() {
         pct = Math.min(pct + (Math.random() * 6 + 2), 88);
         document.getElementById('simProgFill').style.width = pct + '%';
-        // Only advance through AI-generation messages once we know it's not cached
         if (!simProgTimer._cacheHit && msgIdx < SIM_LOADING_MSGS.length - 1) {
           document.getElementById('simLoadMsg').textContent = SIM_LOADING_MSGS[msgIdx++];
         }
       }, 1800);
 
       try {
-        // POST to the backend SimEngine v2.0 pipeline.
-        // The backend first checks simulation_experiments/ for a matching pre-built file.
-        // If found it returns it instantly (source:"cache"); otherwise it calls simulation.py.
         var response = await fetch(BACKEND_URL + '/generate-simulation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -11017,7 +11194,6 @@ function amShowSuccess() {
         }
         var data = await response.json();
 
-        // Backend always returns 200; check render_status for generation failures
         if (data.render_status === 'error') {
           throw new Error(data.error_reason || 'Simulation generation failed on the server.');
         }
@@ -11028,11 +11204,9 @@ function amShowSuccess() {
         var fromCache = (data.source === 'cache');
         simCurrentAnimation = { prompt: prompt, mode: simCurrentMode, html: html, created_at: new Date().toISOString(), fromCache: fromCache };
 
-        // Inject into iframe
         clearInterval(simProgTimer);
         document.getElementById('simProgFill').style.width = '100%';
 
-        // Faster reveal for cache hits (they're instant), short delay for generated ones
         var revealDelay = fromCache ? 120 : 400;
         setTimeout(function() {
           document.getElementById('simLoading').style.display = 'none';
@@ -11043,7 +11217,6 @@ function amShowSuccess() {
 
           var shortTitle = prompt.slice(0, 50) + (prompt.length > 50 ? '…' : '');
           if (fromCache) {
-            // Show a "from library" badge next to the title
             document.getElementById('simPreviewTitle').innerHTML =
               shortTitle +
               ' <span style="display:inline-flex;align-items:center;gap:4px;' +
@@ -11064,9 +11237,8 @@ function amShowSuccess() {
 
         var msg = err.message || 'Unknown error';
         if (msg === 'Failed to fetch') {
-          msg = 'Could not reach the server. Note: The backend changes might not be deployed to Railway yet, or the local server is not running.';
+          msg = 'Could not reach the server. Check your connection or try again later.';
         }
-
         simShowError('Generation failed: ' + msg);
         console.error('[Simulation]', err);
       } finally {
