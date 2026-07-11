@@ -5019,6 +5019,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .topbar-search-wrap {
       flex: 1;
       max-width: 360px;
+      min-width: 0;
       margin: 0 24px;
       position: relative;
     }
@@ -5058,6 +5059,45 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       font-size: 14px;
       pointer-events: none;
       opacity: .6;
+    }
+
+    /* Autocomplete dropdown — attached to #acList which uses class ac-list */
+    .ac-list {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      z-index: 1200;
+      background: var(--surface, #fff);
+      border: 1.5px solid var(--border2, #e5e7eb);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.13);
+      overflow: hidden;
+      display: none;
+    }
+    .ac-list.show {
+      display: block;
+    }
+
+    /* Clear (×) button inside the search wrap */
+    .lib-search-clear {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text3);
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .lib-search-clear:hover {
+      color: var(--text);
+      background: var(--border);
     }
 
     .topbar-center-badge {
@@ -5439,7 +5479,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       }
 
       .topbar-search-wrap {
-        display: none;
+        /* Keep search visible on tablets; just limit its width */
+        max-width: 220px;
+        margin: 0 10px;
       }
 
       .animind-wrap {
@@ -5622,6 +5664,17 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
       .shortcuts-btn {
         display: none;
+      }
+
+      .topbar-search-wrap {
+        max-width: 160px;
+        margin: 0 6px;
+        flex: 1;
+      }
+
+      .topbar-search-wrap input {
+        font-size: 12px;
+        padding: 7px 30px 7px 32px;
       }
 
       .user-name-block {
@@ -9424,7 +9477,8 @@ function amShowSuccess() {
     </div>
     <div class="topbar-search-wrap">
       <span class="topbar-search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search topics, animations…" oninput="acUpdate(this.value)" onfocus="acShow()" onblur="setTimeout(acHide,200)" onkeydown="acKey(event)" autocomplete="off" />
+      <input type="text" id="searchInput" placeholder="Search topics, animations…" oninput="acUpdateAndSync(this.value)" onfocus="acShow()" onblur="setTimeout(acHide,200)" onkeydown="acKey(event)" autocomplete="off" />
+      <button class="lib-search-clear" id="searchClearBtn" onclick="clearLibSearch()" title="Clear search" style="display:none">✕</button>
       <div id="acList" class="ac-list"></div>
     </div>
     <div class="topbar-right">
@@ -9959,6 +10013,7 @@ function amShowSuccess() {
                     <div class="sim-lib-toolbar">
                       <span class="sim-lib-toolbar-title">🔬 Topics Simulations</span>
                       <button class="sim-lib-refresh-btn" onclick="simLoadLibrary('topics')">↺ Refresh</button>
+                      <button class="sim-lib-refresh-btn" style="margin-left:6px" onclick="simTriggerUpload('topics')">📤 Upload</button>
                     </div>
                     <div class="sim-lib-grid" id="simLibGrid-topics">
                       <div class="sim-lib-loading" id="simLibLoading-topics">
@@ -9996,6 +10051,7 @@ function amShowSuccess() {
                     <div class="sim-lib-toolbar">
                       <span class="sim-lib-toolbar-title">🧪 Experiments</span>
                       <button class="sim-lib-refresh-btn" onclick="simLoadLibrary('experiments')">↺ Refresh</button>
+                      <button class="sim-lib-refresh-btn" style="margin-left:6px" onclick="simTriggerUpload('experiments')">📤 Upload</button>
                     </div>
                     <div class="sim-lib-grid" id="simLibGrid-experiments">
                       <div class="sim-lib-loading" id="simLibLoading-experiments">
@@ -10819,9 +10875,15 @@ function amShowSuccess() {
     function hideShortcuts() { document.getElementById('shortcutOverlay').classList.remove('show'); }
 
     // ═══════════════════════════════════════════════
-    // AUTOCOMPLETE
+    // AUTOCOMPLETE + LIBRARY SEARCH
     // ═══════════════════════════════════════════════
     const AC_KEY = 'genzet_searches';
+    // The active search query used by renderLibrary for filtering/sorting
+    var libSearchQuery = '';
+    // How many library cards to show per page
+    const LIB_PAGE_SIZE = 20;
+    var libSearchPage = 0;
+
     function acGetHistory() { try { return JSON.parse(localStorage.getItem(AC_KEY) || '[]'); } catch { return []; } }
     function acAddHistory(term) {
       if (!term) return;
@@ -10830,25 +10892,63 @@ function amShowSuccess() {
       if (h.length > 12) h = h.slice(0, 12);
       localStorage.setItem(AC_KEY, JSON.stringify(h));
     }
+
+    // Sync both autocomplete dropdown AND live library results as user types
+    function acUpdateAndSync(val) {
+      acUpdate(val);
+      // Toggle clear button visibility
+      const clearBtn = document.getElementById('searchClearBtn');
+      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+      // Live-update library if that panel is active
+      if (currentMode === 'library') {
+        libSearchQuery = (val || '').trim();
+        libSearchPage = 0;
+        renderLibrary();
+      }
+    }
+
+    // Clear search input and reset library
+    function clearLibSearch() {
+      const inp = document.getElementById('searchInput');
+      if (inp) { inp.value = ''; inp.focus(); }
+      const clearBtn = document.getElementById('searchClearBtn');
+      if (clearBtn) clearBtn.style.display = 'none';
+      acHide();
+      libSearchQuery = '';
+      libSearchPage = 0;
+      if (currentMode === 'library') renderLibrary();
+    }
+
+    // Build candidate list from library animations + history
+    function acGetLibraryCandidates() {
+      const libTitles = animindLibrary.map(a => a.title).filter(Boolean);
+      const coTopics = getAllCOTopicNames();
+      const topicTitles = questions.map(x => x.title);
+      return [...new Set([...libTitles, ...coTopics, ...topicTitles])];
+    }
+
     function acUpdate(val) {
       const list = document.getElementById('acList');
-      const q = val.toLowerCase().trim();
-      const topics = questions.map(x => x.title);
-      const coTopics = getAllCOTopicNames();
+      const q = (val || '').toLowerCase().trim();
       const history = acGetHistory();
       let items = [];
       if (!q) {
-        items = history.slice(0, 5).map(h => ({ label: h, type: 'history' }));
+        items = history.slice(0, 6).map(h => ({ label: h, type: 'history' }));
       } else {
-        const allTopics = [...topics, ...coTopics];
-        const matched = allTopics.filter(t => t.toLowerCase().includes(q)).slice(0, 5);
-        const hist = history.filter(h => h.toLowerCase().includes(q)).slice(0, 3);
-        items = [...new Set([...matched, ...hist])].slice(0, 6).map(x => ({ label: x, type: matched.includes(x) ? 'topic' : 'history' }));
+        const candidates = acGetLibraryCandidates();
+        // Prefer starts-with matches, then includes matches
+        const startsWith = candidates.filter(t => t.toLowerCase().startsWith(q));
+        const includes = candidates.filter(t => !t.toLowerCase().startsWith(q) && t.toLowerCase().includes(q));
+        const matched = [...startsWith, ...includes].slice(0, 6);
+        const hist = history.filter(h => h.toLowerCase().includes(q) && !matched.includes(h)).slice(0, 2);
+        const combined = [...matched.map(x => ({ label: x, type: 'library' })), ...hist.map(x => ({ label: x, type: 'history' }))];
+        items = combined.slice(0, 7);
       }
       if (items.length === 0) { list.classList.remove('show'); return; }
-      list.innerHTML = items.map((it, i) =>
-        `<div class="ac-item" data-idx="${i}" onclick="acSelect('${esc(it.label)}')">${it.type === 'history' ? '🕐' : '📘'} ${esc(it.label)} <span>${it.type}</span></div>`
-      ).join('');
+      list.innerHTML = items.map((it, i) => {
+        const icon = it.type === 'history' ? '🕐' : '📘';
+        return `<div class="ac-item" data-idx="${i}" onmousedown="event.preventDefault()" onclick="acSelect('${esc(it.label)}')">${icon} ${esc(it.label)} <span>${it.type}</span></div>`;
+      }).join('');
       list.classList.add('show');
       acFocusIdx = -1;
     }
@@ -10860,13 +10960,45 @@ function amShowSuccess() {
     }
     function acShow() { acUpdate(document.getElementById('searchInput').value); }
     function acHide() { document.getElementById('acList').classList.remove('show'); acFocusIdx = -1; }
-    function acSelect(term) { document.getElementById('searchInput').value = term; acHide(); acAddHistory(term); showFolders(); }
+
+    // Run a search: update libSearchQuery, re-render library, add to history
+    function runLibrarySearch(term) {
+      const q = (term || '').trim();
+      libSearchQuery = q;
+      libSearchPage = 0;
+      acHide();
+      if (q) acAddHistory(q);
+      // If in library mode, re-render immediately
+      if (currentMode === 'library') renderLibrary();
+    }
+
+    function acSelect(term) {
+      document.getElementById('searchInput').value = term;
+      runLibrarySearch(term);
+    }
+
     function acKey(e) {
-      const items = document.querySelectorAll('.ac-item');
-      if (e.key === 'ArrowDown') { e.preventDefault(); acFocusIdx = Math.min(acFocusIdx + 1, items.length - 1); items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx)); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); acFocusIdx = Math.max(acFocusIdx - 1, 0); items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx)); }
-      else if (e.key === 'Enter' && acFocusIdx >= 0) { items[acFocusIdx]?.click(); }
-      else if (e.key === 'Escape') { acHide(); }
+      const items = document.querySelectorAll('#acList .ac-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        acFocusIdx = Math.min(acFocusIdx + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        acFocusIdx = Math.max(acFocusIdx - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx));
+      } else if (e.key === 'Enter') {
+        if (acFocusIdx >= 0 && items[acFocusIdx]) {
+          // A suggestion is highlighted — select it
+          items[acFocusIdx].click();
+        } else {
+          // No suggestion highlighted — run search with whatever is typed
+          const val = document.getElementById('searchInput').value;
+          runLibrarySearch(val);
+        }
+      } else if (e.key === 'Escape') {
+        acHide();
+      }
     }
 
     // ═══════════════════════════════════════════════
@@ -11021,6 +11153,65 @@ function amShowSuccess() {
           '<div class="sim-lib-empty-title">Could not load ' + type + '</div>' +
           '<div class="sim-lib-empty-sub">Make sure the backend is running and try refreshing.</div>' +
           '</div>';
+      }
+    }
+
+    // ── Upload simulation file to backend ────────────────────────────────
+    let currentSimUploadType = null;
+
+    function simTriggerUpload(type) {
+      currentSimUploadType = type;
+      let fileInput = document.getElementById('simUploadInput');
+      if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'simUploadInput';
+        fileInput.accept = '.html,.htm';
+        fileInput.style.display = 'none';
+        fileInput.onchange = simHandleUpload;
+        document.body.appendChild(fileInput);
+      }
+      fileInput.value = '';
+      fileInput.click();
+    }
+
+    async function simHandleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!currentSimUploadType) return;
+      
+      const type = currentSimUploadType;
+      const formData = new FormData();
+      formData.append('type', type);
+      formData.append('file', file);
+      
+      notify('⏳ Uploading ' + file.name + '…');
+      
+      try {
+        const res = await fetch(BACKEND_URL + '/simulations/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Upload failed');
+        }
+        
+        notify('✅ Upload successful!');
+        // Reload library to show the new file
+        await simLoadLibrary(type);
+        
+        // Auto-open it
+        const data = await res.json();
+        if (data.filename) {
+          // Attempt to infer a friendly name
+          const friendlyName = data.filename.replace(/\.html?$/i, '').replace(/[_-]/g, ' ');
+          simOpenFile(type, data.filename, friendlyName);
+        }
+      } catch (err) {
+        console.error('[SimLib] Upload error:', err);
+        notify('❌ Upload failed: ' + err.message, 'error');
       }
     }
 
@@ -11878,20 +12069,74 @@ function amShowSuccess() {
         return `<button class="pf-tag ${p === activePlaylist ? 'active' : ''}" onclick="filterPlaylist('${esc(p)}')">${p === 'all' ? '📂 All' : p} (${cnt})</button>`;
       }).join('');
       const showA = activeLibTab === 'all' || activeLibTab === 'animations';
-      const fA = showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : [];
+      let fA = showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : [];
+
+      // ── Search: filter + sort by relevance ──────────────────────────────
+      const sq = (libSearchQuery || '').toLowerCase().trim();
+      if (sq) {
+        // Score each card: title match scores higher than description/prompt match
+        fA = fA.map(a => {
+          const title = (a.title || '').toLowerCase();
+          const desc = (a.explanation || a.prompt || '').toLowerCase();
+          const playlist = (a.playlist || '').toLowerCase();
+          let score = 0;
+          if (title === sq) score += 100;                         // exact title
+          else if (title.startsWith(sq)) score += 60;            // title prefix
+          else if (title.includes(sq)) score += 30;              // title substring
+          if (desc.includes(sq)) score += 10;                    // body match
+          if (playlist.includes(sq)) score += 5;                 // playlist match
+          return { ...a, _score: score };
+        }).filter(a => a._score > 0)
+          .sort((a, b) => b._score - a._score);
+      }
+      // ── Pagination ───────────────────────────────────────────────────────
+      const totalPages = Math.ceil(fA.length / LIB_PAGE_SIZE);
+      // Clamp current page to valid range
+      libSearchPage = Math.max(0, Math.min(libSearchPage, totalPages - 1));
+      const pageStart = libSearchPage * LIB_PAGE_SIZE;
+      const paginated = fA.slice(pageStart, pageStart + LIB_PAGE_SIZE);
+
       const grid = document.getElementById('libraryGrid');
+
       if (fA.length === 0) {
-        grid.innerHTML = `<div class="lib-empty"><div style="font-size:52px;margin-bottom:14px;">🎬</div><p style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);">Nothing here yet</p><p style="font-size:13px;">Go to AI Creator to generate animations!</p></div>`;
+        const emptyMsg = sq
+          ? `<div class="lib-empty"><div style="font-size:48px;margin-bottom:14px;">🔍</div><p style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);">No results for "${esc(sq)}"</p><p style="font-size:13px;">Try a different keyword or clear the search.</p></div>`
+          : `<div class="lib-empty"><div style="font-size:52px;margin-bottom:14px;">🎬</div><p style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);">Nothing here yet</p><p style="font-size:13px;">Go to AI Creator to generate animations!</p></div>`;
+        grid.innerHTML = emptyMsg;
         return;
       }
-      grid.innerHTML = fA.map(a =>
+
+      grid.innerHTML = paginated.map(a =>
         `<div class="lib-anim-card" onclick="openLibAnim('${a.id}')"><button class="lac-delete" onclick="event.stopPropagation();deleteAI('${a.id}')">✕</button>
     <div class="lac-type">🎬 Animation</div>
     <div class="lac-title">${esc(a.title)}</div>
     <div class="lac-desc">${esc((a.explanation || a.prompt || '').substring(0, 90))}…</div>
     <div class="lac-footer"><span class="lac-date">${fmtDate(a.created_at)}</span><span class="lac-playlist">🗂 ${esc(a.playlist || 'General')}</span></div></div>`
       ).join('');
+
+      // ── Pagination controls ───────────────────────────────────────────────
+      if (totalPages > 1) {
+        const pagerDiv = document.createElement('div');
+        pagerDiv.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 0;';
+        pagerDiv.innerHTML = `
+          <button onclick="libGoPage(${libSearchPage - 1})" ${libSearchPage === 0 ? 'disabled' : ''}
+            style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:12px;font-family:var(--font-body);"
+          >← Prev</button>
+          <span style="font-size:12px;color:var(--text2);">Page ${libSearchPage + 1} of ${totalPages} &nbsp;(${fA.length} result${fA.length !== 1 ? 's' : ''})</span>
+          <button onclick="libGoPage(${libSearchPage + 1})" ${libSearchPage >= totalPages - 1 ? 'disabled' : ''}
+            style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:12px;font-family:var(--font-body);"
+          >Next →</button>
+        `;
+        grid.appendChild(pagerDiv);
+      } else if (sq && fA.length > 0) {
+        // Show result count for searches even with 1 page
+        const countDiv = document.createElement('div');
+        countDiv.style.cssText = 'grid-column:1/-1;text-align:center;padding:10px 0 4px;font-size:12px;color:var(--text3);';
+        countDiv.textContent = `${fA.length} result${fA.length !== 1 ? 's' : ''} for "${sq}"`;
+        grid.appendChild(countDiv);
+      }
     }
+    function libGoPage(page) { libSearchPage = page; renderLibrary(); const grid = document.getElementById('libraryGrid'); if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function setLibTab(tab) { activeLibTab = tab; document.querySelectorAll('.lib-tab').forEach(b => b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1))); renderLibrary(); }
     function filterPlaylist(p) { activePlaylist = p; renderLibrary(); }
     function openLibAnim(id) {
