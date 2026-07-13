@@ -13664,40 +13664,91 @@ ${text.substring(0, 4500)}`
 
       try {
 
-        // ── FIX (CORS preflight failure) ────────────────────────────────────────────────
-        // Previously this called Railway directly to bypass Vercel's proxy
-        // timeout, but the Railway backend's CORS allow-list rejects the
-        // OPTIONS preflight from genzet-app.vercel.app, causing a hard
-        // "Failed to fetch" before any data is sent (visible in DevTools as
-        // two red "(failed)" rows: one "fetch", one "preflight").
+        // ── FETCH STRATEGY: proxy → retry → direct fallback ───────────────────────
         //
-        // NEW APPROACH: route through Vercel's /api proxy (same-origin, so
-        // no CORS preflight is needed), and attach an AbortController with a
-        // 295-second client-side timeout so the browser never drops the
-        // connection before the AI pipeline finishes. vercel.json must set
-        // maxDuration = 300 on this route for the full benefit.
-        const _qaAbort = new AbortController();
-        const _qaTimer = setTimeout(function() { _qaAbort.abort(); }, 295000);
-        let res;
-        try {
-          res = await fetch('/api/generate-question-animation', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ question: rawQ }),
-            signal:  _qaAbort.signal,
-          });
-        } catch (fetchErr) {
-          if (fetchErr.name === 'AbortError') {
-            throw new Error('Request timed out (>5 min). The question may be very complex — please try a shorter question or try again.');
+        // Layer 1 – Vercel /api proxy (same-origin, no CORS preflight).
+        //   If this returns 502/503/504 (Railway ROUTER_EXTERNAL_TARGET_ERROR)
+        //   we retry once after 3 s, then fall through to Layer 2.
+        //
+        // Layer 2 – Railway direct with a simple-request trick.
+        //   Sending body as plain text (Content-Type: text/plain) makes the
+        //   browser skip the OPTIONS preflight entirely (simple request rules).
+        //   The backend receives the raw JSON string in the body and must
+        //   parse it manually — q_animation.py already does this via
+        //   request.body(). If your backend requires application/json, add
+        //   "text/plain" to its accept list for this endpoint.
+        //
+        // Layer 3 – AbortController 295-second hard timeout on every attempt.
+
+        var RAILWAY_DIRECT = 'https://animind-backend-production-2.up.railway.app';
+        var _qaBodyStr = JSON.stringify({ question: rawQ });
+
+        async function _qaTryFetch(url, useJsonHeader) {
+          var ab = new AbortController();
+          var t  = setTimeout(function() { ab.abort(); }, 295000);
+          try {
+            var hdrs = useJsonHeader
+              ? { 'Content-Type': 'application/json' }
+              : { 'Content-Type': 'text/plain' };       // simple-request: no preflight
+            return await fetch(url, {
+              method:  'POST',
+              headers: hdrs,
+              body:    _qaBodyStr,
+              signal:  ab.signal,
+            });
+          } catch (fe) {
+            if (fe.name === 'AbortError') {
+              throw new Error('Request timed out (≥5 min). Please try a shorter question or try again.');
+            }
+            throw fe;
+          } finally {
+            clearTimeout(t);
           }
-          throw fetchErr;
-        } finally {
-          clearTimeout(_qaTimer);
         }
 
-        // ── Parse as text first so a plain-text error body (HTTP 499,
-        // backend crash, or Vercel timeout page) never throws the cryptic
-        // "Unexpected token ... not valid JSON" error.
+        function _qaIsRetryable(r) {
+          return r.status === 502 || r.status === 503 || r.status === 504;
+        }
+
+        var res;
+
+        // --- Attempt 1: Vercel proxy ---
+        document.getElementById('qaLoadMsg').textContent = 'Connecting to AI engine…';
+        try {
+          res = await _qaTryFetch('/api/generate-question-animation', true);
+        } catch (e1) {
+          // Network-level failure on proxy → jump straight to Railway direct
+          console.warn('[QAnim] Proxy fetch threw, falling back to Railway direct:', e1.message);
+          res = null;
+        }
+
+        // --- Attempt 2: retry proxy once on 502/503/504 after 3 s ---
+        if (res && _qaIsRetryable(res)) {
+          console.warn('[QAnim] Proxy returned', res.status, '(' + (await res.clone().text()).slice(0, 120) + ') — retrying in 3 s…');
+          document.getElementById('qaLoadMsg').textContent = 'Server busy, retrying…';
+          await new Promise(function(ok) { setTimeout(ok, 3000); });
+          try {
+            res = await _qaTryFetch('/api/generate-question-animation', true);
+          } catch (e2) {
+            console.warn('[QAnim] Retry threw, falling back to Railway direct:', e2.message);
+            res = null;
+          }
+        }
+
+        // --- Attempt 3: Railway direct (simple-request, no preflight) ---
+        if (!res || _qaIsRetryable(res)) {
+          console.warn('[QAnim] Proxy failed/retryable, trying Railway direct (text/plain simple-request)…');
+          document.getElementById('qaLoadMsg').textContent = 'Switching to direct connection…';
+          try {
+            res = await _qaTryFetch(RAILWAY_DIRECT + '/generate-question-animation', false);
+          } catch (e3) {
+            throw new Error('All connection attempts failed. Please check your network and try again. (' + e3.message + ')');
+          }
+        }
+
+        // ── Parse response safely ────────────────────────────────────────────
+        // Always read as text first so a plain-text Railway error page or
+        // Vercel HTML timeout page never causes "Unexpected token ... not valid JSON".
         const rawText = await res.text();
         let data;
         try { data = JSON.parse(rawText); }
