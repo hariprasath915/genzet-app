@@ -13664,41 +13664,46 @@ ${text.substring(0, 4500)}`
 
       try {
 
-        // ── FETCH STRATEGY: proxy → retry → direct fallback ───────────────────────
+        // ── FETCH STRATEGY (v3 — always application/json, retry with backoff) ─────
         //
-        // Layer 1 – Vercel /api proxy (same-origin, no CORS preflight).
-        //   If this returns 502/503/504 (Railway ROUTER_EXTERNAL_TARGET_ERROR)
-        //   we retry once after 3 s, then fall through to Layer 2.
+        // Root causes fixed in this version:
         //
-        // Layer 2 – Railway direct with a simple-request trick.
-        //   Sending body as plain text (Content-Type: text/plain) makes the
-        //   browser skip the OPTIONS preflight entirely (simple request rules).
-        //   The backend receives the raw JSON string in the body and must
-        //   parse it manually — q_animation.py already does this via
-        //   request.body(). If your backend requires application/json, add
-        //   "text/plain" to its accept list for this endpoint.
+        //  1. CORS preflight failure (original bug):
+        //     Fixed by routing through /api proxy (same-origin, no preflight).
         //
-        // Layer 3 – AbortController 295-second hard timeout on every attempt.
+        //  2. Railway 502 ROUTER_EXTERNAL_TARGET_ERROR:
+        //     Fixed by retrying up to 3 times with exponential backoff (2s, 5s, 10s).
+        //     Railway cold-start / transient router crash resolves within a few seconds.
+        //
+        //  3. "Object of type bytes is not JSON serializable" (this bug):
+        //     Caused by sending Content-Type: text/plain as a CORS workaround.
+        //     FastAPI's Pydantic validation fails on text/plain, stores the raw
+        //     bytes in the error dict, then json.dumps() crashes on those bytes.
+        //     FIXED: always send application/json through the /api proxy.
+        //     The backend qanim_fastapi_endpoint() also now reads request.body()
+        //     directly (bypassing Pydantic) to handle both content-types safely.
+        //
+        //  4. Silent browser hang: AbortController with 295 s hard timeout.
 
-        var RAILWAY_DIRECT = 'https://animind-backend-production-2.up.railway.app';
-        var _qaBodyStr = JSON.stringify({ question: rawQ });
+        var _qaBody = JSON.stringify({ question: rawQ });
+        var _qaHeaders = { 'Content-Type': 'application/json' };
+        var _qaMaxAttempts = 3;
+        var _qaDelays = [0, 2000, 5000];   // ms before each attempt (0 = immediate)
 
-        async function _qaTryFetch(url, useJsonHeader) {
+        async function _qaFetchOnce(attemptNum) {
           var ab = new AbortController();
           var t  = setTimeout(function() { ab.abort(); }, 295000);
           try {
-            var hdrs = useJsonHeader
-              ? { 'Content-Type': 'application/json' }
-              : { 'Content-Type': 'text/plain' };       // simple-request: no preflight
-            return await fetch(url, {
-              method:  'POST',
-              headers: hdrs,
-              body:    _qaBodyStr,
-              signal:  ab.signal,
+            return await fetch('/api/generate-question-animation', {
+              method:   'POST',
+              headers:  _qaHeaders,
+              body:     _qaBody,
+              keepalive: true,
+              signal:   ab.signal,
             });
           } catch (fe) {
             if (fe.name === 'AbortError') {
-              throw new Error('Request timed out (≥5 min). Please try a shorter question or try again.');
+              throw new Error('Request timed out after 5 min. Please try a shorter question.');
             }
             throw fe;
           } finally {
@@ -13706,49 +13711,48 @@ ${text.substring(0, 4500)}`
           }
         }
 
-        function _qaIsRetryable(r) {
-          return r.status === 502 || r.status === 503 || r.status === 504;
-        }
+        var res = null;
+        var lastErr = null;
 
-        var res;
+        for (var _attempt = 0; _attempt < _qaMaxAttempts; _attempt++) {
+          // Show status
+          if (_attempt === 0) {
+            document.getElementById('qaLoadMsg').textContent = 'Connecting to AI engine…';
+          } else {
+            document.getElementById('qaLoadMsg').textContent =
+              'Server busy — retrying (' + _attempt + '/' + (_qaMaxAttempts - 1) + ')…';
+          }
 
-        // --- Attempt 1: Vercel proxy ---
-        document.getElementById('qaLoadMsg').textContent = 'Connecting to AI engine…';
-        try {
-          res = await _qaTryFetch('/api/generate-question-animation', true);
-        } catch (e1) {
-          // Network-level failure on proxy → jump straight to Railway direct
-          console.warn('[QAnim] Proxy fetch threw, falling back to Railway direct:', e1.message);
-          res = null;
-        }
+          // Wait before retry
+          if (_qaDelays[_attempt] > 0) {
+            await new Promise(function(ok) { setTimeout(ok, _qaDelays[_attempt]); });
+          }
 
-        // --- Attempt 2: retry proxy once on 502/503/504 after 3 s ---
-        if (res && _qaIsRetryable(res)) {
-          console.warn('[QAnim] Proxy returned', res.status, '(' + (await res.clone().text()).slice(0, 120) + ') — retrying in 3 s…');
-          document.getElementById('qaLoadMsg').textContent = 'Server busy, retrying…';
-          await new Promise(function(ok) { setTimeout(ok, 3000); });
           try {
-            res = await _qaTryFetch('/api/generate-question-animation', true);
-          } catch (e2) {
-            console.warn('[QAnim] Retry threw, falling back to Railway direct:', e2.message);
+            res = await _qaFetchOnce(_attempt);
+            // 502/503/504 = Railway router crash or overload — retry
+            if (res.status === 502 || res.status === 503 || res.status === 504) {
+              lastErr = new Error('Server error ' + res.status + ' (Railway router issue)');
+              console.warn('[QAnim] Attempt', _attempt + 1, 'got', res.status, '— will retry');
+              res = null;
+              continue;
+            }
+            break;  // any other status (200, 400, 422, 500) — stop retrying
+          } catch (fe) {
+            lastErr = fe;
+            console.warn('[QAnim] Attempt', _attempt + 1, 'threw:', fe.message);
             res = null;
+            if (fe.message.indexOf('timed out') !== -1) break;  // don't retry timeout
           }
         }
 
-        // --- Attempt 3: Railway direct (simple-request, no preflight) ---
-        if (!res || _qaIsRetryable(res)) {
-          console.warn('[QAnim] Proxy failed/retryable, trying Railway direct (text/plain simple-request)…');
-          document.getElementById('qaLoadMsg').textContent = 'Switching to direct connection…';
-          try {
-            res = await _qaTryFetch(RAILWAY_DIRECT + '/generate-question-animation', false);
-          } catch (e3) {
-            throw new Error('All connection attempts failed. Please check your network and try again. (' + e3.message + ')');
-          }
+        if (!res) {
+          throw lastErr || new Error('All connection attempts failed. Please try again.');
         }
 
         // ── Parse response safely ────────────────────────────────────────────
-        // Always read as text first so a plain-text Railway error page or
-        // Vercel HTML timeout page never causes "Unexpected token ... not valid JSON".
+        // Always read as text first so a Railway error page or Vercel HTML
+        // timeout page never causes "Unexpected token ... not valid JSON".
         const rawText = await res.text();
         let data;
         try { data = JSON.parse(rawText); }
