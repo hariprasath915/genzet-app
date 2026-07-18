@@ -1192,42 +1192,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       animation: panelIn .32s cubic-bezier(.4, 0, .2, 1) forwards;
     }
 
-    /* Simulation panel needs its own flex/height layout, but ONLY while
-       active -- see fix note at the #simulationPanel element in the HTML. */
-    #simulationPanel.active {
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - var(--topbar-h) - 48px);
-      overflow: hidden;
-    }
-
-    /* FIX: Ensure the QAnim panel's animind-wrap renders as grid immediately
-       when the panel becomes active. Without this, the am-prev-header and
-       am-sid-header can appear missing on first open because the grid
-       hasn't been computed yet from display:block. */
-    #questionPanel.active {
-      display: block;
-    }
-    #questionPanel.active .animind-wrap {
-      display: grid;
-      grid-template-columns: 290px 1fr;
-    }
-    #questionPanel.active .animind-sidebar {
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    #questionPanel.active .am-sid-header {
-      flex-shrink: 0;
-    }
-    #questionPanel.active .animind-preview {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 0;
-    }
-
     @keyframes panelIn {
       from {
         opacity: 0;
@@ -1275,7 +1239,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: linear-gradient(135deg, var(--blue-lt) 0%, var(--indigo-lt) 50%, var(--orange-lt) 100%);
       position: relative;
       overflow: hidden;
-      flex-shrink: 0;
     }
 
     .am-sid-header::before {
@@ -1482,7 +1445,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .am-section {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
     }
 
     .am-section-label {
@@ -1857,7 +1819,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       display: flex;
       gap: 3px;
       padding: 14px 14px 0;
-      flex-shrink: 0;
     }
 
     .am-mode-tab {
@@ -8387,7 +8348,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <li><a href="#testimonials">Reviews</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <button class="nav-cta" onclick="openAuthModal()">Create Your First Lesson</button>
+  <button class="nav-cta" onclick="openAuthModal()">Start Free Trial</button>
   <button class="nav-menu-btn">☰</button>
 </nav>
 
@@ -8397,14 +8358,14 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="hero-glow-1"></div>
   <div class="hero-glow-2"></div>
 
-  <div class="hero-eyebrow">AI-Powered Lesson Creation for Educators</div>
+  <div class="hero-eyebrow">The Future of Education is Animated</div>
   <h1 class="hero-title">
-    Turn your curriculum into<br>
-    <span class="accent">interactive animated lessons.</span>
+    Teaching deserves<br>
+    <span class="accent">a smarter canvas.</span>
   </h1>
-  <p class="hero-sub">Improve student learning with interactive animation — less slide-making, more teaching.</p>
+  <p class="hero-sub">Genzet turns your curriculum into stunning animated lessons. Less slide-making, more learning — powered by AI built for educators.</p>
   <div class="hero-actions">
-    <button class="btn-primary" onclick="openAuthModal()">Create Your First Lesson</button>
+    <button class="btn-primary" onclick="openAuthModal()">Start Learning</button>
     <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
   </div>
   <div class="hero-stats">
@@ -8676,7 +8637,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <h2 class="cta-title">Ready to teach<br>without limits?</h2>
     <p class="cta-sub">Join thousands of educators transforming their classrooms with Genzet. Free for your first 30 lessons — no credit card needed.</p>
     <div class="cta-input-row">
-      <button class="btn-primary" onclick="openAuthModal()">Create Your First Lesson →</button>
+      <button class="btn-primary" onclick="openAuthModal()">Start Learning →</button>
     </div>
     <p class="cta-note">✦ Free 30-day trial &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Cancel anytime</p>
   </div>
@@ -9313,6 +9274,678 @@ function amShowSuccess() {
 }
 </script>
 
+<!-- ══════════════════════════════════════════════════════════════════
+     LESSONS LIBRARY — CSS
+     Kahoot-style card grid + lesson viewer + admin upload panel
+     All variables inherit from #gz-dashboard CSS custom properties.
+══════════════════════════════════════════════════════════════════ -->
+<style>
+/* ── LESSONS PANEL LAYOUT ── */
+.lessons-page {
+  padding: 0;
+  min-height: calc(100vh - var(--topbar-h));
+  background: var(--bg);
+}
+.lessons-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.lessons-topbar-left h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-title);
+}
+.lessons-topbar-left p {
+  font-size: 13px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+.lessons-topbar-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.lessons-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #0d9488, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .25s;
+  box-shadow: 0 4px 16px rgba(13,148,136,.3);
+}
+.lessons-upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13,148,136,.4);
+}
+/* ── KAHOOT-STYLE CARD GRID ── */
+.lessons-grid-wrap {
+  padding: 28px;
+}
+.lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 22px;
+}
+.lesson-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .28s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.lesson-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--blue);
+  box-shadow: 0 16px 48px rgba(13,148,136,.18);
+}
+.lesson-card-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  background: linear-gradient(135deg, var(--blue-lt), var(--indigo-lt));
+}
+.lesson-card-thumb-placeholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, var(--blue-lt), var(--indigo-lt));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+}
+.lesson-card-body {
+  padding: 14px 16px 16px;
+}
+.lesson-card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 8px;
+  font-family: var(--font-title);
+}
+.lesson-card-modes {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.lesson-mode-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  letter-spacing: .02em;
+}
+.lmc-present  { background: var(--blue-lt);   color: var(--blue);   border-color: var(--blue-md); }
+.lmc-anim     { background: var(--green-lt);  color: var(--green);  border-color: var(--green-md); }
+.lmc-theory   { background: var(--purple-lt); color: var(--purple); border-color: var(--purple-md); }
+.lmc-quiz     { background: var(--orange-lt); color: var(--orange); border-color: var(--orange-md); }
+.lesson-card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(239,68,68,.85);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+  backdrop-filter: blur(4px);
+}
+.lesson-card:hover .lesson-card-delete { display: flex; }
+.lesson-card-delete:hover { background: #ef4444; transform: scale(1.1); }
+/* ── EMPTY STATE ── */
+.lessons-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  gap: 16px;
+  color: var(--text3);
+  text-align: center;
+}
+.lessons-empty-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 24px;
+  background: var(--blue-lt);
+  border: 2px solid var(--blue-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  box-shadow: 0 8px 32px rgba(13,148,136,.12);
+}
+.lessons-empty h3 { font-size: 18px; font-weight: 800; color: var(--text2); }
+.lessons-empty p  { font-size: 13px; max-width: 340px; line-height: 1.65; }
+/* ── LESSON VIEWER OVERLAY ── */
+.lesson-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.lesson-viewer-overlay.open { display: flex; }
+.lesson-viewer-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+}
+.lesson-viewer-back {
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.lesson-viewer-back:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.lesson-viewer-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-title);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lesson-mode-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lesson-mode-tab-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .22s;
+  white-space: nowrap;
+}
+.lesson-mode-tab-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.lesson-mode-tab-btn.active {
+  background: linear-gradient(135deg, var(--blue), #6366f1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 3px 12px rgba(13,148,136,.3);
+}
+.lesson-mode-tab-btn:disabled { opacity: .35; cursor: not-allowed; }
+/* ── VIEWER CONTENT AREAS ── */
+.lesson-viewer-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.lv-mode-pane {
+  display: none;
+  flex: 1;
+  overflow: auto;
+  position: absolute;
+  inset: 0;
+}
+.lv-mode-pane.active { display: flex; flex-direction: column; }
+/* Present mode — fullscreen image */
+#lvPresent {
+  background: #000;
+  align-items: center;
+  justify-content: center;
+}
+#lvPresent img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+/* Animation mode — fullscreen video */
+#lvAnimation { background: #000; align-items: center; justify-content: center; }
+#lvAnimVideo {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 0;
+  outline: none;
+}
+/* Theory mode — iframe */
+#lvTheory { overflow: hidden; }
+#lvTheoryIframe { width: 100%; height: 100%; border: none; flex: 1; }
+/* Quiz mode */
+#lvQuiz {
+  background: var(--bg);
+  align-items: center;
+  overflow-y: auto;
+}
+.quiz-wrap {
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+.quiz-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.quiz-header h3 { font-size: 22px; font-weight: 800; color: var(--text); font-family: var(--font-title); }
+.quiz-header p  { font-size: 14px; color: var(--text3); margin-top: 6px; }
+.quiz-progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 12px 0 24px;
+}
+.quiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), #6366f1);
+  border-radius: 6px;
+  transition: width .4s ease;
+}
+.quiz-question-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+.quiz-q-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+}
+.quiz-q-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quiz-opt-btn {
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.quiz-opt-btn:hover:not(:disabled) { border-color: var(--blue); background: var(--blue-lt); color: var(--blue); transform: translateX(4px); }
+.quiz-opt-btn.correct  { background: var(--green-lt); border-color: var(--green); color: #166534; }
+.quiz-opt-btn.wrong    { background: var(--red-lt);   border-color: var(--red);   color: #991b1b; }
+.quiz-opt-letter {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--border2);
+  color: var(--text2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  transition: all .2s;
+}
+.quiz-opt-btn.correct .quiz-opt-letter  { background: var(--green); color: #fff; }
+.quiz-opt-btn.wrong   .quiz-opt-letter  { background: var(--red);   color: #fff; }
+.quiz-opt-btn:hover:not(:disabled) .quiz-opt-letter { background: var(--blue); color: #fff; }
+.quiz-feedback {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 14px;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct-fb { background: var(--green-lt); color: #166534; border: 1px solid var(--green-md); }
+.quiz-feedback.wrong-fb   { background: var(--red-lt);   color: #991b1b; border: 1px solid #fca5a5; }
+.quiz-next-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 13px;
+  border: none;
+  background: linear-gradient(135deg, var(--blue), #6366f1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  margin-top: 16px;
+  transition: all .25s;
+  box-shadow: 0 4px 16px rgba(13,148,136,.3);
+  display: none;
+}
+.quiz-next-btn.show { display: block; }
+.quiz-next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,.4); }
+.quiz-score-screen {
+  display: none;
+  text-align: center;
+  padding: 40px 24px;
+}
+.quiz-score-screen.show { display: block; }
+.quiz-score-circle {
+  width: 130px; height: 130px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), #6366f1);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 40px rgba(13,148,136,.35);
+}
+.quiz-score-num  { font-size: 36px; font-weight: 900; color: #fff; font-family: var(--font-title); line-height: 1; }
+.quiz-score-deno { font-size: 14px; color: rgba(255,255,255,.7); }
+.quiz-score-msg  { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.quiz-score-sub  { font-size: 14px; color: var(--text3); margin-bottom: 24px; }
+.quiz-restart-btn {
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--blue), #6366f1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .25s;
+}
+.quiz-restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,.35); }
+/* Empty mode message */
+.lv-mode-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 14px;
+  color: var(--text3);
+  text-align: center;
+  padding: 40px;
+}
+.lv-mode-empty-icon { font-size: 48px; }
+.lv-mode-empty h4   { font-size: 16px; font-weight: 700; color: var(--text2); }
+.lv-mode-empty p    { font-size: 13px; max-width: 280px; line-height: 1.6; }
+/* ── ADMIN UPLOAD OVERLAY ── */
+.admin-upload-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.admin-upload-overlay.open { display: flex; }
+.admin-upload-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+}
+.aup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  border-bottom: 1.5px solid var(--border);
+  background: linear-gradient(135deg, var(--blue-lt), var(--indigo-lt));
+  border-radius: 22px 22px 0 0;
+}
+.aup-header h3 { font-size: 17px; font-weight: 800; color: var(--text); }
+.aup-close-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.aup-close-btn:hover { background: var(--red-lt); border-color: var(--red); color: var(--red); }
+.aup-body { padding: 24px 26px; display: flex; flex-direction: column; gap: 18px; }
+.aup-field { display: flex; flex-direction: column; gap: 7px; }
+.aup-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.aup-input, .aup-textarea {
+  padding: 11px 14px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color .2s;
+  width: 100%;
+}
+.aup-input:focus, .aup-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+.aup-textarea { resize: vertical; min-height: 80px; }
+.aup-file-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.aup-file-box {
+  background: var(--bg);
+  border: 2px dashed var(--border2);
+  border-radius: 12px;
+  padding: 16px 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .2s;
+  position: relative;
+}
+.aup-file-box:hover { border-color: var(--blue); background: var(--blue-lt); }
+.aup-file-box.has-file { border-style: solid; border-color: var(--green); background: var(--green-lt); }
+.aup-file-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.aup-file-label { font-size: 11px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 3px; }
+.aup-file-hint  { font-size: 10px; color: var(--text3); }
+.aup-file-name  { font-size: 11px; color: var(--blue); font-weight: 700; margin-top: 4px; word-break: break-all; }
+.aup-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+/* Quiz builder */
+.aup-quiz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.aup-quiz-header span { font-size: 12px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+.aup-add-q-btn {
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: 1.5px solid var(--blue);
+  background: var(--blue-lt);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+}
+.aup-add-q-btn:hover { background: var(--blue-md); }
+.aup-quiz-list { display: flex; flex-direction: column; gap: 12px; }
+.aup-q-item {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  position: relative;
+}
+.aup-q-num { font-size: 10px; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.aup-q-text-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 10px;
+}
+.aup-q-text-input:focus { border-color: var(--blue); }
+.aup-q-options { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+.aup-q-opt-row { display: flex; align-items: center; gap: 8px; }
+.aup-q-opt-radio { flex-shrink: 0; cursor: pointer; accent-color: var(--blue); width: 16px; height: 16px; }
+.aup-q-opt-label { font-size: 10px; font-weight: 700; color: var(--text3); flex-shrink: 0; width: 16px; }
+.aup-q-opt-input {
+  flex: 1;
+  padding: 7px 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  outline: none;
+}
+.aup-q-opt-input:focus { border-color: var(--blue); }
+.aup-q-correct-hint { font-size: 10px; color: var(--green); font-weight: 600; }
+.aup-q-del-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  border: 1.5px solid #fca5a5;
+  background: var(--red-lt);
+  color: var(--red);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.aup-q-del-btn:hover { background: var(--red); color: #fff; }
+/* Upload footer */
+.aup-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 26px 22px;
+  border-top: 1.5px solid var(--border);
+}
+.aup-cancel-btn {
+  padding: 11px 22px;
+  border-radius: 11px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+}
+.aup-cancel-btn:hover { border-color: var(--border2); color: var(--text); }
+.aup-save-btn {
+  padding: 11px 26px;
+  border-radius: 11px;
+  border: none;
+  background: linear-gradient(135deg, var(--blue), #6366f1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .25s;
+  box-shadow: 0 4px 16px rgba(13,148,136,.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.aup-save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,.4); }
+.aup-save-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.aup-progress {
+  font-size: 12px;
+  color: var(--blue);
+  font-weight: 600;
+  align-self: center;
+  display: none;
+}
+/* Responsive */
+@media (max-width: 600px) {
+  .lessons-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .aup-file-row { grid-template-columns: 1fr; }
+  .lesson-mode-tab-btn { padding: 7px 10px; font-size: 11px; }
+  .lessons-topbar { padding: 14px 16px 12px; }
+  .lessons-grid-wrap { padding: 16px; }
+}
+</style>
+
 </body>
 
 </div>
@@ -9641,6 +10274,12 @@ function amShowSuccess() {
           <span class="nav-item-text">Simulation</span>
           <span class="nav-item-tag">New</span>
         </button>
+        <!-- LESSONS tab — always shown to all users -->
+        <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('lessons')">
+          <div class="nav-icon">📚</div>
+          <span class="nav-item-text">Lessons</span>
+          <span class="nav-item-tag" style="background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;border-color:transparent;">Live</span>
+        </button>
       </div>
       <div class="sidebar-footer">
         <div class="sidebar-stat-row">
@@ -9942,7 +10581,7 @@ function amShowSuccess() {
                     </div>
                     <div class="am-error" id="qaError"></div>
                   </div>
-                  <div class="am-section" style="flex:1;overflow-y:auto;flex-shrink:1;min-height:60px;">
+                  <div class="am-section" style="flex:1;overflow-y:auto;">
                     <div class="am-section-label">Try these questions</div>
                     <button class="am-example-btn"
                       onclick="qaSetPrompt('What is photosynthesis and how does it work?')"><span>→</span> What is
@@ -10029,12 +10668,7 @@ function amShowSuccess() {
             </div>
 
             <!-- SIMULATION PANEL -->
-            <!-- FIX: display/height moved to CSS (#simulationPanel.active) below --
-                 the inline style here used to override .panel{display:none} even
-                 when this panel was NOT active, permanently occupying ~full
-                 viewport height and pushing every other panel (Library, File,
-                 QAnim, AI Creator) down out of view until the user scrolled. -->
-            <div class="panel" id="simulationPanel">
+            <div class="panel" id="simulationPanel" style="display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
 
               <!-- ── Top 3 Main Tabs ─────────────────────────────────── -->
               <div class="sim-top-tabs">
@@ -10641,6 +11275,161 @@ function amShowSuccess() {
     </div>
   </div>
 
+  <!-- ══ LESSONS PANEL ══ -->
+  <div class="panel" id="lessonsPanel">
+    <div class="lessons-page">
+
+      <!-- Topbar -->
+      <div class="lessons-topbar">
+        <div class="lessons-topbar-left">
+          <h2>📚 Lesson Library</h2>
+          <p id="lessonCount">Loading lessons…</p>
+        </div>
+        <div class="lessons-topbar-right">
+          <!-- Admin-only upload button (shown by JS after login) -->
+          <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload Lesson
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="lessons-grid-wrap">
+        <div class="lessons-grid" id="lessonsGrid">
+          <!-- Skeleton loaders shown while loading -->
+          <div class="lesson-card" style="pointer-events:none;opacity:.5">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></div>
+          </div>
+          <div class="lesson-card" style="pointer-events:none;opacity:.3">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:55%;"></div></div>
+          </div>
+          <div class="lesson-card" style="pointer-events:none;opacity:.15">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:40%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LESSON VIEWER OVERLAY (fullscreen, 4 modes) ══ -->
+  <div class="lesson-viewer-overlay" id="lessonViewerOverlay">
+    <div class="lesson-viewer-topbar">
+      <button class="lesson-viewer-back" onclick="closeLessonViewer()">← Back</button>
+      <span class="lesson-viewer-title" id="lvTitle">Lesson Title</span>
+      <div class="lesson-mode-tabs">
+        <button class="lesson-mode-tab-btn" id="lvBtnPresent"  onclick="switchLessonMode('present')">🖼️ Present</button>
+        <button class="lesson-mode-tab-btn" id="lvBtnAnimation" onclick="switchLessonMode('animation')">🎬 Animation</button>
+        <button class="lesson-mode-tab-btn" id="lvBtnTheory"   onclick="switchLessonMode('theory')">📄 Theory</button>
+        <button class="lesson-mode-tab-btn" id="lvBtnQuiz"     onclick="switchLessonMode('quiz')">❓ Quiz</button>
+      </div>
+    </div>
+    <div class="lesson-viewer-body">
+      <!-- Present mode: thumbnail fullscreen -->
+      <div class="lv-mode-pane" id="lvPresent">
+        <div class="lv-mode-empty" id="lvPresentEmpty" style="display:none">
+          <span class="lv-mode-empty-icon">🖼️</span>
+          <h4>No thumbnail uploaded</h4>
+          <p>The admin hasn’t added a thumbnail image for this lesson yet.</p>
+        </div>
+        <img id="lvPresentImg" src="" alt="Lesson thumbnail" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
+      </div>
+      <!-- Animation mode: MP4 video -->
+      <div class="lv-mode-pane" id="lvAnimation">
+        <div class="lv-mode-empty" id="lvAnimationEmpty" style="display:none">
+          <span class="lv-mode-empty-icon">🎬</span>
+          <h4>No video uploaded</h4>
+          <p>The admin hasn’t added an animation video for this lesson yet.</p>
+        </div>
+        <video id="lvAnimVideo" controls preload="metadata" style="display:none"></video>
+      </div>
+      <!-- Theory mode: HTML iframe -->
+      <div class="lv-mode-pane" id="lvTheory">
+        <div class="lv-mode-empty" id="lvTheoryEmpty" style="display:none">
+          <span class="lv-mode-empty-icon">📄</span>
+          <h4>No theory file uploaded</h4>
+          <p>The admin hasn’t added a theory HTML file for this lesson yet.</p>
+        </div>
+        <iframe id="lvTheoryIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Theory Content" style="display:none"></iframe>
+      </div>
+      <!-- Quiz mode -->
+      <div class="lv-mode-pane" id="lvQuiz">
+        <div class="quiz-wrap" id="quizContainer">
+          <!-- Populated by renderQuiz() -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN UPLOAD OVERLAY ══ -->
+  <div class="admin-upload-overlay" id="adminUploadOverlay">
+    <div class="admin-upload-box">
+      <div class="aup-header">
+        <h3>✨ Upload New Lesson</h3>
+        <button class="aup-close-btn" onclick="closeAdminUpload()">&#x2715;</button>
+      </div>
+      <div class="aup-body">
+        <!-- Title -->
+        <div class="aup-field">
+          <label class="aup-label">Lesson Title *</label>
+          <input type="text" class="aup-input" id="aupTitle" placeholder="e.g. Photosynthesis Process" maxlength="150" />
+        </div>
+
+        <!-- File uploads -->
+        <div class="aup-field">
+          <label class="aup-label">Files</label>
+          <div class="aup-file-row">
+            <!-- Thumbnail -->
+            <div class="aup-file-box" id="aupThumbBox" onclick="document.getElementById('aupThumbInput').click()">
+              <span class="aup-file-icon">🖼️</span>
+              <span class="aup-file-label">Thumbnail Image</span>
+              <span class="aup-file-hint">JPG/PNG · any size</span>
+              <span class="aup-file-name" id="aupThumbName"></span>
+              <input type="file" class="aup-file-input" id="aupThumbInput" accept="image/*" onchange="aupHandleFile(this,'thumb')" />
+            </div>
+            <!-- Animation MP4 -->
+            <div class="aup-file-box" id="aupAnimBox" onclick="document.getElementById('aupAnimInput').click()">
+              <span class="aup-file-icon">🎬</span>
+              <span class="aup-file-label">Animation Video</span>
+              <span class="aup-file-hint">MP4 · max 100 MB</span>
+              <span class="aup-file-name" id="aupAnimName"></span>
+              <input type="file" class="aup-file-input" id="aupAnimInput" accept="video/mp4,video/*" onchange="aupHandleFile(this,'anim')" />
+            </div>
+            <!-- Theory HTML -->
+            <div class="aup-file-box" id="aupHtmlBox" onclick="document.getElementById('aupHtmlInput').click()">
+              <span class="aup-file-icon">📄</span>
+              <span class="aup-file-label">Theory HTML File</span>
+              <span class="aup-file-hint">.html / .htm</span>
+              <span class="aup-file-name" id="aupHtmlName"></span>
+              <input type="file" class="aup-file-input" id="aupHtmlInput" accept=".html,.htm" onchange="aupHandleFile(this,'html')" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Builder -->
+        <div class="aup-field">
+          <div class="aup-quiz-header">
+            <span>❓ Quiz Questions</span>
+            <button class="aup-add-q-btn" onclick="aupAddQuestion()">+ Add Question</button>
+          </div>
+          <div class="aup-quiz-list" id="aupQuizList"></div>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="aup-footer">
+        <span class="aup-progress" id="aupProgress"></span>
+        <button class="aup-cancel-btn" onclick="closeAdminUpload()">Cancel</button>
+        <button class="aup-save-btn" id="aupSaveBtn" onclick="aupSaveLesson()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Lesson
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Shortcuts -->
   <div class="shortcut-overlay" id="shortcutOverlay" onclick="hideShortcuts()">
     <div class="shortcut-box" onclick="event.stopPropagation()">
@@ -11081,27 +11870,22 @@ function amShowSuccess() {
       closeMobileSidebar();
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
-      const modeMap = ['animind', 'library', 'file', 'question', 'simulation'];
+      const modeMap = ['animind', 'library', 'file', 'question', 'simulation', 'lessons'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel, vaultPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel'].forEach(id => {
-        document.getElementById(id).classList.toggle('active', id === mode + 'Panel');
+      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', simulation: 'sideSimulation' };
+      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', simulation: 'sideSimulation', lessons: 'sideLessons' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
       // REMOVED: teacher mode handler
       if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
       if (mode === 'simulation') simInit();
-      // Scroll QAnim sidebar to top so the header + input are always visible
-      if (mode === 'question') {
-        requestAnimationFrame(() => {
-          const qSidebar = document.querySelector('#questionPanel .animind-sidebar');
-          if (qSidebar) qSidebar.scrollTop = 0;
-        });
-      }
+      if (mode === 'lessons') initLessonsMode();
     }
 
     // ═══════════════════════════════════════════════
@@ -11716,18 +12500,8 @@ function amShowSuccess() {
       }, 3000);
       try {
         const res = await fetch(`${BACKEND_URL}/generate-animation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
-        // ── FIX: always parse response body as text first, then attempt JSON.
-        // When Railway/backend crashes or times out it can return HTTP 200 with
-        // a plain-text exception string instead of JSON, causing a
-        // "Unexpected token ... is not valid JSON" crash here.
-        const rawText = await res.text();
-        let data;
-        try { data = JSON.parse(rawText); }
-        catch (_) { throw new Error(rawText.slice(0, 200) || 'Server returned non-JSON response'); }
-        if (!res.ok) throw new Error(data.detail || 'Generation failed');
-        // ── FIX: backend now returns {"error":true,"detail":"..."} on timeout/error
-        // even with HTTP 200, so we must check this field explicitly.
-        if (data.error) throw new Error(data.detail || 'Generation failed');
+        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
+        const data = await res.json();
         const patchedCode = patchAnimHTML(data.animation_code);
         currentAnimation = { id: Date.now().toString(), title: data.title, prompt, explanation: data.explanation, animation_code: patchedCode, created_at: new Date().toISOString(), playlist: null };
         clearInterval(pt); clearInterval(mt);
@@ -11904,18 +12678,12 @@ function amShowSuccess() {
           // NOTE: Do NOT set Content-Type manually — browser sets it with boundary
         });
 
-        // ── FIX: always parse as text first to avoid "not valid JSON" crash
-        // when backend returns a plain-text error body on timeout/crash.
-        const rawBookText = await res.text();
-        let data;
-        try { data = JSON.parse(rawBookText); }
-        catch (_) { throw new Error(rawBookText.slice(0, 200) || 'Server returned non-JSON response'); }
-
         if (!res.ok) {
-          throw new Error(data.detail || 'Generation failed');
+          const errData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(errData.detail || 'Generation failed');
         }
-        if (data.error) throw new Error(data.detail || 'Generation failed');
 
+        const data = await res.json();
         const patchedCode = patchAnimHTML(data.animation_code);
 
         currentAnimation = {
@@ -13624,7 +14392,7 @@ ${text.substring(0, 4500)}`
 
     function qaSetPrompt(t) {
       document.getElementById('qaPrompt').value = t;
-      document.getElementById('qaCharCount').textContent = t.length + '/1000';
+      document.getElementById('qaCharCount').textContent = t.length + '/500';
     }
 
     async function generateQuestionAnim() {
@@ -13664,101 +14432,13 @@ ${text.substring(0, 4500)}`
 
       try {
 
-        // ── FETCH STRATEGY (v3 — always application/json, retry with backoff) ─────
-        //
-        // Root causes fixed in this version:
-        //
-        //  1. CORS preflight failure (original bug):
-        //     Fixed by routing through /api proxy (same-origin, no preflight).
-        //
-        //  2. Railway 502 ROUTER_EXTERNAL_TARGET_ERROR:
-        //     Fixed by retrying up to 3 times with exponential backoff (2s, 5s, 10s).
-        //     Railway cold-start / transient router crash resolves within a few seconds.
-        //
-        //  3. "Object of type bytes is not JSON serializable" (this bug):
-        //     Caused by sending Content-Type: text/plain as a CORS workaround.
-        //     FastAPI's Pydantic validation fails on text/plain, stores the raw
-        //     bytes in the error dict, then json.dumps() crashes on those bytes.
-        //     FIXED: always send application/json through the /api proxy.
-        //     The backend qanim_fastapi_endpoint() also now reads request.body()
-        //     directly (bypassing Pydantic) to handle both content-types safely.
-        //
-        //  4. Silent browser hang: AbortController with 295 s hard timeout.
-
-        var _qaBody = JSON.stringify({ question: rawQ });
-        var _qaHeaders = { 'Content-Type': 'application/json' };
-        var _qaMaxAttempts = 3;
-        var _qaDelays = [0, 2000, 5000];   // ms before each attempt (0 = immediate)
-
-        async function _qaFetchOnce(attemptNum) {
-          var ab = new AbortController();
-          var t  = setTimeout(function() { ab.abort(); }, 295000);
-          try {
-            return await fetch('/api/generate-question-animation', {
-              method:   'POST',
-              headers:  _qaHeaders,
-              body:     _qaBody,
-              keepalive: true,
-              signal:   ab.signal,
-            });
-          } catch (fe) {
-            if (fe.name === 'AbortError') {
-              throw new Error('Request timed out after 5 min. Please try a shorter question.');
-            }
-            throw fe;
-          } finally {
-            clearTimeout(t);
-          }
-        }
-
-        var res = null;
-        var lastErr = null;
-
-        for (var _attempt = 0; _attempt < _qaMaxAttempts; _attempt++) {
-          // Show status
-          if (_attempt === 0) {
-            document.getElementById('qaLoadMsg').textContent = 'Connecting to AI engine…';
-          } else {
-            document.getElementById('qaLoadMsg').textContent =
-              'Server busy — retrying (' + _attempt + '/' + (_qaMaxAttempts - 1) + ')…';
-          }
-
-          // Wait before retry
-          if (_qaDelays[_attempt] > 0) {
-            await new Promise(function(ok) { setTimeout(ok, _qaDelays[_attempt]); });
-          }
-
-          try {
-            res = await _qaFetchOnce(_attempt);
-            // 502/503/504 = Railway router crash or overload — retry
-            if (res.status === 502 || res.status === 503 || res.status === 504) {
-              lastErr = new Error('Server error ' + res.status + ' (Railway router issue)');
-              console.warn('[QAnim] Attempt', _attempt + 1, 'got', res.status, '— will retry');
-              res = null;
-              continue;
-            }
-            break;  // any other status (200, 400, 422, 500) — stop retrying
-          } catch (fe) {
-            lastErr = fe;
-            console.warn('[QAnim] Attempt', _attempt + 1, 'threw:', fe.message);
-            res = null;
-            if (fe.message.indexOf('timed out') !== -1) break;  // don't retry timeout
-          }
-        }
-
-        if (!res) {
-          throw lastErr || new Error('All connection attempts failed. Please try again.');
-        }
-
-        // ── Parse response safely ────────────────────────────────────────────
-        // Always read as text first so a Railway error page or Vercel HTML
-        // timeout page never causes "Unexpected token ... not valid JSON".
-        const rawText = await res.text();
-        let data;
-        try { data = JSON.parse(rawText); }
-        catch (_) { throw new Error(rawText.slice(0, 300) || 'Server returned a non-JSON response'); }
-        if (!res.ok) throw new Error(data.detail || data.error || ('Server error ' + res.status));
-        if (data.error) throw new Error(data.detail || data.error || 'Generation failed');
+        const res = await fetch(`${BACKEND_URL}/generate-question-animation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: rawQ })
+        });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
+        const data = await res.json();
 
         // ✅ ENHANCED CLEANING: Handle all backend escape sequences
         let _animCode = data.animation_code || '';
@@ -15042,6 +15722,472 @@ ${text.substring(0, 4500)}`
 
   <!-- ✅ Auth + Cloud Sync override — must be the LAST script (overrides authInit, syncPush, etc.) -->
   <script src="cloud_sync_v3.js"></script>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       LESSONS MODULE — Admin Upload + Kahoot Library + 4-Mode Viewer
+  ════════════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Admin check ──
+    const ADMIN_EMAIL = 'genzet@gmail.com';
+    function isAdmin() {
+      const u = window.authUser;
+      return u && (u.email || '').toLowerCase().trim() === ADMIN_EMAIL;
+    }
+
+    // ── State ──
+    let _currentLesson = null;    // lesson object being viewed
+    let _currentLvMode = null;    // 'present'|'animation'|'theory'|'quiz'
+    let _quizState     = null;    // { questions, idx, score }
+    let _aupFiles      = { thumb: null, anim: null, html: null };  // File objects
+    let _aupQuestions  = [];      // quiz builder state
+    let _lessonsLoaded = false;
+
+    // ────────────────────────────────────────────────────
+    // INIT — called by switchMode('lessons')
+    // ────────────────────────────────────────────────────
+    window.initLessonsMode = async function () {
+      // Show admin upload button only for admin
+      const adminBtn = document.getElementById('adminUploadBtn');
+      if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
+
+      if (_lessonsLoaded) return; // already fetched
+      _lessonsLoaded = true;
+
+      if (window.lessonsAPI) {
+        await window.lessonsAPI.load();
+        // After first load, subscribe Realtime so new lessons push instantly
+        window.lessonsAPI.subscribeRealtime();
+      }
+    };
+
+    // ────────────────────────────────────────────────────
+    // RENDER GRID  — called by lessonsAPI after data loads / realtime update
+    // ────────────────────────────────────────────────────
+    window.renderLessonsGrid = function (lessons) {
+      const grid  = document.getElementById('lessonsGrid');
+      const count = document.getElementById('lessonCount');
+      if (!grid) return;
+
+      if (!lessons || !lessons.length) {
+        grid.innerHTML = `
+          <div class="lessons-empty" style="grid-column:1/-1">
+            <div class="lessons-empty-icon">📚</div>
+            <h3>No lessons yet</h3>
+            <p>The admin hasn’t uploaded any lessons yet. Check back soon!</p>
+          </div>`;
+        if (count) count.textContent = '0 lessons';
+        return;
+      }
+
+      if (count) count.textContent = `${lessons.length} lesson${lessons.length !== 1 ? 's' : ''}`;
+
+      grid.innerHTML = lessons.map(lesson => {
+        const hasPres  = !!lesson.thumbnail_url;
+        const hasAnim  = !!lesson.animation_url;
+        const hasTheory= !!lesson.theory_url;
+        const hasQuiz  = lesson.quiz_data && lesson.quiz_data.length > 0;
+        const chips = [
+          hasPres   ? '<span class="lesson-mode-chip lmc-present">🖼️ Present</span>'   : '',
+          hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
+          hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
+          hasQuiz   ? `<span class="lesson-mode-chip lmc-quiz">❓ Quiz (${lesson.quiz_data.length})</span>` : '',
+        ].join('');
+        const thumbHTML = lesson.thumbnail_url
+          ? `<img class="lesson-card-thumb" src="${lesson.thumbnail_url}" alt="${lesson.title.replace(/"/g,'&quot;')}" loading="lazy" />`
+          : `<div class="lesson-card-thumb-placeholder">📚</div>`;
+        const deleteBtn = isAdmin()
+          ? `<button class="lesson-card-delete" title="Delete lesson" onclick="event.stopPropagation();deleteLessonCard('${lesson.id}', this)">✕</button>`
+          : '';
+        return `
+          <div class="lesson-card" onclick="openLesson('${lesson.id}')">
+            ${thumbHTML}
+            <div class="lesson-card-body">
+              <div class="lesson-card-title">${lesson.title}</div>
+              <div class="lesson-card-modes">${chips || '<span class="lesson-mode-chip" style="background:var(--border);color:var(--text3);border-color:var(--border2);">No content yet</span>'}</div>
+            </div>
+            ${deleteBtn}
+          </div>`;
+      }).join('');
+    };
+
+    // ────────────────────────────────────────────────────
+    // OPEN / CLOSE LESSON VIEWER
+    // ────────────────────────────────────────────────────
+    window.openLesson = function (lessonIdOrObj) {
+      // Accept either a lesson ID string (from onclick attr) or a full lesson object
+      let lesson;
+      if (typeof lessonIdOrObj === 'string') {
+        // ID-based lookup from the in-memory cache — safe, no JSON in attributes
+        const cache = window.lessonsAPI ? window.lessonsAPI.getCache() : [];
+        lesson = cache.find(l => l.id === lessonIdOrObj);
+        if (!lesson) { console.warn('[LESSONS] openLesson: ID not found in cache:', lessonIdOrObj); return; }
+      } else {
+        lesson = lessonIdOrObj;
+      }
+      _currentLesson = lesson;
+      document.getElementById('lvTitle').textContent = lesson.title || 'Lesson';
+
+      // Enable/disable mode buttons based on available content
+      _setModeBtn('present',   'lvBtnPresent',   !!lesson.thumbnail_url);
+      _setModeBtn('animation', 'lvBtnAnimation', !!lesson.animation_url);
+      _setModeBtn('theory',    'lvBtnTheory',    !!lesson.theory_url);
+      _setModeBtn('quiz',      'lvBtnQuiz',      !!(lesson.quiz_data && lesson.quiz_data.length));
+
+      // Open the viewer overlay
+      document.getElementById('lessonViewerOverlay').classList.add('open');
+
+      // Auto-select first available mode
+      if (lesson.thumbnail_url)      switchLessonMode('present');
+      else if (lesson.animation_url) switchLessonMode('animation');
+      else if (lesson.theory_url)    switchLessonMode('theory');
+      else if (lesson.quiz_data && lesson.quiz_data.length) switchLessonMode('quiz');
+      else switchLessonMode('present'); // show empty state
+    };
+
+    function _setModeBtn(mode, btnId, enabled) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.disabled = !enabled;
+      if (!enabled) btn.title = 'Not available for this lesson';
+      else btn.title = '';
+    }
+
+    window.closeLessonViewer = function () {
+      document.getElementById('lessonViewerOverlay').classList.remove('open');
+      // Pause video if playing
+      const vid = document.getElementById('lvAnimVideo');
+      if (vid) { vid.pause(); vid.src = ''; }
+      const iframe = document.getElementById('lvTheoryIframe');
+      if (iframe) iframe.src = '';
+      _currentLesson = null;
+      _currentLvMode = null;
+    };
+
+    // ────────────────────────────────────────────────────
+    // SWITCH MODE (Present / Animation / Theory / Quiz)
+    // ────────────────────────────────────────────────────
+    window.switchLessonMode = function (mode) {
+      if (!_currentLesson) return;
+      _currentLvMode = mode;
+
+      // Deactivate all panes
+      document.querySelectorAll('.lv-mode-pane').forEach(p => p.classList.remove('active'));
+      // Deactivate all tab buttons
+      document.querySelectorAll('.lesson-mode-tab-btn').forEach(b => b.classList.remove('active'));
+
+      // Activate the selected pane
+      const pane = document.getElementById('lv' + mode.charAt(0).toUpperCase() + mode.slice(1));
+      if (pane) pane.classList.add('active');
+      // Activate the selected tab
+      const btnMap = { present: 'lvBtnPresent', animation: 'lvBtnAnimation', theory: 'lvBtnTheory', quiz: 'lvBtnQuiz' };
+      const btn = document.getElementById(btnMap[mode]);
+      if (btn) btn.classList.add('active');
+
+      // Load content for the mode
+      if (mode === 'present') {
+        const img  = document.getElementById('lvPresentImg');
+        const empt = document.getElementById('lvPresentEmpty');
+        if (_currentLesson.thumbnail_url) {
+          img.src = _currentLesson.thumbnail_url;
+          img.style.display = 'block';
+          if (empt) empt.style.display = 'none';
+        } else {
+          img.style.display = 'none';
+          if (empt) empt.style.display = 'flex';
+        }
+      } else if (mode === 'animation') {
+        const vid  = document.getElementById('lvAnimVideo');
+        const empt = document.getElementById('lvAnimationEmpty');
+        if (_currentLesson.animation_url) {
+          vid.src = _currentLesson.animation_url;
+          vid.style.display = 'block';
+          if (empt) empt.style.display = 'none';
+          vid.load();
+        } else {
+          vid.style.display = 'none';
+          if (empt) empt.style.display = 'flex';
+        }
+      } else if (mode === 'theory') {
+        const fr   = document.getElementById('lvTheoryIframe');
+        const empt = document.getElementById('lvTheoryEmpty');
+        if (_currentLesson.theory_url) {
+          fr.src = _currentLesson.theory_url;
+          fr.style.display = 'block';
+          if (empt) empt.style.display = 'none';
+        } else {
+          fr.style.display = 'none';
+          if (empt) empt.style.display = 'flex';
+        }
+      } else if (mode === 'quiz') {
+        renderQuiz(_currentLesson.quiz_data || []);
+      }
+    };
+
+    // ────────────────────────────────────────────────────
+    // INTERACTIVE QUIZ ENGINE
+    // ────────────────────────────────────────────────────
+    function renderQuiz(questions) {
+      const wrap = document.getElementById('quizContainer');
+      if (!wrap) return;
+
+      if (!questions || !questions.length) {
+        wrap.innerHTML = `
+          <div class="lv-mode-empty">
+            <span class="lv-mode-empty-icon">❓</span>
+            <h4>No quiz questions</h4>
+            <p>The admin hasn’t added quiz questions for this lesson yet.</p>
+          </div>`;
+        return;
+      }
+
+      _quizState = { questions, idx: 0, score: 0, answered: false };
+      _renderQuizQuestion();
+    }
+
+    function _renderQuizQuestion() {
+      const { questions, idx } = _quizState;
+      const q    = questions[idx];
+      const wrap = document.getElementById('quizContainer');
+      const total = questions.length;
+      const pct   = Math.round(((idx) / total) * 100);
+      const LETTERS = ['A', 'B', 'C', 'D'];
+
+      wrap.innerHTML = `
+        <div class="quiz-header">
+          <h3>❓ Quiz Time!</h3>
+          <p>Question ${idx + 1} of ${total}</p>
+          <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="quiz-question-box" id="qBox">
+          <div class="quiz-q-num">Question ${idx + 1} • ${q.question ? q.question.length : 0} chars</div>
+          <div class="quiz-q-text">${q.question || 'No question text'}</div>
+          <div class="quiz-options">
+            ${(q.options || []).map((opt, i) => `
+              <button class="quiz-opt-btn" onclick="_quizAnswer(${i})" data-idx="${i}">
+                <span class="quiz-opt-letter">${LETTERS[i] || i}</span>
+                ${opt}
+              </button>`).join('')}
+          </div>
+          <div class="quiz-feedback correct-fb" id="qFbCorrect">✅ Correct! Well done!</div>
+          <div class="quiz-feedback wrong-fb"   id="qFbWrong">  ❌ Incorrect. The correct answer was: <strong>${(q.options || [])[q.correct_index] || ''}</strong></div>
+          <button class="quiz-next-btn" id="quizNextBtn" onclick="_quizNext()">
+            ${idx + 1 < total ? 'Next Question →' : 'See Results'}
+          </button>
+        </div>`;
+      _quizState.answered = false;
+    }
+
+    // Expose to inline onclick (inside innerHTML)
+    window._quizAnswer = function (chosenIdx) {
+      if (_quizState.answered) return;
+      _quizState.answered = true;
+      const q = _quizState.questions[_quizState.idx];
+      const correct = q.correct_index;
+
+      document.querySelectorAll('.quiz-opt-btn').forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === correct) btn.classList.add('correct');
+        else if (i === chosenIdx) btn.classList.add('wrong');
+      });
+
+      if (chosenIdx === correct) {
+        _quizState.score++;
+        document.getElementById('qFbCorrect').classList.add('show');
+      } else {
+        document.getElementById('qFbWrong').classList.add('show');
+      }
+      document.getElementById('quizNextBtn').classList.add('show');
+    };
+
+    window._quizNext = function () {
+      _quizState.idx++;
+      if (_quizState.idx >= _quizState.questions.length) {
+        _showQuizScore();
+      } else {
+        _renderQuizQuestion();
+      }
+    };
+
+    function _showQuizScore() {
+      const { score, questions } = _quizState;
+      const total  = questions.length;
+      const pct    = Math.round((score / total) * 100);
+      const msg    = pct === 100 ? '🎉 Perfect Score!' : pct >= 70 ? '👍 Great Job!' : pct >= 40 ? '👊 Keep Practising!' : '💪 Try Again!';
+      const sub    = `You answered ${score} out of ${total} questions correctly.`;
+      document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-wrap">
+          <div class="quiz-score-screen show">
+            <div class="quiz-score-circle">
+              <div class="quiz-score-num">${score}</div>
+              <div class="quiz-score-deno">/ ${total}</div>
+            </div>
+            <div class="quiz-score-msg">${msg}</div>
+            <div class="quiz-score-sub">${sub}</div>
+            <button class="quiz-restart-btn" onclick="window._restartCurrentQuiz()">&#x21ba; Try Again</button>
+          </div>
+        </div>`;
+    }
+
+    // Exposed helper for the restart button (inline onclick can't call private renderQuiz)
+    window.renderQuiz = renderQuiz;
+    window._restartCurrentQuiz = function () {
+      if (!_currentLesson) return;
+      renderQuiz(_currentLesson.quiz_data || []);
+    };
+
+    // ────────────────────────────────────────────────────
+    // ADMIN DELETE LESSON CARD
+    // ────────────────────────────────────────────────────
+    window.deleteLessonCard = async function (lessonId, btnEl) {
+      if (!confirm('Delete this lesson permanently? This cannot be undone.')) return;
+      btnEl.textContent = '⏳';
+      btnEl.disabled = true;
+      if (window.lessonsAPI) {
+        const r = await window.lessonsAPI.deleteLesson(lessonId);
+        if (r.ok) {
+          const grid = document.getElementById('lessonsGrid');
+          const card = btnEl.closest('.lesson-card');
+          if (card) card.style.transition = 'all .3s'; if (card) { card.style.opacity = '0'; card.style.transform = 'scale(.9)'; setTimeout(() => card.remove(), 300); }
+          // Update count
+          const cache = window.lessonsAPI.getCache().filter(l => l.id !== lessonId);
+          const count = document.getElementById('lessonCount');
+          if (count) count.textContent = `${cache.length} lesson${cache.length !== 1 ? 's' : ''}`;
+          if (typeof notify === 'function') notify('Lesson deleted.', 'success');
+        } else {
+          if (typeof notify === 'function') notify('Delete failed: ' + r.error, 'error');
+          btnEl.textContent = '✕'; btnEl.disabled = false;
+        }
+      }
+    };
+
+    // ────────────────────────────────────────────────────
+    // ADMIN UPLOAD PANEL
+    // ────────────────────────────────────────────────────
+    window.openAdminUpload = function () {
+      if (!isAdmin()) return;
+      // Reset form
+      document.getElementById('aupTitle').value = '';
+      _aupFiles = { thumb: null, anim: null, html: null };
+      _aupQuestions = [];
+      ['aupThumbBox','aupAnimBox','aupHtmlBox'].forEach(id => document.getElementById(id)?.classList.remove('has-file'));
+      ['aupThumbName','aupAnimName','aupHtmlName'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+      ['aupThumbInput','aupAnimInput','aupHtmlInput'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      document.getElementById('aupQuizList').innerHTML = '';
+      const prog = document.getElementById('aupProgress');
+      if (prog) { prog.style.display = 'none'; prog.textContent = ''; }
+      document.getElementById('adminUploadOverlay').classList.add('open');
+    };
+
+    window.closeAdminUpload = function () {
+      document.getElementById('adminUploadOverlay').classList.remove('open');
+    };
+
+    // Handle file picker changes
+    window.aupHandleFile = function (input, type) {
+      const file = input.files[0];
+      if (!file) return;
+      const boxId  = { thumb: 'aupThumbBox', anim: 'aupAnimBox', html: 'aupHtmlBox' }[type];
+      const nameId = { thumb: 'aupThumbName', anim: 'aupAnimName', html: 'aupHtmlName' }[type];
+      _aupFiles[type] = file;
+      document.getElementById(boxId)?.classList.add('has-file');
+      const nameEl = document.getElementById(nameId);
+      if (nameEl) nameEl.textContent = file.name;
+    };
+
+    // ── Quiz Builder ──
+    window.aupAddQuestion = function () {
+      _aupQuestions.push({ question: '', options: ['', '', '', ''], correct_index: 0 });
+      _renderQuizBuilder();
+    };
+
+    function _renderQuizBuilder() {
+      const list = document.getElementById('aupQuizList');
+      if (!list) return;
+      const LETTERS = ['A','B','C','D'];
+      list.innerHTML = _aupQuestions.map((q, qi) => `
+        <div class="aup-q-item" id="aupQ${qi}">
+          <div class="aup-q-num">Question ${qi + 1}</div>
+          <input class="aup-q-text-input" placeholder="Enter question text…" value="${q.question.replace(/"/g,'&quot;')}" oninput="_aupQText(${qi},this.value)" />
+          <div class="aup-q-options">
+            ${q.options.map((opt, oi) => `
+              <div class="aup-q-opt-row">
+                <input type="radio" class="aup-q-opt-radio" name="aupCorrect${qi}" ${q.correct_index === oi ? 'checked' : ''}
+                  onchange="_aupQCorrect(${qi},${oi})" title="Mark as correct answer" />
+                <span class="aup-q-opt-label">${LETTERS[oi]}</span>
+                <input class="aup-q-opt-input" placeholder="Option ${LETTERS[oi]}…" value="${opt.replace(/"/g,'&quot;')}" oninput="_aupQOpt(${qi},${oi},this.value)" />
+              </div>`).join('')}
+          </div>
+          <div class="aup-q-correct-hint">✔ Select the radio button next to the correct answer</div>
+          <button class="aup-q-del-btn" onclick="_aupDelQ(${qi})" title="Remove question">✕</button>
+        </div>`).join('');
+    }
+
+    window._aupQText    = function (qi, v) { _aupQuestions[qi].question = v; };
+    window._aupQOpt     = function (qi, oi, v) { _aupQuestions[qi].options[oi] = v; };
+    window._aupQCorrect = function (qi, oi) { _aupQuestions[qi].correct_index = oi; };
+    window._aupDelQ     = function (qi) { _aupQuestions.splice(qi, 1); _renderQuizBuilder(); };
+
+    // ── SAVE LESSON ──
+    window.aupSaveLesson = async function () {
+      if (!isAdmin()) return;
+      const title = (document.getElementById('aupTitle')?.value || '').trim();
+      if (!title) { if (typeof notify === 'function') notify('Please enter a lesson title!', 'error'); return; }
+
+      const saveBtn = document.getElementById('aupSaveBtn');
+      const prog    = document.getElementById('aupProgress');
+      if (saveBtn)  saveBtn.disabled = true;
+      if (prog)    { prog.style.display = 'inline'; prog.textContent = 'Uploading files…'; }
+
+      const urls = { thumbnail_url: null, animation_url: null, theory_url: null };
+
+      // Upload files sequentially (show progress)
+      const uploads = [
+        { file: _aupFiles.thumb, type: 'thumbnail', key: 'thumbnail_url' },
+        { file: _aupFiles.anim,  type: 'animation', key: 'animation_url' },
+        { file: _aupFiles.html,  type: 'theory',    key: 'theory_url'    },
+      ];
+
+      for (const u of uploads) {
+        if (!u.file) continue;
+        if (prog) prog.textContent = `Uploading ${u.type}…`;
+        const r = await window.lessonsAPI.uploadFile(u.file, u.type);
+        if (r.ok) {
+          urls[u.key] = r.public_url;
+        } else {
+          if (typeof notify === 'function') notify(`Failed to upload ${u.type}: ` + r.error, 'error');
+          if (saveBtn) saveBtn.disabled = false;
+          if (prog) prog.style.display = 'none';
+          return;
+        }
+      }
+
+      // Save lesson row
+      if (prog) prog.textContent = 'Saving lesson…';
+      const r = await window.lessonsAPI.createLesson({
+        title,
+        ...urls,
+        quiz_data: _aupQuestions,
+      });
+
+      if (r.ok) {
+        if (typeof notify === 'function') notify('🎉 Lesson published! All users will see it instantly.', 'success');
+        closeAdminUpload();
+        // Force reload the grid
+        _lessonsLoaded = false;
+        await window.lessonsAPI.load();
+      } else {
+        if (typeof notify === 'function') notify('Failed to save: ' + r.error, 'error');
+        if (saveBtn) saveBtn.disabled = false;
+      }
+      if (prog) { prog.style.display = 'none'; prog.textContent = ''; }
+      if (saveBtn) saveBtn.disabled = false;
+    };
+
+  })();
+  </script>
 </body>
 
 </div>
