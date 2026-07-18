@@ -958,7 +958,13 @@
   async function _loadLessons() {
     const r = await _api('GET', '/sync/lessons');
     if (r.ok) {
-      _lessonsCache = r.data.lessons || [];
+      // Normalize quiz_data: null → [] for rows inserted directly via Supabase
+      // Table Editor (which leave the jsonb column as NULL instead of []).
+      _lessonsCache = (r.data.lessons || []).map(l => ({
+        ...l,
+        quiz_data: Array.isArray(l.quiz_data) ? l.quiz_data : [],
+      }));
+      console.log('[LESSONS] Loaded', _lessonsCache.length, 'lesson(s) from backend.');
       if (typeof window.renderLessonsGrid === 'function') {
         window.renderLessonsGrid(_lessonsCache);
       }
