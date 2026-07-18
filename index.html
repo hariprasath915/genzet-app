@@ -5125,8 +5125,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     /* ── NEW APP LAYOUT ── */
     .app-wrap {
       display: flex;
-      height: calc(100vh - 60px);
-      margin-top: 60px;
+      height: calc(100vh - var(--topbar-h));
+      margin-top: var(--topbar-h);
       overflow: hidden;
     }
 
@@ -5138,8 +5138,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-right: 1px solid #E5E7EB;
       display: flex;
       flex-direction: column;
-      padding: 8px 0 0;
-      overflow: hidden;
+      padding: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
       box-shadow: 2px 0 12px rgba(0, 0, 0, .04);
       z-index: 100;
@@ -5334,6 +5335,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       position: relative;
       z-index: 1;
       background: #FFFFFF;
+      margin-top: auto;
+      flex-shrink: 0;
     }
 
     .sidebar-stat-row {
@@ -10249,6 +10252,11 @@ function amShowSuccess() {
 
     <!-- PREMIUM LEFT NAVIGATION SIDEBAR -->
     <nav class="nav-sidebar">
+      <!-- Brand / Logo -->
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🎓</div>
+        <span class="sidebar-brand-name">Gen<em>Zet</em></span>
+      </div>
       <div class="sidebar-nav-label">Navigation</div>
       <div class="sidebar-nav">
         <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('animind')">
@@ -11286,12 +11294,21 @@ function amShowSuccess() {
           <p id="lessonCount">Loading lessons…</p>
         </div>
         <div class="lessons-topbar-right">
+          <!-- Refresh button — force reload from Supabase -->
+          <button class="lessons-upload-btn" id="lessonsRefreshBtn"
+            style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
+            title="Reload lessons from server"
+            onclick="window.refreshLessons()">
+            ↻ Refresh
+          </button>
+
           <!-- Admin-only upload button (shown by JS after login) -->
           <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Upload Lesson
           </button>
         </div>
+
       </div>
 
       <!-- Grid -->
@@ -15753,18 +15770,42 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('adminUploadBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
 
-      if (_lessonsLoaded) return; // already fetched
-      _lessonsLoaded = true;
+      if (_lessonsLoaded) return; // already fetched successfully — skip
 
       if (window.lessonsAPI) {
-        await window.lessonsAPI.load();
-        // After first load, subscribe Realtime so new lessons push instantly
-        window.lessonsAPI.subscribeRealtime();
+        const result = await window.lessonsAPI.load();
+        // Only mark as loaded if we got a successful response (even empty array is OK)
+        // If result is undefined/null it means the _api call returned {ok:false}
+        if (result !== undefined) {
+          _lessonsLoaded = true;
+          // After first load, subscribe Realtime so new lessons push instantly
+          window.lessonsAPI.subscribeRealtime();
+        } else {
+          // Load failed — show error state and let user retry
+          const grid = document.getElementById('lessonsGrid');
+          if (grid) grid.innerHTML = `
+            <div class="lessons-empty" style="grid-column:1/-1">
+              <div class="lessons-empty-icon">⚠️</div>
+              <h3>Couldn't load lessons</h3>
+              <p>Check your connection and try again.</p>
+              <button onclick="window.refreshLessons()" style="margin-top:14px;padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">↻ Retry</button>
+            </div>`;
+          const count = document.getElementById('lessonCount');
+          if (count) count.textContent = 'Failed to load';
+        }
       }
     };
 
-    // ────────────────────────────────────────────────────
-    // RENDER GRID  — called by lessonsAPI after data loads / realtime update
+    // ── Force-refresh from Supabase (called by Refresh button & Retry button) ──
+    window.refreshLessons = async function () {
+      const btn = document.getElementById('lessonsRefreshBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading…'; }
+      _lessonsLoaded = false;
+      await window.initLessonsMode();
+      if (btn) { btn.disabled = false; btn.innerHTML = '↻ Refresh'; }
+    };
+
+
     // ────────────────────────────────────────────────────
     window.renderLessonsGrid = function (lessons) {
       const grid  = document.getElementById('lessonsGrid');
