@@ -8268,6 +8268,183 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
         padding: 32px 24px;
       }
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       HORIZONTAL SUB-NAV OVERRIDE
+       Converts the left .nav-sidebar into a second, horizontal bar
+       docked directly under the main .topbar (matching the reference
+       design). Placed last in the cascade so it wins over the earlier
+       vertical-sidebar rules and their responsive breakpoints without
+       touching any HTML structure, IDs, or JS — all switchMode() /
+       toggleMobileSidebar() logic keeps working unchanged.
+       ══════════════════════════════════════════════════════════════ */
+
+    :root { --subnav-h: 60px; }
+
+    .app-wrap {
+      flex-direction: column !important;
+    }
+
+    .nav-sidebar {
+      width: 100% !important;
+      height: var(--subnav-h);
+      flex-shrink: 0;
+      flex-direction: row !important;
+      align-items: center;
+      border-right: none !important;
+      border-bottom: 1px solid #E5E7EB;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .04);
+      padding: 0 20px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative !important;
+      transform: none !important;
+      top: auto !important;
+      z-index: 200;
+    }
+
+    [data-theme="dark"] .nav-sidebar {
+      border-bottom-color: rgba(26, 41, 64, .8);
+      border-right: none !important;
+    }
+
+    /* Logo already lives in the main topbar — no need to repeat it */
+    .sidebar-brand,
+    .sidebar-nav-label {
+      display: none !important;
+    }
+
+    .sidebar-nav {
+      flex-direction: row !important;
+      align-items: center;
+      gap: 6px;
+      padding: 0 !important;
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .sidebar-nav-item {
+      width: auto !important;
+      flex-shrink: 0;
+      padding: 8px 14px !important;
+      white-space: nowrap;
+    }
+
+    .sidebar-nav-item:hover {
+      transform: none !important;
+    }
+
+    /* Footer stats + feedback button move to the right side of the bar */
+    .sidebar-footer {
+      border-top: none !important;
+      border-left: 1px solid #E5E7EB;
+      margin-top: 0 !important;
+      margin-left: auto;
+      padding: 0 0 0 16px !important;
+      background: transparent !important;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    [data-theme="dark"] .sidebar-footer {
+      border-left-color: rgba(26, 41, 64, .8);
+    }
+
+    .sidebar-stat-row {
+      padding: 6px 10px;
+      white-space: nowrap;
+      margin: 0 !important;
+    }
+
+    .feedback-btn {
+      width: auto !important;
+      margin-top: 0 !important;
+      padding: 8px 14px !important;
+      white-space: nowrap;
+    }
+
+    /* Contact links become compact icon-only buttons */
+    .sidebar-contact-wrap {
+      display: flex !important;
+      margin-top: 0 !important;
+      padding: 0 !important;
+      gap: 4px;
+    }
+
+    .sidebar-contact-row {
+      width: 32px;
+      height: 32px;
+      padding: 0 !important;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid transparent;
+    }
+
+    .sidebar-contact-row:hover {
+      background: var(--bg2, #F0FDF9);
+      border-color: #CCFBF1;
+    }
+
+    .sidebar-contact-row .sc-label {
+      display: none;
+    }
+
+    /* Hamburger/off-canvas drawer no longer applies — the bar is
+       always visible and horizontally scrollable if it overflows */
+    .mobile-sidebar-toggle,
+    .sidebar-backdrop {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar-brand-name,
+      .sidebar-nav-label,
+      .nav-item-text,
+      .nav-item-tag,
+      .sidebar-stat-row .ss-text,
+      .sidebar-stat-row .ss-val {
+        display: revert !important;
+      }
+
+      .sidebar-nav-item {
+        padding: 8px 12px !important;
+      }
+
+      .feedback-btn-text {
+        display: none;
+      }
+
+      .feedback-btn {
+        padding: 8px !important;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .nav-sidebar {
+        padding: 0 12px;
+        gap: 4px;
+      }
+
+      .sidebar-nav-item .nav-item-text {
+        display: none !important;
+      }
+
+      .sidebar-nav-item {
+        padding: 8px !important;
+      }
+
+      .sidebar-footer {
+        padding-left: 10px !important;
+      }
+
+      .sidebar-stat-row .ss-text {
+        display: none !important;
+      }
+    }
   
 </style>
 <style>
@@ -10308,12 +10485,12 @@ function amShowSuccess() {
         </a>
 
         <!-- Contact info -->
-        <div style="margin-top:10px;padding:0 2px;">
-          <a class="sidebar-contact-row" href="mailto:genzet@gmail.com">
-            <span class="sc-icon">📧</span> genzet@gmail.com
+        <div class="sidebar-contact-wrap" style="margin-top:10px;padding:0 2px;">
+          <a class="sidebar-contact-row" href="mailto:genzet@gmail.com" title="Email: genzet@gmail.com">
+            <span class="sc-icon">📧</span><span class="sc-label"> genzet@gmail.com</span>
           </a>
-          <a class="sidebar-contact-row" href="tel:+919080202377">
-            <span class="sc-icon">📞</span> +91 90802 02377
+          <a class="sidebar-contact-row" href="tel:+919080202377" title="Call: +91 90802 02377">
+            <span class="sc-icon">📞</span><span class="sc-label"> +91 90802 02377</span>
           </a>
         </div>
       </div>
