@@ -199,12 +199,31 @@
       _hydrateItems(r.data.items    || []);
       _hydrateCourses(r.data.subjects || []);
       _hydrateVault(r.data.vault    || []);
+      // Fetch public Supabase config for Realtime (fire-and-forget, no auth needed)
+      _fetchPublicConfig();
       return true;
     }
     // /sync/all not available yet (pre-deploy) — fall back to legacy
     console.warn('[SYNC] /sync/all unavailable — using legacy 3-call fallback');
     await _legacyLoadAll();
+    _fetchPublicConfig();
     return false;
+  }
+
+  // ── Fetch public Supabase config (URL + anon key) for Realtime ─────────
+  // Called after login. No auth token required. Idempotent.
+  async function _fetchPublicConfig() {
+    if (window.__supabaseUrl && window.__supabaseAnonKey) return; // already set
+    try {
+      const res  = await fetch(`${BACKEND}/sync/config`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.supabase_url)      window.__supabaseUrl      = data.supabase_url;
+      if (data.supabase_anon_key) window.__supabaseAnonKey  = data.supabase_anon_key;
+      console.log('[CLOUD] Supabase config loaded for Realtime');
+    } catch (_) {
+      // Non-critical — Realtime simply won't connect if config unavailable
+    }
   }
 
   // ── Hydrate in-memory state from cloud data ─────────────────────────────
@@ -922,6 +941,165 @@
   // idempotent DOM/CSS cleanup that doesn't touch the network and doesn't
   // need to wait for DOMContentLoaded.
   _removeOldGate();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // LESSONS API  —  Admin Content Management + Kahoot-Style Library
+  // ════════════════════════════════════════════════════════════════════════
+  // Exposes window.lessonsAPI with all lesson CRUD + Realtime subscription.
+  // ════════════════════════════════════════════════════════════════════════
+
+  let _lessonsCache = [];        // in-memory cache for quick re-renders
+  let _realtimeWS   = null;      // Supabase Realtime WebSocket handle
+
+  /**
+   * Load all lessons from the backend and (re-)render the grid.
+   * Called when the user navigates to the Lessons tab.
+   */
+  async function _loadLessons() {
+    const r = await _api('GET', '/sync/lessons');
+    if (r.ok) {
+      _lessonsCache = r.data.lessons || [];
+      if (typeof window.renderLessonsGrid === 'function') {
+        window.renderLessonsGrid(_lessonsCache);
+      }
+      return _lessonsCache;
+    }
+    console.warn('[LESSONS] Failed to load lessons:', r.error);
+    return [];
+  }
+
+  /**
+   * Upload a single file (thumbnail / animation / theory) to Supabase Storage
+   * via the backend proxy. Returns { public_url, storage_path }.
+   * @param {File}   file      — File object from <input type="file">
+   * @param {string} fileType  — "thumbnail" | "animation" | "theory"
+   */
+  async function _uploadLessonFile(file, fileType) {
+    const token = window.authToken;
+    if (!token) return { ok: false, error: 'Not authenticated' };
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('file_type', fileType);
+
+    try {
+      const res  = await fetch(`${BACKEND}/sync/lessons/upload-file`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body:    formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.detail || `HTTP ${res.status}` };
+      }
+      return { ok: true, ...data };
+    } catch (err) {
+      if (_isNetworkFailure(err)) _logNetworkFailure('POST /sync/lessons/upload-file');
+      return { ok: false, error: err.message };
+    }
+  }
+
+  /**
+   * Create a lesson row in the DB (admin only).
+   * @param {object} lesson — { title, thumbnail_url, theory_url, animation_url, quiz_data[] }
+   */
+  async function _createLesson(lesson) {
+    return _api('POST', '/sync/lessons', lesson);
+  }
+
+  /**
+   * Delete a lesson (admin only).
+   * @param {string} lessonId — UUID
+   */
+  async function _deleteLesson(lessonId) {
+    return _api('DELETE', `/sync/lessons/${encodeURIComponent(lessonId)}`);
+  }
+
+  // ── Supabase Realtime subscription ──────────────────────────────────────
+  // Uses the Supabase Realtime WebSocket protocol to receive INSERT/UPDATE/DELETE
+  // events on the `lessons` table and instantly update all active sessions.
+  // No extra library needed — plain WebSocket.
+  function _subscribeRealtime() {
+    const supabaseUrl = (() => {
+      // Derive from BACKEND or use env-encoded URL from backend /health
+      // We embed the URL via the window.__supabaseUrl hint set during auth
+      return window.__supabaseUrl || null;
+    })();
+
+    if (!supabaseUrl || _realtimeWS) return;  // already connected or no URL
+
+    const anonKey = window.__supabaseAnonKey || null;
+    if (!anonKey) return;
+
+    try {
+      const wsUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+      const ws = new WebSocket(
+        `${wsUrl}/realtime/v1/websocket?apikey=${anonKey}&vsn=1.0.0`
+      );
+      _realtimeWS = ws;
+
+      ws.onopen = () => {
+        // Join the lessons channel
+        ws.send(JSON.stringify({
+          topic:   'realtime:public:lessons',
+          event:   'phx_join',
+          payload: { user_token: window.authToken || anonKey },
+          ref:     '1',
+        }));
+        console.log('[LESSONS] Realtime subscribed to lessons table');
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          const { event, payload } = msg;
+
+          if (event === 'INSERT' || event === 'postgres_changes') {
+            // New lesson inserted — add to cache and re-render
+            const newLesson = payload?.data?.record || payload?.record;
+            if (newLesson) {
+              const exists = _lessonsCache.some(l => l.id === newLesson.id);
+              if (!exists) {
+                _lessonsCache.push(newLesson);
+                if (typeof window.renderLessonsGrid === 'function') {
+                  window.renderLessonsGrid(_lessonsCache);
+                }
+                if (typeof notify === 'function') {
+                  notify('📚 New lesson added to the library!', 'success');
+                }
+              }
+            }
+          } else if (event === 'DELETE') {
+            const oldId = payload?.data?.old_record?.id || payload?.old_record?.id;
+            if (oldId) {
+              _lessonsCache = _lessonsCache.filter(l => l.id !== oldId);
+              if (typeof window.renderLessonsGrid === 'function') {
+                window.renderLessonsGrid(_lessonsCache);
+              }
+            }
+          }
+        } catch (_) {}
+      };
+
+      ws.onerror = (e) => console.warn('[LESSONS] Realtime WS error:', e);
+      ws.onclose = () => {
+        _realtimeWS = null;
+        console.log('[LESSONS] Realtime WS closed');
+      };
+    } catch (err) {
+      console.warn('[LESSONS] Realtime setup failed:', err.message);
+    }
+  }
+
+  // Expose the public API on window
+  window.lessonsAPI = {
+    load:            _loadLessons,
+    uploadFile:      _uploadLessonFile,
+    createLesson:    _createLesson,
+    deleteLesson:    _deleteLesson,
+    subscribeRealtime: _subscribeRealtime,
+    getCache:        () => _lessonsCache,
+  };
 
   console.log('[CLOUD] cloud_sync_v3.js loaded — window.authInit is ready; index.html triggers it on DOMContentLoaded');
 
