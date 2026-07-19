@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -377,15 +377,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       --glass: rgba(255, 255, 255, 0.92);
       --glass-border: rgba(229, 231, 235, 0.80);
       --glass-blur: 20px;
-    }
-
-    html[data-theme="light"] body,
-    html[data-theme="light"] #gz-dashboard {
-      color-scheme: light;
-    }
-    html[data-theme="dark"] body,
-    html[data-theme="dark"] #gz-dashboard {
-      color-scheme: dark;
     }
 
     [data-theme="dark"] html,
@@ -1202,15 +1193,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       animation: panelIn .32s cubic-bezier(.4, 0, .2, 1) forwards;
     }
 
-    /* Simulation panel needs a flex (not block) container, but only
-       while it's actually the active tab — otherwise it must stay
-       display:none like every other inactive panel, so it doesn't
-       silently occupy space and stretch .stream-main's scroll area
-       underneath whichever panel is really being shown. */
-    #simulationPanel.active {
-      display: flex;
-    }
-
     @keyframes panelIn {
       from {
         opacity: 0;
@@ -1233,7 +1215,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: var(--shadow-md);
-      height: calc(100vh - var(--topbar-h) - var(--subnav-h, 0px) - 12px);
+      height: calc(100vh - var(--topbar-h) - 12px);
       background: var(--surface);
       transition: box-shadow var(--transition), border-color var(--transition);
     }
@@ -2682,18 +2664,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     /* ══ FILE MODE — ENGINEERING COURSES ══ */
     .file-panel-wrap {
       min-height: calc(100vh - 200px);
-    }
-
-    /* Sticky header block for File panel: keeps the title/actions,
-       storage banner and search/filter bar fixed in place while only
-       the subjects grid below it scrolls. */
-    .file-home-sticky {
-      position: sticky;
-      top: 0;
-      z-index: 30;
-      background: var(--bg);
-      padding-top: 2px;
-      padding-bottom: 4px;
     }
 
     .file-topbar {
@@ -6883,128 +6853,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
     .sim-dl-btn:hover { border-color: #0d9488; color: #0d9488; background: #f0fdf9; }
 
-    /* Simulation "Create with AI" — hero header (mirrors am-sid-header) */
-    .sim-hero-header {
-      padding: 4px 4px 4px;
-      text-align: left;
-    }
-    .sim-hero-header h3 {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 3px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .sim-hero-header p {
-      font-size: 11.5px;
-      color: var(--text2);
-    }
-
-    /* ══ SIMULATION — PRE-GENERATE HERO STATE (Claude-artifact style) ══ */
-    .sim-ai-preview {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .sim-ai-layout.pre-generate {
-      grid-template-columns: 1fr;
-    }
-    .sim-ai-layout.pre-generate .sim-ai-preview {
-      display: none;
-    }
-    .sim-ai-layout.pre-generate .sim-ai-sidebar {
-      border-right: none;
-      align-items: center;
-      justify-content: center;
-      overflow-y: hidden;
-    }
-    .sim-ai-layout.pre-generate .sim-hero-header,
-    .sim-ai-layout.pre-generate .sim-input-card,
-    .sim-ai-layout.pre-generate .sim-examples,
-    .sim-ai-layout.pre-generate .sim-save-section {
-      max-width: 760px;
-      width: 100%;
-      margin: 0 auto;
-      box-sizing: border-box;
-    }
-    .sim-ai-layout.pre-generate .sim-hero-header {
-      text-align: center;
-      padding: 44px 24px 8px;
-    }
-    .sim-ai-layout.pre-generate .sim-hero-header h3 {
-      font-size: 30px;
-      font-weight: 900;
-      justify-content: center;
-      margin-bottom: 8px;
-    }
-    .sim-ai-layout.pre-generate .sim-hero-header p {
-      font-size: 15px;
-    }
-    .sim-ai-layout.pre-generate .sim-input-card {
-      border: 2px solid var(--teal-md);
-      border-radius: 18px;
-      padding: 18px 20px 14px;
-      box-shadow: var(--shadow-md);
-      transition: border-color .25s;
-    }
-    .sim-ai-layout.pre-generate .sim-input-card:focus-within {
-      border-color: var(--teal);
-    }
-    .sim-ai-layout.pre-generate .sim-input-label {
-      display: none;
-    }
-    .sim-ai-layout.pre-generate .sim-textarea {
-      border: none;
-      background: transparent;
-      padding: 6px 4px 14px;
-      min-height: 100px;
-      font-size: 14px;
-    }
-    .sim-ai-layout.pre-generate .sim-textarea:focus {
-      box-shadow: none;
-    }
-    .sim-ai-layout.pre-generate .sim-input-footer {
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-      margin-top: 4px;
-    }
-    .sim-ai-layout.pre-generate .sim-gen-btn {
-      padding: 12px 26px;
-      border-radius: 14px;
-    }
-    .sim-ai-layout.pre-generate .sim-examples {
-      background: none;
-      border: none;
-      padding: 8px 24px 0;
-    }
-    .sim-ai-layout.pre-generate .sim-examples-label {
-      text-align: center;
-      font-size: 12px;
-      letter-spacing: 1.5px;
-    }
-    .sim-ai-layout.pre-generate .sim-example-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
-    .sim-ai-layout.pre-generate .sim-example-btn {
-      width: auto;
-      margin-bottom: 0;
-      border-radius: 999px;
-      padding: 10px 18px;
-      text-align: center;
-    }
-    .sim-ai-layout.pre-generate .sim-example-btn:hover {
-      transform: translateY(-2px);
-    }
-    .sim-ai-layout.pre-generate .am-privacy-note {
-      display: block;
-    }
-
-
     /* Subject sub-tabs (for AI mode only) */
     .sim-mode-tabs {
       display: flex; gap: 0; padding: 10px 16px 0;
@@ -8614,8 +8462,6 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .animind-wrap.pre-generate .animind-sidebar {
       border-right: none;
       align-items: center;
-      justify-content: center;
-      overflow-y: hidden;
     }
 
     .animind-wrap.pre-generate .am-mode-switcher,
@@ -8631,7 +8477,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .animind-wrap.pre-generate .am-mode-switcher {
       justify-content: center;
       gap: 12px;
-      padding: 24px 24px 0;
+      padding: 48px 24px 0;
     }
 
     .animind-wrap.pre-generate .am-mode-tab {
@@ -8645,7 +8491,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: none;
       border-bottom: none;
       text-align: center;
-      padding: 14px 24px 4px;
+      padding: 28px 24px 8px;
     }
 
     .animind-wrap.pre-generate .am-sid-header::before {
@@ -8653,18 +8499,18 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .animind-wrap.pre-generate .am-sid-header h3 {
-      font-size: 26px;
+      font-size: 30px;
       font-weight: 900;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
 
     .animind-wrap.pre-generate .am-sid-header p {
-      font-size: 14px;
+      font-size: 15px;
     }
 
     .animind-wrap.pre-generate .am-section {
       border-bottom: none;
-      padding: 10px 24px;
+      padding: 14px 24px;
     }
 
     .animind-wrap.pre-generate .am-input-card {
@@ -8690,8 +8536,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     .animind-wrap.pre-generate .am-textarea {
       border: none;
-      padding: 6px 4px 10px;
-      min-height: 80px;
+      padding: 6px 4px 14px;
+      min-height: 100px;
       font-size: 14px;
       border-radius: 0;
     }
@@ -8781,13 +8627,10 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     z-index: 9000;
   }
 
-  /* When dashboard is active, it must stay pinned to the viewport —
-     it is NOT the scroll container. Only .stream-main (inside
-     .main-area) scrolls; keeping this hidden is what makes the
-     topbar/sidebar stay fixed and the .file-home-sticky header
-     actually stick while the subjects grid scrolls beneath it. */
+  /* When dashboard is active, let it scroll normally */
   #gz-dashboard.active {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 </style>
 </head>
@@ -9781,14 +9624,6 @@ function amShowSuccess() {
   min-height: calc(100vh - var(--topbar-h));
   background: var(--bg);
 }
-/* Sticky wrapper: keeps the Lesson Library title/refresh bar fixed
-   in place while only the lesson cards below it scroll. */
-.lessons-topbar-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: var(--surface);
-}
 .lessons-topbar {
   display: flex;
   align-items: center;
@@ -9875,6 +9710,11 @@ function amShowSuccess() {
   justify-content: center;
   font-size: 40px;
 }
+/* Real-World Application mode */
+#lvRealworld {
+  background: var(--bg);
+  overflow: hidden;
+}
 .lesson-card-body {
   padding: 14px 16px 16px;
 }
@@ -9902,7 +9742,7 @@ function amShowSuccess() {
 .lmc-present  { background: var(--blue-lt);   color: var(--blue);   border-color: var(--blue-md); }
 .lmc-anim     { background: var(--green-lt);  color: var(--green);  border-color: var(--green-md); }
 .lmc-theory   { background: var(--purple-lt); color: var(--purple); border-color: var(--purple-md); }
-.lmc-quiz     { background: var(--orange-lt); color: var(--orange); border-color: var(--orange-md); }
+.lmc-realworld { background: #e0faf6; color: #0e9384; border-color: #5fe0cd; }
 .lesson-card-delete {
   position: absolute;
   top: 8px;
@@ -10037,17 +9877,6 @@ function amShowSuccess() {
   inset: 0;
 }
 .lv-mode-pane.active { display: flex; flex-direction: column; }
-/* Present mode — fullscreen image */
-#lvPresent {
-  background: #000;
-  align-items: center;
-  justify-content: center;
-}
-#lvPresent img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
 /* Animation mode — fullscreen video */
 #lvAnimation { background: #000; align-items: center; justify-content: center; }
 #lvAnimVideo {
@@ -10059,161 +9888,7 @@ function amShowSuccess() {
 /* Theory mode — iframe */
 #lvTheory { overflow: hidden; }
 #lvTheoryIframe { width: 100%; height: 100%; border: none; flex: 1; }
-/* Quiz mode */
-#lvQuiz {
-  background: var(--bg);
-  align-items: center;
-  overflow-y: auto;
-}
-.quiz-wrap {
-  max-width: 680px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 40px 24px;
-}
-.quiz-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-.quiz-header h3 { font-size: 22px; font-weight: 800; color: var(--text); font-family: var(--font-title); }
-.quiz-header p  { font-size: 14px; color: var(--text3); margin-top: 6px; }
-.quiz-progress-bar {
-  height: 6px;
-  background: var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 12px 0 24px;
-}
-.quiz-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--blue), #6366f1);
-  border-radius: 6px;
-  transition: width .4s ease;
-}
-.quiz-question-box {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-md);
-}
-.quiz-q-num {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--blue);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  font-family: var(--font-mono);
-}
-.quiz-q-text {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.5;
-  margin-bottom: 22px;
-}
-.quiz-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.quiz-opt-btn {
-  width: 100%;
-  text-align: left;
-  padding: 14px 18px;
-  border: 1.5px solid var(--border);
-  border-radius: 13px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.quiz-opt-btn:hover:not(:disabled) { border-color: var(--blue); background: var(--blue-lt); color: var(--blue); transform: translateX(4px); }
-.quiz-opt-btn.correct  { background: var(--green-lt); border-color: var(--green); color: #166534; }
-.quiz-opt-btn.wrong    { background: var(--red-lt);   border-color: var(--red);   color: #991b1b; }
-.quiz-opt-letter {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--border2);
-  color: var(--text2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800;
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  transition: all .2s;
-}
-.quiz-opt-btn.correct .quiz-opt-letter  { background: var(--green); color: #fff; }
-.quiz-opt-btn.wrong   .quiz-opt-letter  { background: var(--red);   color: #fff; }
-.quiz-opt-btn:hover:not(:disabled) .quiz-opt-letter { background: var(--blue); color: #fff; }
-.quiz-feedback {
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: 14px;
-  display: none;
-}
-.quiz-feedback.show { display: block; }
-.quiz-feedback.correct-fb { background: var(--green-lt); color: #166534; border: 1px solid var(--green-md); }
-.quiz-feedback.wrong-fb   { background: var(--red-lt);   color: #991b1b; border: 1px solid #fca5a5; }
-.quiz-next-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 13px;
-  border: none;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  margin-top: 16px;
-  transition: all .25s;
-  box-shadow: 0 4px 16px rgba(13,148,136,.3);
-  display: none;
-}
-.quiz-next-btn.show { display: block; }
-.quiz-next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,.4); }
-.quiz-score-screen {
-  display: none;
-  text-align: center;
-  padding: 40px 24px;
-}
-.quiz-score-screen.show { display: block; }
-.quiz-score-circle {
-  width: 130px; height: 130px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 40px rgba(13,148,136,.35);
-}
-.quiz-score-num  { font-size: 36px; font-weight: 900; color: #fff; font-family: var(--font-title); line-height: 1; }
-.quiz-score-deno { font-size: 14px; color: rgba(255,255,255,.7); }
-.quiz-score-msg  { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
-.quiz-score-sub  { font-size: 14px; color: var(--text3); margin-bottom: 24px; }
-.quiz-restart-btn {
-  padding: 12px 32px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all .25s;
-}
-.quiz-restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,.35); }
+
 /* Empty mode message */
 .lv-mode-empty {
   display: flex;
@@ -10319,28 +9994,122 @@ function amShowSuccess() {
 .aup-file-hint  { font-size: 10px; color: var(--text3); }
 .aup-file-name  { font-size: 11px; color: var(--blue); font-weight: 700; margin-top: 4px; word-break: break-all; }
 .aup-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-/* Quiz builder */
-.aup-quiz-header {
+/* Real-World image upload preview */
+.aup-rw-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
 }
-.aup-quiz-header span { font-size: 12px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
-.aup-add-q-btn {
+.aup-rw-header span { font-size: 12px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+.aup-add-rw-btn {
   padding: 7px 14px;
   border-radius: 9px;
-  border: 1.5px solid var(--blue);
-  background: var(--blue-lt);
-  color: var(--blue);
+  border: 1.5px solid #0e9384;
+  background: #e0faf6;
+  color: #0e9384;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-body);
   transition: all .2s;
 }
-.aup-add-q-btn:hover { background: var(--blue-md); }
-.aup-quiz-list { display: flex; flex-direction: column; gap: 12px; }
+.aup-add-rw-btn:hover { background: #b2f0e8; }
+.aup-rw-preview { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.aup-rw-img-item {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.aup-rw-img-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.aup-rw-img-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(239,68,68,.92);
+  color: #fff;
+  border: none;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+/* Flashcard viewer */
+.rw-flashcard-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px 24px;
+  gap: 14px;
+  box-sizing: border-box;
+}
+.rw-slide-counter {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  user-select: none;
+}
+.rw-img-stage {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  position: relative;
+  min-height: 0;
+}
+.rw-img-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: opacity .3s ease;
+  display: block;
+}
+.rw-img-stage img.rw-fade { opacity: 0; }
+.rw-nav-row {
+  display: flex;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.rw-nav-btn {
+  padding: 11px 30px;
+  border-radius: 13px;
+  border: 2px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .2s;
+  user-select: none;
+}
+.rw-nav-btn:hover:not(:disabled) { background: var(--blue); color: #fff; border-color: var(--blue); transform: translateY(-1px); }
+.rw-nav-btn:active:not(:disabled) { transform: translateY(0); }
+.rw-nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+.rw-nav-next {
+  background: linear-gradient(135deg, #6c47ff 0%, #3b82f6 100%);
+  color: #fff;
+  border-color: #6c47ff;
+}
+.rw-nav-next:hover:not(:disabled) { opacity: .88; background: linear-gradient(135deg, #6c47ff 0%, #3b82f6 100%); border-color: #6c47ff; }
 .aup-q-item {
   background: var(--bg);
   border: 1.5px solid var(--border);
@@ -11181,7 +10950,7 @@ function amShowSuccess() {
             </div>
 
             <!-- SIMULATION PANEL -->
-            <div class="panel" id="simulationPanel" style="flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
+            <div class="panel" id="simulationPanel" style="display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
 
               <!-- ── Top 3 Main Tabs ─────────────────────────────────── -->
               <div class="sim-top-tabs">
@@ -11294,13 +11063,9 @@ function amShowSuccess() {
                   </button>
                 </div>
 
-                <div class="sim-ai-layout pre-generate" id="simAiLayout">
+                <div class="sim-ai-layout">
                   <!-- Left sidebar: input -->
                   <div class="sim-ai-sidebar">
-                    <div class="sim-hero-header">
-                      <h3>⚡ Create with AI</h3>
-                      <p>Describe any concept and let AI generate an interactive simulation.</p>
-                    </div>
                     <div class="sim-input-card">
                       <div class="sim-input-label">
                         <span class="sim-input-label-dot"></span>
@@ -11330,7 +11095,6 @@ function amShowSuccess() {
                       <div class="sim-example-list" id="simExampleList">
                         <!-- Filled by JS -->
                       </div>
-                      <p class="am-privacy-note">🔒 Your prompts are private and secure</p>
                     </div>
 
                     <!-- Save / Download (shown after generation) -->
@@ -11341,7 +11105,7 @@ function amShowSuccess() {
                   </div>
 
                   <!-- Right: Preview -->
-                  <div class="sim-ai-preview">
+                  <div style="display:flex;flex-direction:column;overflow:hidden;">
                     <div class="sim-preview-header">
                       <span class="sim-preview-title" id="simPreviewTitle">Simulation Preview</span>
                       <div class="sim-preview-actions">
@@ -11389,38 +11153,35 @@ function amShowSuccess() {
 
               <!-- VIEW 1: Subjects Home -->
               <div id="fileHome">
-                <!-- Fixed/sticky header block: stays in place while subjects grid scrolls -->
-                <div class="file-home-sticky">
-                  <div class="file-topbar">
-                    <div class="file-topbar-identity">
-                      <div class="file-topbar-icon">📁</div>
-                      <div class="file-topbar-left">
-                        <h2>Engineering Courses — Subjects</h2>
-                        <p>Manage subjects, course outcomes (COs) and AI animations per CO</p>
-                      </div>
-                    </div>
-                    <div class="file-topbar-actions">
-                      <button class="file-action-btn create" onclick="openCreateSubjectModal()">Create new course</button>
-                      <button class="file-action-btn modify" onclick="toggleModifyMode()">✏ Modify</button>
-                      <button class="file-action-btn delbtn" onclick="toggleDeleteSubjectMode()">🗑 Delete</button>
+                <div class="file-topbar">
+                  <div class="file-topbar-identity">
+                    <div class="file-topbar-icon">📁</div>
+                    <div class="file-topbar-left">
+                      <h2>Engineering Courses — Subjects</h2>
+                      <p>Manage subjects, course outcomes (COs) and AI animations per CO</p>
                     </div>
                   </div>
-                  <!-- Storage info banner -->
-                  <div class="storage-info-banner" id="storageInfoBanner">
-                    <span>☁️</span>
-                    <span id="storageInfoText">Loading storage info…</span>
+                  <div class="file-topbar-actions">
+                    <button class="file-action-btn create" onclick="openCreateSubjectModal()">Create new course</button>
+                    <button class="file-action-btn modify" onclick="toggleModifyMode()">✏ Modify</button>
+                    <button class="file-action-btn delbtn" onclick="toggleDeleteSubjectMode()">🗑 Delete</button>
                   </div>
-                  <!-- Filter bar: All subjects tab + search -->
-                  <div class="subjects-filterbar">
-                    <div class="subjects-filterbar-left">
-                      <div class="subjects-tab">
-                        All subjects
-                        <span class="subjects-tab-count" id="subjectsTabCount">0</span>
-                      </div>
+                </div>
+                <!-- Storage info banner -->
+                <div class="storage-info-banner" id="storageInfoBanner">
+                  <span>☁️</span>
+                  <span id="storageInfoText">Loading storage info…</span>
+                </div>
+                <!-- Filter bar: All subjects tab + search -->
+                <div class="subjects-filterbar">
+                  <div class="subjects-filterbar-left">
+                    <div class="subjects-tab">
+                      All subjects
+                      <span class="subjects-tab-count" id="subjectsTabCount">0</span>
                     </div>
-                    <div class="subjects-search-wrap">
-                      <input class="subjects-search" id="subjectsSearchInput" type="text" placeholder="Search subjects…" oninput="filterSubjectsGrid(this.value)" />
-                    </div>
+                  </div>
+                  <div class="subjects-search-wrap">
+                    <input class="subjects-search" id="subjectsSearchInput" type="text" placeholder="Search subjects…" oninput="filterSubjectsGrid(this.value)" />
                   </div>
                 </div>
                 <div class="subjects-grid" id="subjectsGrid"></div>
@@ -11505,56 +11266,6 @@ function amShowSuccess() {
               </div>
 
             </div>
-
-            <!-- ══ LESSONS PANEL ══ -->
-            <div class="panel" id="lessonsPanel">
-              <div class="lessons-page">
-
-                <!-- Fixed/sticky header: stays in place while the lesson cards scroll -->
-                <div class="lessons-topbar-sticky">
-                  <div class="lessons-topbar">
-                    <div class="lessons-topbar-left">
-                      <h2>📚 Lesson Library</h2>
-                      <p id="lessonCount">Loading lessons…</p>
-                    </div>
-                    <div class="lessons-topbar-right">
-                      <!-- Refresh button — force reload from Supabase -->
-                      <button class="lessons-upload-btn" id="lessonsRefreshBtn"
-                        style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
-                        title="Reload lessons from server"
-                        onclick="window.refreshLessons()">
-                        ↻ Refresh
-                      </button>
-
-                      <!-- Admin-only upload button (shown by JS after login) -->
-                      <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Upload Lesson
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Grid -->
-                <div class="lessons-grid-wrap">
-                  <div class="lessons-grid" id="lessonsGrid">
-                    <!-- Skeleton loaders shown while loading -->
-                    <div class="lesson-card" style="pointer-events:none;opacity:.5">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></div>
-                    </div>
-                    <div class="lesson-card" style="pointer-events:none;opacity:.3">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:55%;"></div></div>
-                    </div>
-                    <div class="lesson-card" style="pointer-events:none;opacity:.15">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:40%;"></div></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div><!-- end lessonsPanel -->
 
           </div>
         </div>
@@ -11846,50 +11557,101 @@ function amShowSuccess() {
     </div>
   </div>
 
+  <!-- ══ LESSONS PANEL ══ -->
+  <div class="panel" id="lessonsPanel">
+    <div class="lessons-page">
+
+      <!-- Topbar -->
+      <div class="lessons-topbar">
+        <div class="lessons-topbar-left">
+          <h2>📚 Lesson Library</h2>
+          <p id="lessonCount">Loading lessons…</p>
+        </div>
+        <div class="lessons-topbar-right">
+          <!-- Refresh button — force reload from Supabase -->
+          <button class="lessons-upload-btn" id="lessonsRefreshBtn"
+            style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
+            title="Reload lessons from server"
+            onclick="window.refreshLessons()">
+            ↻ Refresh
+          </button>
+
+          <!-- Admin-only upload button (shown by JS after login) -->
+          <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload Lesson
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Grid -->
+      <div class="lessons-grid-wrap">
+        <div class="lessons-grid" id="lessonsGrid">
+          <!-- Skeleton loaders shown while loading -->
+          <div class="lesson-card" style="pointer-events:none;opacity:.5">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></div>
+          </div>
+          <div class="lesson-card" style="pointer-events:none;opacity:.3">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:55%;"></div></div>
+          </div>
+          <div class="lesson-card" style="pointer-events:none;opacity:.15">
+            <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+            <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:40%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ LESSON VIEWER OVERLAY (fullscreen, 4 modes) ══ -->
   <div class="lesson-viewer-overlay" id="lessonViewerOverlay">
     <div class="lesson-viewer-topbar">
       <button class="lesson-viewer-back" onclick="closeLessonViewer()">← Back</button>
       <span class="lesson-viewer-title" id="lvTitle">Lesson Title</span>
       <div class="lesson-mode-tabs">
-        <button class="lesson-mode-tab-btn" id="lvBtnPresent"  onclick="switchLessonMode('present')">🖼️ Present</button>
         <button class="lesson-mode-tab-btn" id="lvBtnAnimation" onclick="switchLessonMode('animation')">🎬 Animation</button>
         <button class="lesson-mode-tab-btn" id="lvBtnTheory"   onclick="switchLessonMode('theory')">📄 Theory</button>
-        <button class="lesson-mode-tab-btn" id="lvBtnQuiz"     onclick="switchLessonMode('quiz')">❓ Quiz</button>
+        <button class="lesson-mode-tab-btn" id="lvBtnRealWorld" onclick="switchLessonMode('realworld')">🌍 Real World</button>
       </div>
     </div>
     <div class="lesson-viewer-body">
-      <!-- Present mode: thumbnail fullscreen -->
-      <div class="lv-mode-pane" id="lvPresent">
-        <div class="lv-mode-empty" id="lvPresentEmpty" style="display:none">
-          <span class="lv-mode-empty-icon">🖼️</span>
-          <h4>No thumbnail uploaded</h4>
-          <p>The admin hasn’t added a thumbnail image for this lesson yet.</p>
-        </div>
-        <img id="lvPresentImg" src="" alt="Lesson thumbnail" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
-      </div>
       <!-- Animation mode: MP4 video -->
       <div class="lv-mode-pane" id="lvAnimation">
         <div class="lv-mode-empty" id="lvAnimationEmpty" style="display:none">
-          <span class="lv-mode-empty-icon">🎬</span>
+          <span class="lv-mode-empty-icon">&#127916;</span>
           <h4>No video uploaded</h4>
-          <p>The admin hasn’t added an animation video for this lesson yet.</p>
+          <p>The admin hasn't added an animation video for this lesson yet.</p>
         </div>
         <video id="lvAnimVideo" controls preload="metadata" style="display:none"></video>
       </div>
       <!-- Theory mode: HTML iframe -->
       <div class="lv-mode-pane" id="lvTheory">
         <div class="lv-mode-empty" id="lvTheoryEmpty" style="display:none">
-          <span class="lv-mode-empty-icon">📄</span>
+          <span class="lv-mode-empty-icon">&#128196;</span>
           <h4>No theory file uploaded</h4>
-          <p>The admin hasn’t added a theory HTML file for this lesson yet.</p>
+          <p>The admin hasn't added a theory HTML file for this lesson yet.</p>
         </div>
         <iframe id="lvTheoryIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Theory Content" style="display:none"></iframe>
       </div>
-      <!-- Quiz mode -->
-      <div class="lv-mode-pane" id="lvQuiz">
-        <div class="quiz-wrap" id="quizContainer">
-          <!-- Populated by renderQuiz() -->
+      <!-- Real-World Application mode: flashcard image viewer -->
+      <div class="lv-mode-pane" id="lvRealworld">
+        <div class="rw-flashcard-wrap">
+          <div class="rw-slide-counter" id="rwCounter">1 / 1</div>
+          <div class="rw-img-stage" id="rwImgStage">
+            <img id="rwImg" src="" alt="Real-world example" style="display:none" />
+            <div class="lv-mode-empty" id="rwEmpty" style="display:none">
+              <span class="lv-mode-empty-icon">&#127757;</span>
+              <h4>No real-world images</h4>
+              <p>The admin hasn't added any real-world application images for this lesson yet.</p>
+            </div>
+          </div>
+          <div class="rw-nav-row" id="rwNavRow">
+            <button class="rw-nav-btn" id="rwPrevBtn" onclick="rwPrev()">&#8592; Previous</button>
+            <button class="rw-nav-btn rw-nav-next" id="rwNextBtn" onclick="rwNext()">Next &#8594;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -11940,13 +11702,14 @@ function amShowSuccess() {
           </div>
         </div>
 
-        <!-- Quiz Builder -->
+        <!-- Real-World Application Images uploader -->
         <div class="aup-field">
-          <div class="aup-quiz-header">
-            <span>❓ Quiz Questions</span>
-            <button class="aup-add-q-btn" onclick="aupAddQuestion()">+ Add Question</button>
+          <div class="aup-rw-header">
+            <span>🌍 Real-World Application Images</span>
+            <button class="aup-add-rw-btn" onclick="document.getElementById('aupRwInput').click()">+ Add Images</button>
           </div>
-          <div class="aup-quiz-list" id="aupQuizList"></div>
+          <input type="file" id="aupRwInput" accept="image/*" multiple style="display:none" onchange="aupHandleRwImages(this)" />
+          <div class="aup-rw-preview" id="aupRwPreview"></div>
         </div>
       </div>
       <!-- Footer -->
@@ -12206,25 +11969,17 @@ function amShowSuccess() {
     // THEME
     // ═══════════════════════════════════════════════
     function initTheme() {
-      // Always default to the light/white theme on load — the old saved
-      // 'dark' preference from earlier sessions is intentionally ignored
-      // here so the app opens white every time. The toggle below still
-      // lets someone switch to dark manually within the session.
-      const dark = false;
+      const saved = localStorage.getItem('genzet_theme');
+      const dark = saved === 'dark' || (saved === null && window.matchMedia('(prefers-color-scheme:dark)').matches);
       document.getElementById('themeToggle').checked = dark;
-      applyTheme(dark, false);
+      applyTheme(dark);
     }
-    function applyTheme(dark, persist = true) {
-      const html = document.documentElement;
-      html.setAttribute('data-theme', dark ? 'dark' : 'light');
-      html.classList.toggle('theme-dark', dark);
-      html.classList.toggle('theme-light', !dark);
-      html.style.colorScheme = dark ? 'dark' : 'light';
-      const knob = document.getElementById('themeKnob');
-      if (knob) knob.textContent = dark ? '🌙' : '☀️';
-      if (persist) localStorage.setItem('genzet_theme', dark ? 'dark' : 'light');
+    function applyTheme(dark) {
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      document.getElementById('themeKnob').textContent = dark ? '🌙' : '☀️';
+      localStorage.setItem('genzet_theme', dark ? 'dark' : 'light');
     }
-    function toggleTheme(cb) { applyTheme(cb.checked, true); }
+    function toggleTheme(cb) { applyTheme(cb.checked); }
 
     // ═══════════════════════════════════════════════
     // KEYBOARD
@@ -12731,8 +12486,6 @@ function amShowSuccess() {
         simShowError('Please describe the simulation you want to generate.');
         return;
       }
-      const simWrap = document.getElementById('simAiLayout');
-      if (simWrap) simWrap.classList.remove('pre-generate');
 
       simHideError();
       var genBtn = document.getElementById('simGenBtn');
@@ -16292,7 +16045,7 @@ ${text.substring(0, 4500)}`
     let _currentLvMode = null;    // 'present'|'animation'|'theory'|'quiz'
     let _quizState     = null;    // { questions, idx, score }
     let _aupFiles      = { thumb: null, anim: null, html: null };  // File objects
-    let _aupQuestions  = [];      // quiz builder state
+    let _aupRwFiles    = [];      // realworld image files state
     let _lessonsLoaded = false;
 
     // ────────────────────────────────────────────────────
@@ -16362,12 +16115,12 @@ ${text.substring(0, 4500)}`
         const hasPres  = !!lesson.thumbnail_url;
         const hasAnim  = !!lesson.animation_url;
         const hasTheory= !!lesson.theory_url;
-        const hasQuiz  = lesson.quiz_data && lesson.quiz_data.length > 0;
+        const hasRW    = lesson.realworld_images && lesson.realworld_images.length > 0;
         const chips = [
           hasPres   ? '<span class="lesson-mode-chip lmc-present">🖼️ Present</span>'   : '',
           hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
           hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
-          hasQuiz   ? `<span class="lesson-mode-chip lmc-quiz">❓ Quiz (${lesson.quiz_data.length})</span>` : '',
+          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${lesson.realworld_images.length})</span>` : '',
         ].join('');
         const thumbHTML = lesson.thumbnail_url
           ? `<img class="lesson-card-thumb" src="${lesson.thumbnail_url}" alt="${lesson.title.replace(/"/g,'&quot;')}" loading="lazy" />`
@@ -16405,20 +16158,19 @@ ${text.substring(0, 4500)}`
       document.getElementById('lvTitle').textContent = lesson.title || 'Lesson';
 
       // Enable/disable mode buttons based on available content
-      _setModeBtn('present',   'lvBtnPresent',   !!lesson.thumbnail_url);
+
       _setModeBtn('animation', 'lvBtnAnimation', !!lesson.animation_url);
       _setModeBtn('theory',    'lvBtnTheory',    !!lesson.theory_url);
-      _setModeBtn('quiz',      'lvBtnQuiz',      !!(lesson.quiz_data && lesson.quiz_data.length));
+      _setModeBtn('realworld', 'lvBtnRealWorld', !!(lesson.realworld_images && lesson.realworld_images.length));
 
       // Open the viewer overlay
       document.getElementById('lessonViewerOverlay').classList.add('open');
 
       // Auto-select first available mode
-      if (lesson.thumbnail_url)      switchLessonMode('present');
-      else if (lesson.animation_url) switchLessonMode('animation');
-      else if (lesson.theory_url)    switchLessonMode('theory');
-      else if (lesson.quiz_data && lesson.quiz_data.length) switchLessonMode('quiz');
-      else switchLessonMode('present'); // show empty state
+      if (lesson.animation_url)                                    switchLessonMode('animation');
+      else if (lesson.theory_url)                                  switchLessonMode('theory');
+      else if (lesson.realworld_images && lesson.realworld_images.length) switchLessonMode('realworld');
+      else switchLessonMode('animation'); // show empty state
     };
 
     function _setModeBtn(mode, btnId, enabled) {
@@ -16432,7 +16184,7 @@ ${text.substring(0, 4500)}`
     window.closeLessonViewer = function () {
       document.getElementById('lessonViewerOverlay').classList.remove('open');
       // Pause video if playing
-      const vid = document.getElementById('lvAnimVideo');
+      const vid  = document.getElementById('lvAnimVideo');
       if (vid) { vid.pause(); vid.src = ''; }
       const iframe = document.getElementById('lvTheoryIframe');
       if (iframe) iframe.src = '';
@@ -16456,23 +16208,12 @@ ${text.substring(0, 4500)}`
       const pane = document.getElementById('lv' + mode.charAt(0).toUpperCase() + mode.slice(1));
       if (pane) pane.classList.add('active');
       // Activate the selected tab
-      const btnMap = { present: 'lvBtnPresent', animation: 'lvBtnAnimation', theory: 'lvBtnTheory', quiz: 'lvBtnQuiz' };
+      const btnMap = { animation: 'lvBtnAnimation', theory: 'lvBtnTheory', realworld: 'lvBtnRealWorld' };
       const btn = document.getElementById(btnMap[mode]);
       if (btn) btn.classList.add('active');
 
       // Load content for the mode
-      if (mode === 'present') {
-        const img  = document.getElementById('lvPresentImg');
-        const empt = document.getElementById('lvPresentEmpty');
-        if (_currentLesson.thumbnail_url) {
-          img.src = _currentLesson.thumbnail_url;
-          img.style.display = 'block';
-          if (empt) empt.style.display = 'none';
-        } else {
-          img.style.display = 'none';
-          if (empt) empt.style.display = 'flex';
-        }
-      } else if (mode === 'animation') {
+      if (mode === 'animation') {
         const vid  = document.getElementById('lvAnimVideo');
         const empt = document.getElementById('lvAnimationEmpty');
         if (_currentLesson.animation_url) {
@@ -16488,128 +16229,83 @@ ${text.substring(0, 4500)}`
         const fr   = document.getElementById('lvTheoryIframe');
         const empt = document.getElementById('lvTheoryEmpty');
         if (_currentLesson.theory_url) {
-          fr.src = _currentLesson.theory_url;
+          // Fetch HTML and inject via srcdoc to bypass X-Frame-Options / CSP blocking
+          fr.srcdoc = '<p style="font-family:sans-serif;padding:20px;color:#888;">Loading theory...</p>';
           fr.style.display = 'block';
           if (empt) empt.style.display = 'none';
+          fetch(_currentLesson.theory_url)
+            .then(function(res) {
+              if (!res.ok) throw new Error('Failed to load theory: ' + res.status);
+              return res.text();
+            })
+            .then(function(html) {
+              fr.srcdoc = html;
+            })
+            .catch(function(err) {
+              fr.srcdoc = '<div style="font-family:sans-serif;padding:30px;text-align:center;color:#e55;">'
+                        + '<h3>⚠️ Could not load theory content</h3>'
+                        + '<p>' + err.message + '</p>'
+                        + '<a href="' + _currentLesson.theory_url + '" target="_blank" '
+                        + 'style="display:inline-block;margin-top:12px;padding:10px 22px;background:#6c47ff;color:#fff;border-radius:8px;text-decoration:none;">Open in new tab</a>'
+                        + '</div>';
+            });
         } else {
           fr.style.display = 'none';
           if (empt) empt.style.display = 'flex';
         }
-      } else if (mode === 'quiz') {
-        renderQuiz(_currentLesson.quiz_data || []);
+      } else if (mode === 'realworld') {
+        renderRealWorld(_currentLesson.realworld_images || []);
       }
     };
 
     // ────────────────────────────────────────────────────
-    // INTERACTIVE QUIZ ENGINE
+    // REAL-WORLD FLASHCARD ENGINE
     // ────────────────────────────────────────────────────
-    function renderQuiz(questions) {
-      const wrap = document.getElementById('quizContainer');
-      if (!wrap) return;
+    let _rwState = { images: [], idx: 0 };
 
-      if (!questions || !questions.length) {
-        wrap.innerHTML = `
-          <div class="lv-mode-empty">
-            <span class="lv-mode-empty-icon">❓</span>
-            <h4>No quiz questions</h4>
-            <p>The admin hasn’t added quiz questions for this lesson yet.</p>
-          </div>`;
+    function renderRealWorld(images) {
+      const counter  = document.getElementById('rwCounter');
+      const img      = document.getElementById('rwImg');
+      const empty    = document.getElementById('rwEmpty');
+      const navRow   = document.getElementById('rwNavRow');
+      if (!img) return;
+      if (!images || !images.length) {
+        img.style.display   = 'none';
+        if (empty)   empty.style.display  = 'flex';
+        if (navRow)  navRow.style.display = 'none';
+        if (counter) counter.textContent   = '';
         return;
       }
-
-      _quizState = { questions, idx: 0, score: 0, answered: false };
-      _renderQuizQuestion();
+      _rwState = { images, idx: 0 };
+      if (empty)   empty.style.display  = 'none';
+      if (navRow)  navRow.style.display = 'flex';
+      _renderRwSlide();
     }
 
-    function _renderQuizQuestion() {
-      const { questions, idx } = _quizState;
-      const q    = questions[idx];
-      const wrap = document.getElementById('quizContainer');
-      const total = questions.length;
-      const pct   = Math.round(((idx) / total) * 100);
-      const LETTERS = ['A', 'B', 'C', 'D'];
-
-      wrap.innerHTML = `
-        <div class="quiz-header">
-          <h3>❓ Quiz Time!</h3>
-          <p>Question ${idx + 1} of ${total}</p>
-          <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
-        </div>
-        <div class="quiz-question-box" id="qBox">
-          <div class="quiz-q-num">Question ${idx + 1} • ${q.question ? q.question.length : 0} chars</div>
-          <div class="quiz-q-text">${q.question || 'No question text'}</div>
-          <div class="quiz-options">
-            ${(q.options || []).map((opt, i) => `
-              <button class="quiz-opt-btn" onclick="_quizAnswer(${i})" data-idx="${i}">
-                <span class="quiz-opt-letter">${LETTERS[i] || i}</span>
-                ${opt}
-              </button>`).join('')}
-          </div>
-          <div class="quiz-feedback correct-fb" id="qFbCorrect">✅ Correct! Well done!</div>
-          <div class="quiz-feedback wrong-fb"   id="qFbWrong">  ❌ Incorrect. The correct answer was: <strong>${(q.options || [])[q.correct_index] || ''}</strong></div>
-          <button class="quiz-next-btn" id="quizNextBtn" onclick="_quizNext()">
-            ${idx + 1 < total ? 'Next Question →' : 'See Results'}
-          </button>
-        </div>`;
-      _quizState.answered = false;
+    function _renderRwSlide() {
+      const { images, idx } = _rwState;
+      const counter = document.getElementById('rwCounter');
+      const img     = document.getElementById('rwImg');
+      const prevBtn = document.getElementById('rwPrevBtn');
+      const nextBtn = document.getElementById('rwNextBtn');
+      if (!img) return;
+      // Fade out
+      img.classList.add('rw-fade');
+      setTimeout(function () {
+        img.src = images[idx];
+        img.style.display = 'block';
+        img.classList.remove('rw-fade');
+      }, 150);
+      if (counter) counter.textContent = (idx + 1) + ' / ' + images.length;
+      if (prevBtn) prevBtn.disabled = (idx === 0);
+      if (nextBtn) nextBtn.disabled = (idx === images.length - 1);
     }
 
-    // Expose to inline onclick (inside innerHTML)
-    window._quizAnswer = function (chosenIdx) {
-      if (_quizState.answered) return;
-      _quizState.answered = true;
-      const q = _quizState.questions[_quizState.idx];
-      const correct = q.correct_index;
-
-      document.querySelectorAll('.quiz-opt-btn').forEach((btn, i) => {
-        btn.disabled = true;
-        if (i === correct) btn.classList.add('correct');
-        else if (i === chosenIdx) btn.classList.add('wrong');
-      });
-
-      if (chosenIdx === correct) {
-        _quizState.score++;
-        document.getElementById('qFbCorrect').classList.add('show');
-      } else {
-        document.getElementById('qFbWrong').classList.add('show');
-      }
-      document.getElementById('quizNextBtn').classList.add('show');
+    window.rwPrev = function () {
+      if (_rwState.idx > 0) { _rwState.idx--; _renderRwSlide(); }
     };
-
-    window._quizNext = function () {
-      _quizState.idx++;
-      if (_quizState.idx >= _quizState.questions.length) {
-        _showQuizScore();
-      } else {
-        _renderQuizQuestion();
-      }
-    };
-
-    function _showQuizScore() {
-      const { score, questions } = _quizState;
-      const total  = questions.length;
-      const pct    = Math.round((score / total) * 100);
-      const msg    = pct === 100 ? '🎉 Perfect Score!' : pct >= 70 ? '👍 Great Job!' : pct >= 40 ? '👊 Keep Practising!' : '💪 Try Again!';
-      const sub    = `You answered ${score} out of ${total} questions correctly.`;
-      document.getElementById('quizContainer').innerHTML = `
-        <div class="quiz-wrap">
-          <div class="quiz-score-screen show">
-            <div class="quiz-score-circle">
-              <div class="quiz-score-num">${score}</div>
-              <div class="quiz-score-deno">/ ${total}</div>
-            </div>
-            <div class="quiz-score-msg">${msg}</div>
-            <div class="quiz-score-sub">${sub}</div>
-            <button class="quiz-restart-btn" onclick="window._restartCurrentQuiz()">&#x21ba; Try Again</button>
-          </div>
-        </div>`;
-    }
-
-    // Exposed helper for the restart button (inline onclick can't call private renderQuiz)
-    window.renderQuiz = renderQuiz;
-    window._restartCurrentQuiz = function () {
-      if (!_currentLesson) return;
-      renderQuiz(_currentLesson.quiz_data || []);
+    window.rwNext = function () {
+      if (_rwState.idx < _rwState.images.length - 1) { _rwState.idx++; _renderRwSlide(); }
     };
 
     // ────────────────────────────────────────────────────
@@ -16645,11 +16341,12 @@ ${text.substring(0, 4500)}`
       // Reset form
       document.getElementById('aupTitle').value = '';
       _aupFiles = { thumb: null, anim: null, html: null };
-      _aupQuestions = [];
+      _aupRwFiles = [];
       ['aupThumbBox','aupAnimBox','aupHtmlBox'].forEach(id => document.getElementById(id)?.classList.remove('has-file'));
+      const rwPrev = document.getElementById('aupRwPreview'); if (rwPrev) rwPrev.innerHTML = '';
       ['aupThumbName','aupAnimName','aupHtmlName'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
       ['aupThumbInput','aupAnimInput','aupHtmlInput'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-      document.getElementById('aupQuizList').innerHTML = '';
+
       const prog = document.getElementById('aupProgress');
       if (prog) { prog.style.display = 'none'; prog.textContent = ''; }
       document.getElementById('adminUploadOverlay').classList.add('open');
@@ -16671,38 +16368,29 @@ ${text.substring(0, 4500)}`
       if (nameEl) nameEl.textContent = file.name;
     };
 
-    // ── Quiz Builder ──
-    window.aupAddQuestion = function () {
-      _aupQuestions.push({ question: '', options: ['', '', '', ''], correct_index: 0 });
-      _renderQuizBuilder();
+    // ── Real-World Image Handler ──
+    window.aupHandleRwImages = function (input) {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      files.forEach(function (file) {
+        _aupRwFiles.push(file);
+      });
+      _renderRwPreview();
+      input.value = ''; // reset so same file can be re-added
     };
 
-    function _renderQuizBuilder() {
-      const list = document.getElementById('aupQuizList');
-      if (!list) return;
-      const LETTERS = ['A','B','C','D'];
-      list.innerHTML = _aupQuestions.map((q, qi) => `
-        <div class="aup-q-item" id="aupQ${qi}">
-          <div class="aup-q-num">Question ${qi + 1}</div>
-          <input class="aup-q-text-input" placeholder="Enter question text…" value="${q.question.replace(/"/g,'&quot;')}" oninput="_aupQText(${qi},this.value)" />
-          <div class="aup-q-options">
-            ${q.options.map((opt, oi) => `
-              <div class="aup-q-opt-row">
-                <input type="radio" class="aup-q-opt-radio" name="aupCorrect${qi}" ${q.correct_index === oi ? 'checked' : ''}
-                  onchange="_aupQCorrect(${qi},${oi})" title="Mark as correct answer" />
-                <span class="aup-q-opt-label">${LETTERS[oi]}</span>
-                <input class="aup-q-opt-input" placeholder="Option ${LETTERS[oi]}…" value="${opt.replace(/"/g,'&quot;')}" oninput="_aupQOpt(${qi},${oi},this.value)" />
-              </div>`).join('')}
-          </div>
-          <div class="aup-q-correct-hint">✔ Select the radio button next to the correct answer</div>
-          <button class="aup-q-del-btn" onclick="_aupDelQ(${qi})" title="Remove question">✕</button>
-        </div>`).join('');
+    function _renderRwPreview() {
+      const wrap = document.getElementById('aupRwPreview');
+      if (!wrap) return;
+      wrap.innerHTML = _aupRwFiles.map(function (file, i) {
+        const url = URL.createObjectURL(file);
+        return '<div class="aup-rw-img-item" id="aupRwItem' + i + '"><img src="' + url + '" alt="Preview" /><button class="aup-rw-img-del" onclick="_aupDelRwImg(' + i + ')" title="Remove">&#215;</button></div>';
+      }).join('');
     }
-
-    window._aupQText    = function (qi, v) { _aupQuestions[qi].question = v; };
-    window._aupQOpt     = function (qi, oi, v) { _aupQuestions[qi].options[oi] = v; };
-    window._aupQCorrect = function (qi, oi) { _aupQuestions[qi].correct_index = oi; };
-    window._aupDelQ     = function (qi) { _aupQuestions.splice(qi, 1); _renderQuizBuilder(); };
+    window._aupDelRwImg = function (i) {
+      _aupRwFiles.splice(i, 1);
+      _renderRwPreview();
+    };
 
     // ── SAVE LESSON ──
     window.aupSaveLesson = async function () {
@@ -16717,7 +16405,7 @@ ${text.substring(0, 4500)}`
 
       const urls = { thumbnail_url: null, animation_url: null, theory_url: null };
 
-      // Upload files sequentially (show progress)
+      // Upload files sequentially — then upload realworld images
       const uploads = [
         { file: _aupFiles.thumb, type: 'thumbnail', key: 'thumbnail_url' },
         { file: _aupFiles.anim,  type: 'animation', key: 'animation_url' },
@@ -16738,12 +16426,27 @@ ${text.substring(0, 4500)}`
         }
       }
 
+      // Upload real-world images
+      const rwUrls = [];
+      for (let ri = 0; ri < _aupRwFiles.length; ri++) {
+        if (prog) prog.textContent = 'Uploading real-world image ' + (ri + 1) + ' of ' + _aupRwFiles.length + '...';
+        const rr = await window.lessonsAPI.uploadFile(_aupRwFiles[ri], 'realworld');
+        if (rr.ok) {
+          rwUrls.push(rr.public_url);
+        } else {
+          if (typeof notify === 'function') notify('Failed to upload image: ' + rr.error, 'error');
+          if (saveBtn) saveBtn.disabled = false;
+          if (prog) prog.style.display = 'none';
+          return;
+        }
+      }
+
       // Save lesson row
       if (prog) prog.textContent = 'Saving lesson…';
       const r = await window.lessonsAPI.createLesson({
         title,
         ...urls,
-        quiz_data: _aupQuestions,
+        realworld_images: rwUrls,
       });
 
       if (r.ok) {
