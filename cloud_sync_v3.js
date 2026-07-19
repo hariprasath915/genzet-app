@@ -958,11 +958,11 @@
   async function _loadLessons() {
     const r = await _api('GET', '/sync/lessons');
     if (r.ok) {
-      // Normalize quiz_data: null → [] for rows inserted directly via Supabase
+      // Normalize realworld_images: null → [] for rows inserted directly via Supabase
       // Table Editor (which leave the jsonb column as NULL instead of []).
       _lessonsCache = (r.data.lessons || []).map(l => ({
         ...l,
-        quiz_data: Array.isArray(l.quiz_data) ? l.quiz_data : [],
+        realworld_images: Array.isArray(l.realworld_images) ? l.realworld_images : [],
       }));
       console.log('[LESSONS] Loaded', _lessonsCache.length, 'lesson(s) from backend.');
       if (typeof window.renderLessonsGrid === 'function') {
@@ -1007,7 +1007,7 @@
 
   /**
    * Create a lesson row in the DB (admin only).
-   * @param {object} lesson — { title, thumbnail_url, theory_url, animation_url, quiz_data[] }
+   * @param {object} lesson — { title, thumbnail_url, theory_url, animation_url, realworld_images[] }
    */
   async function _createLesson(lesson) {
     return _api('POST', '/sync/lessons', lesson);
