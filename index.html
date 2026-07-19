@@ -16304,9 +16304,26 @@ ${text.substring(0, 4500)}`
         const fr   = document.getElementById('lvTheoryIframe');
         const empt = document.getElementById('lvTheoryEmpty');
         if (_currentLesson.theory_url) {
-          fr.src = _currentLesson.theory_url;
+          // Fetch HTML and inject via srcdoc to bypass X-Frame-Options / CSP blocking
+          fr.srcdoc = '<p style="font-family:sans-serif;padding:20px;color:#888;">Loading theory...</p>';
           fr.style.display = 'block';
           if (empt) empt.style.display = 'none';
+          fetch(_currentLesson.theory_url)
+            .then(function(res) {
+              if (!res.ok) throw new Error('Failed to load theory: ' + res.status);
+              return res.text();
+            })
+            .then(function(html) {
+              fr.srcdoc = html;
+            })
+            .catch(function(err) {
+              fr.srcdoc = '<div style="font-family:sans-serif;padding:30px;text-align:center;color:#e55;">'
+                        + '<h3>⚠️ Could not load theory content</h3>'
+                        + '<p>' + err.message + '</p>'
+                        + '<a href="' + _currentLesson.theory_url + '" target="_blank" '
+                        + 'style="display:inline-block;margin-top:12px;padding:10px 22px;background:#6c47ff;color:#fff;border-radius:8px;text-decoration:none;">Open in new tab</a>'
+                        + '</div>';
+            });
         } else {
           fr.style.display = 'none';
           if (empt) empt.style.display = 'flex';
