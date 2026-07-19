@@ -713,9 +713,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       border-radius: 24px;
       font-size: 11px;
       font-weight: 700;
-      border: 1px solid #E5E7EB;
-      background: #FFFFFF;
-      color: #374151;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
       transition: all .2s;
     }
 
@@ -730,12 +730,12 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       align-items: center;
       gap: 8px;
       padding: 6px 14px;
-      background: #F0FDF9;
-      border: 1px solid #CCFBF1;
+      background: var(--teal-lt);
+      border: 1px solid var(--teal-md);
       border-radius: 20px;
       font-size: 11px;
       font-weight: 700;
-      color: #0D9488;
+      color: var(--teal);
     }
 
     .storage-bar-wrap {
@@ -1175,7 +1175,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .stream-inner {
-      max-width: 1200px;
+      max-width: none;
+      width: 100%;
       margin: 0 auto;
       padding: 8px 24px 20px;
     }
@@ -3965,8 +3966,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .modal-box {
-      background: #FFFFFF;
-      border: 1px solid #E5E7EB;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 20px;
       width: 100%;
       max-width: 480px;
@@ -4215,45 +4216,45 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     /* ══ CREATE SUBJECT MODAL — Redesigned ══ */
     .cs-modal-header {
-      background: #fff !important;
-      border-bottom: 1.5px solid #f3f4f6 !important;
+      background: var(--surface) !important;
+      border-bottom: 1.5px solid var(--border) !important;
       padding: 20px 24px !important;
     }
 
     .cs-label {
       font-size: 13px !important;
       font-weight: 700 !important;
-      color: #374151 !important;
+      color: var(--text2) !important;
       margin-bottom: 8px !important;
     }
 
     .cs-input-name {
-      border: 2px solid #10b981 !important;
+      border: 2px solid var(--teal) !important;
       border-radius: 12px !important;
-      background: #f0fdf4 !important;
+      background: var(--teal-lt) !important;
       font-size: 14px !important;
       padding: 13px 16px !important;
-      color: #111827 !important;
+      color: var(--text) !important;
     }
 
     .cs-input-name:focus {
-      border-color: #059669 !important;
-      background: #ecfdf5 !important;
+      border-color: var(--teal-dk) !important;
+      background: var(--teal-md) !important;
       box-shadow: 0 0 0 3px rgba(16,185,129,.12) !important;
     }
 
     .cs-input-code {
-      border: 1.5px solid #e5e7eb !important;
+      border: 1.5px solid var(--border) !important;
       border-radius: 12px !important;
-      background: #f9fafb !important;
+      background: var(--surface2) !important;
       font-size: 14px !important;
       padding: 13px 16px !important;
-      color: #111827 !important;
+      color: var(--text) !important;
     }
 
     .cs-input-code:focus {
-      border-color: #6b7280 !important;
-      background: #fff !important;
+      border-color: var(--border2) !important;
+      background: var(--surface) !important;
     }
 
     /* Icon picker — bigger, image-style cards */
@@ -4266,23 +4267,23 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       width: 52px !important;
       height: 52px !important;
       border-radius: 14px !important;
-      border: 2px solid #e5e7eb !important;
-      background: #f9fafb !important;
+      border: 2px solid var(--border) !important;
+      background: var(--surface2) !important;
       font-size: 24px !important;
       box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
       transition: all .18s !important;
     }
 
     .cs-icon-row .icon-pick:hover {
-      border-color: #10b981 !important;
-      background: #f0fdf4 !important;
+      border-color: var(--teal) !important;
+      background: var(--teal-lt) !important;
       transform: scale(1.1) !important;
       box-shadow: 0 3px 10px rgba(16,185,129,.18) !important;
     }
 
     .cs-icon-row .icon-pick.sel {
-      border-color: #10b981 !important;
-      background: #ecfdf5 !important;
+      border-color: var(--teal) !important;
+      background: var(--teal-md) !important;
       box-shadow: 0 0 0 3px rgba(16,185,129,.18) !important;
       transform: scale(1.08) !important;
     }
@@ -4314,8 +4315,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .cs-modal-footer {
-      background: #fff !important;
-      border-top: 1.5px solid #f3f4f6 !important;
+      background: var(--surface) !important;
+      border-top: 1.5px solid var(--border) !important;
       padding: 16px 24px !important;
       justify-content: flex-end !important;
       gap: 12px !important;
@@ -4324,9 +4325,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .cs-cancel-btn {
       padding: 11px 24px !important;
       border-radius: 12px !important;
-      border: 1.5px solid #e5e7eb !important;
-      background: #fff !important;
-      color: #374151 !important;
+      border: 1.5px solid var(--border) !important;
+      background: var(--surface) !important;
+      color: var(--text2) !important;
       font-size: 14px !important;
       font-weight: 600 !important;
       cursor: pointer !important;
@@ -4334,8 +4335,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .cs-cancel-btn:hover {
-      border-color: #9ca3af !important;
-      background: #f9fafb !important;
+      border-color: var(--border2) !important;
+      background: var(--surface2) !important;
     }
 
     .cs-create-btn {
@@ -4543,9 +4544,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       gap: 6px;
       padding: 9px 16px;
       border-radius: 11px;
-      border: 2px solid #059669;
-      background: #ecfdf5;
-      color: #059669;
+      border: 2px solid var(--green);
+      background: var(--green-lt);
+      color: var(--green);
       font-size: 12.5px;
       font-weight: 700;
       cursor: pointer;
@@ -4554,7 +4555,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .ppt-upload-btn:hover {
-      background: #d1fae5;
+      background: var(--green-md);
       transform: translateY(-1px);
       box-shadow: 0 4px 14px rgba(5, 150, 105, .25);
     }
@@ -4680,9 +4681,9 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     /* PPT Upload Drop Zone */
     .ppt-file-drop {
-      border: 2px dashed #6ee7b7;
+      border: 2px dashed var(--green-md);
       border-radius: 12px;
-      background: #ecfdf5;
+      background: var(--green-lt);
       padding: 30px 20px;
       text-align: center;
       cursor: pointer;
@@ -4695,8 +4696,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     .ppt-file-drop:hover,
     .ppt-file-drop.drag-over {
-      border-color: #059669;
-      background: #d1fae5;
+      border-color: var(--green);
+      background: var(--green-md);
     }
 
     .ppt-file-info {
@@ -4750,18 +4751,18 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .topic-type-badge.ppt-up {
-      background: #ecfdf5;
-      color: #059669;
-      border: 1px solid #6ee7b7;
+      background: var(--green-lt);
+      color: var(--green);
+      border: 1px solid var(--green-md);
     }
 
     /* PPT topic Present button */
     .topic-ppt-present-btn {
       padding: 6px 14px;
       border-radius: 8px;
-      border: 1.5px solid #6ee7b7;
-      background: #ecfdf5;
-      color: #059669;
+      border: 1.5px solid var(--green-md);
+      background: var(--green-lt);
+      color: var(--green);
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
@@ -4770,7 +4771,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .topic-ppt-present-btn:hover {
-      background: #d1fae5;
+      background: var(--green-md);
       transform: translateY(-1px);
     }
 
@@ -5027,8 +5028,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .topbar-search-wrap input {
       width: 100%;
       padding: 9px 16px 9px 40px;
-      background: #F9FAFB;
-      border: 1.5px solid #E5E7EB;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
       border-radius: 28px;
       font-family: var(--font-body);
       font-size: 13px;
@@ -5039,8 +5040,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .topbar-search-wrap input:focus {
-      border-color: #0D9488;
-      background: #FFFFFF;
+      border-color: var(--teal);
+      background: var(--surface);
       box-shadow:
         0 0 0 4px rgba(13, 148, 136, .12),
         0 4px 16px rgba(13, 148, 136, .10);
