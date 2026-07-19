@@ -1202,6 +1202,15 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       animation: panelIn .32s cubic-bezier(.4, 0, .2, 1) forwards;
     }
 
+    /* Simulation panel needs a flex (not block) container, but only
+       while it's actually the active tab — otherwise it must stay
+       display:none like every other inactive panel, so it doesn't
+       silently occupy space and stretch .stream-main's scroll area
+       underneath whichever panel is really being shown. */
+    #simulationPanel.active {
+      display: flex;
+    }
+
     @keyframes panelIn {
       from {
         opacity: 0;
@@ -6894,6 +6903,11 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     /* ══ SIMULATION — PRE-GENERATE HERO STATE (Claude-artifact style) ══ */
+    .sim-ai-preview {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     .sim-ai-layout.pre-generate {
       grid-template-columns: 1fr;
     }
@@ -6903,6 +6917,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .sim-ai-layout.pre-generate .sim-ai-sidebar {
       border-right: none;
       align-items: center;
+      justify-content: center;
+      overflow-y: hidden;
     }
     .sim-ai-layout.pre-generate .sim-hero-header,
     .sim-ai-layout.pre-generate .sim-input-card,
@@ -8598,6 +8614,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .animind-wrap.pre-generate .animind-sidebar {
       border-right: none;
       align-items: center;
+      justify-content: center;
+      overflow-y: hidden;
     }
 
     .animind-wrap.pre-generate .am-mode-switcher,
@@ -8613,7 +8631,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     .animind-wrap.pre-generate .am-mode-switcher {
       justify-content: center;
       gap: 12px;
-      padding: 48px 24px 0;
+      padding: 24px 24px 0;
     }
 
     .animind-wrap.pre-generate .am-mode-tab {
@@ -8627,7 +8645,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: none;
       border-bottom: none;
       text-align: center;
-      padding: 28px 24px 8px;
+      padding: 14px 24px 4px;
     }
 
     .animind-wrap.pre-generate .am-sid-header::before {
@@ -8635,18 +8653,18 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     }
 
     .animind-wrap.pre-generate .am-sid-header h3 {
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 900;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .animind-wrap.pre-generate .am-sid-header p {
-      font-size: 15px;
+      font-size: 14px;
     }
 
     .animind-wrap.pre-generate .am-section {
       border-bottom: none;
-      padding: 14px 24px;
+      padding: 10px 24px;
     }
 
     .animind-wrap.pre-generate .am-input-card {
@@ -8672,8 +8690,8 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     .animind-wrap.pre-generate .am-textarea {
       border: none;
-      padding: 6px 4px 14px;
-      min-height: 100px;
+      padding: 6px 4px 10px;
+      min-height: 80px;
       font-size: 14px;
       border-radius: 0;
     }
@@ -8763,10 +8781,13 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
     z-index: 9000;
   }
 
-  /* When dashboard is active, let it scroll normally */
+  /* When dashboard is active, it must stay pinned to the viewport —
+     it is NOT the scroll container. Only .stream-main (inside
+     .main-area) scrolls; keeping this hidden is what makes the
+     topbar/sidebar stay fixed and the .file-home-sticky header
+     actually stick while the subjects grid scrolls beneath it. */
   #gz-dashboard.active {
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
   }
 </style>
 </head>
@@ -11160,7 +11181,7 @@ function amShowSuccess() {
             </div>
 
             <!-- SIMULATION PANEL -->
-            <div class="panel" id="simulationPanel" style="display:flex;flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
+            <div class="panel" id="simulationPanel" style="flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
 
               <!-- ── Top 3 Main Tabs ─────────────────────────────────── -->
               <div class="sim-top-tabs">
@@ -11320,7 +11341,7 @@ function amShowSuccess() {
                   </div>
 
                   <!-- Right: Preview -->
-                  <div class="sim-ai-preview" style="display:flex;flex-direction:column;overflow:hidden;">
+                  <div class="sim-ai-preview">
                     <div class="sim-preview-header">
                       <span class="sim-preview-title" id="simPreviewTitle">Simulation Preview</span>
                       <div class="sim-preview-actions">
@@ -12185,8 +12206,11 @@ function amShowSuccess() {
     // THEME
     // ═══════════════════════════════════════════════
     function initTheme() {
-      const saved = localStorage.getItem('genzet_theme');
-      const dark = saved === 'dark'; // only trust explicit saved choice, never OS preference
+      // Always default to the light/white theme on load — the old saved
+      // 'dark' preference from earlier sessions is intentionally ignored
+      // here so the app opens white every time. The toggle below still
+      // lets someone switch to dark manually within the session.
+      const dark = false;
       document.getElementById('themeToggle').checked = dark;
       applyTheme(dark, false);
     }
