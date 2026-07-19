@@ -1232,6 +1232,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
+      min-height: 0;
     }
 
     .am-sid-header {
@@ -5431,6 +5432,7 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     .stream-main {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
     }
 
@@ -8446,6 +8448,161 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
         display: none !important;
       }
     }
+
+    /* ══ PRE-GENERATE HERO STATE — full-width centered creator, ══
+       preview panel hidden until Generate is clicked (Claude-artifact style) */
+    .animind-wrap.pre-generate {
+      grid-template-columns: 1fr;
+    }
+
+    .animind-wrap.pre-generate .animind-preview {
+      display: none;
+    }
+
+    .animind-wrap.pre-generate .animind-sidebar {
+      border-right: none;
+      align-items: center;
+    }
+
+    .animind-wrap.pre-generate .am-mode-switcher,
+    .animind-wrap.pre-generate .am-sid-header,
+    .animind-wrap.pre-generate .am-section,
+    .animind-wrap.pre-generate .pdf-upload-section {
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    .animind-wrap.pre-generate .am-mode-switcher {
+      justify-content: center;
+      gap: 12px;
+      padding: 48px 24px 0;
+    }
+
+    .animind-wrap.pre-generate .am-mode-tab {
+      flex: none;
+      padding: 12px 24px;
+      font-size: 13px;
+      border-radius: 12px;
+    }
+
+    .animind-wrap.pre-generate .am-sid-header {
+      background: none;
+      border-bottom: none;
+      text-align: center;
+      padding: 28px 24px 8px;
+    }
+
+    .animind-wrap.pre-generate .am-sid-header::before {
+      display: none;
+    }
+
+    .animind-wrap.pre-generate .am-sid-header h3 {
+      font-size: 30px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .animind-wrap.pre-generate .am-sid-header p {
+      font-size: 15px;
+    }
+
+    .animind-wrap.pre-generate .am-section {
+      border-bottom: none;
+      padding: 14px 24px;
+    }
+
+    .animind-wrap.pre-generate .am-input-card {
+      border: 2px solid var(--teal-md);
+      border-radius: 18px;
+      background: var(--surface);
+      padding: 18px 20px 14px;
+      box-shadow: var(--shadow-md);
+      transition: border-color .25s;
+    }
+
+    .animind-wrap.pre-generate .am-input-card:focus-within {
+      border-color: var(--teal);
+    }
+
+    #questionPanel .animind-wrap.pre-generate .am-input-card {
+      border-color: var(--purple-md);
+    }
+
+    #questionPanel .animind-wrap.pre-generate .am-input-card:focus-within {
+      border-color: var(--purple);
+    }
+
+    .animind-wrap.pre-generate .am-textarea {
+      border: none;
+      padding: 6px 4px 14px;
+      min-height: 100px;
+      font-size: 14px;
+      border-radius: 0;
+    }
+
+    .animind-wrap.pre-generate .am-textarea:focus {
+      box-shadow: none;
+    }
+
+    .animind-wrap.pre-generate .am-input-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 4px !important;
+    }
+
+    .animind-wrap.pre-generate .am-gen-btn {
+      padding: 12px 26px;
+      border-radius: 14px;
+    }
+
+    .animind-wrap.pre-generate .am-topics-section,
+    .animind-wrap.pre-generate .am-questions-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      overflow: visible !important;
+      flex: none !important;
+    }
+
+    .animind-wrap.pre-generate .am-topics-section .am-section-label,
+    .animind-wrap.pre-generate .am-questions-section .am-section-label {
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+
+    .animind-wrap.pre-generate .am-topics-section .am-section-label::before,
+    .animind-wrap.pre-generate .am-questions-section .am-section-label::before {
+      display: none;
+    }
+
+    .animind-wrap.pre-generate .am-example-btn {
+      width: auto;
+      margin-bottom: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      text-align: center;
+    }
+
+    .animind-wrap.pre-generate .am-example-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .am-privacy-note {
+      display: none;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    .animind-wrap.pre-generate .am-privacy-note {
+      display: block;
+    }
   
 </style>
 <style>
@@ -8529,7 +8686,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <li><a href="#testimonials">Reviews</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <button class="nav-cta" onclick="openAuthModal()">Start Free Trial</button>
+  <button class="nav-cta" onclick="openAuthModal()">Create Your First Lesson</button>
   <button class="nav-menu-btn">☰</button>
 </nav>
 
@@ -8539,14 +8696,14 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="hero-glow-1"></div>
   <div class="hero-glow-2"></div>
 
-  <div class="hero-eyebrow">The Future of Education is Animated</div>
+  <div class="hero-eyebrow">AI-POWERED LESSON CREATION FOR EDUCATORS</div>
   <h1 class="hero-title">
-    Teaching deserves<br>
-    <span class="accent">a smarter canvas.</span>
+    Turn your curriculum into<br>
+    <span class="accent">interactive animated lessons.</span>
   </h1>
-  <p class="hero-sub">Genzet turns your curriculum into stunning animated lessons. Less slide-making, more learning — powered by AI built for educators.</p>
+  <p class="hero-sub">Improve student learning with interactive animation — less slide-making, more teaching.</p>
   <div class="hero-actions">
-    <button class="btn-primary" onclick="openAuthModal()">Start Learning</button>
+    <button class="btn-primary" onclick="openAuthModal()">Create Your First Lesson</button>
     <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
   </div>
   <div class="hero-stats">
@@ -8818,7 +8975,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <h2 class="cta-title">Ready to teach<br>without limits?</h2>
     <p class="cta-sub">Join thousands of educators transforming their classrooms with Genzet. Free for your first 30 lessons — no credit card needed.</p>
     <div class="cta-input-row">
-      <button class="btn-primary" onclick="openAuthModal()">Start Learning →</button>
+      <button class="btn-primary" onclick="openAuthModal()">Create Your First Lesson →</button>
     </div>
     <p class="cta-note">✦ Free 30-day trial &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Cancel anytime</p>
   </div>
@@ -10532,7 +10689,7 @@ function amShowSuccess() {
 
             <!-- ANIMIND PANEL — UPDATED: Now the default active panel (Teacher Mode removed) -->
             <div class="panel active" id="animindPanel">
-              <div class="animind-wrap">
+              <div class="animind-wrap pre-generate" id="animindWrap">
                 <div class="animind-sidebar">
 
 
@@ -10549,23 +10706,25 @@ function amShowSuccess() {
                   <!-- ══ AI CREATOR SECTION (existing) ══ -->
                   <div id="amAiCreatorSection">
                     <div class="am-sid-header">
-                      <h3>✨ Generate Animation</h3>
-                      <p>Describe any concept — Claude animates it</p>
+                      <h3>✨ Create Animations</h3>
+                      <p>Describe any concept and let AI generate a stunning visual animation.</p>
                     </div>
                     <div class="am-section">
-                      <textarea class="am-textarea" id="amPrompt" rows="4" placeholder="e.g. Photosynthesis in plants…"
-                        maxlength="500"></textarea>
-                      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-                        <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;"
-                          id="amCharCount">0/500</span>
-                        <button class="am-gen-btn" id="amGenBtn" onclick="generateAnimation()">
-                          <span id="amBtnIcon">🚀</span><span id="amBtnText">Generate</span>
-                        </button>
+                      <div class="am-input-card">
+                        <textarea class="am-textarea" id="amPrompt" rows="4" placeholder="Describe the animation you want to create…"
+                          maxlength="500"></textarea>
+                        <div class="am-input-footer" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                          <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;"
+                            id="amCharCount">0/500</span>
+                          <button class="am-gen-btn" id="amGenBtn" onclick="generateAnimation()">
+                            <span id="amBtnIcon">🚀</span><span id="amBtnText">Generate</span>
+                          </button>
+                        </div>
                       </div>
                       <div class="am-error" id="amError"></div>
                     </div>
-                    <div class="am-section" style="flex:1;overflow-y:auto;">
-                      <div class="am-section-label">Try these topics</div>
+                    <div class="am-section am-topics-section" style="flex:1;overflow-y:auto;">
+                      <div class="am-section-label">Try these ideas to get started</div>
                       <button class="am-example-btn" onclick="amSetPrompt('Photosynthesis in plants')"><span>→</span>
                         Photosynthesis</button>
                       <button class="am-example-btn" onclick="amSetPrompt('Newton\'s Laws of Motion')"><span>→</span>
@@ -10584,6 +10743,7 @@ function amShowSuccess() {
                       <button class="am-example-btn"
                         onclick="amSetPrompt('Mitosis cell division stages')"><span>→</span>
                         Mitosis</button>
+                      <p class="am-privacy-note">🔒 Your prompts are private and secure</p>
                     </div>
                   </div>
 
@@ -10744,31 +10904,32 @@ function amShowSuccess() {
 
             <!-- QUESTION ANIMATION PANEL -->
             <div class="panel" id="questionPanel">
-              <div class="animind-wrap">
+              <div class="animind-wrap pre-generate" id="questionWrap">
                 <div class="animind-sidebar">
                   <div class="am-sid-header" style="background:linear-gradient(135deg,#f5f3ff,#fef3c7);">
-                    <h3>❓ Question Animation</h3>
-                    <p>Type any question — Claude builds an animated answer</p>
+                    <h3>❓ Ask Anything</h3>
+                    <p>Type any question and let AI build a beautiful animated visual answer.</p>
                   </div>
                   <div class="am-section">
-                    <div class="am-section-label">Enter your question</div>
-                    <textarea class="am-textarea" id="qaPrompt" rows="6"
-                      placeholder="e.g. What is photosynthesis?&#10;How does DNA replication work?&#10;Why is the sky blue?"
-                      maxlength="1000"
-                      oninput="document.getElementById('qaCharCount').textContent=this.value.length+'/1000'"
-                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();generateQuestionAnim();}"></textarea>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-                      <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;"
-                        id="qaCharCount">0/1000</span>
-                      <button class="am-gen-btn" id="qaGenBtn" onclick="generateQuestionAnim()"
-                        style="background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 3px 12px rgba(124,58,237,.35);">
-                        <span id="qaBtnIcon">❓</span><span id="qaBtnText">Generate Answer</span>
-                      </button>
+                    <div class="am-input-card">
+                      <textarea class="am-textarea" id="qaPrompt" rows="6"
+                        placeholder="Ask any question you want animated…&#10;Example: How does the human heart pump blood through the body?"
+                        maxlength="1000"
+                        oninput="document.getElementById('qaCharCount').textContent=this.value.length+'/1000'"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();generateQuestionAnim();}"></textarea>
+                      <div class="am-input-footer" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                        <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;"
+                          id="qaCharCount">0/1000</span>
+                        <button class="am-gen-btn" id="qaGenBtn" onclick="generateQuestionAnim()"
+                          style="background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 3px 12px rgba(124,58,237,.35);">
+                          <span id="qaBtnIcon">❓</span><span id="qaBtnText">Generate Answer</span>
+                        </button>
+                      </div>
                     </div>
                     <div class="am-error" id="qaError"></div>
                   </div>
-                  <div class="am-section" style="flex:1;overflow-y:auto;">
-                    <div class="am-section-label">Try these questions</div>
+                  <div class="am-section am-questions-section" style="flex:1;overflow-y:auto;">
+                    <div class="am-section-label">Try these questions to get started</div>
                     <button class="am-example-btn"
                       onclick="qaSetPrompt('What is photosynthesis and how does it work?')"><span>→</span> What is
                       photosynthesis?</button>
@@ -10791,6 +10952,7 @@ function amShowSuccess() {
                     <button class="am-example-btn"
                       onclick="qaSetPrompt('How does mitosis differ from meiosis?')"><span>→</span> Mitosis vs
                       meiosis?</button>
+                    <p class="am-privacy-note">🔒 Your questions are private and secure</p>
                   </div>
                   <div class="am-section" id="qaSaveSection" style="display:none;">
                     <div class="am-section-label">Save Options</div>
@@ -11718,6 +11880,12 @@ function amShowSuccess() {
     let animindLibrary = [];
     let currentAnimation = null;
     let currentMode = 'animind'; // UPDATED: Teacher mode removed, default is now AI Creator
+
+    // Reveal the split preview panel the moment generation starts (Claude-artifact style)
+    function amEnterSplitView(wrapId) {
+      const wrap = document.getElementById(wrapId);
+      if (wrap) wrap.classList.remove('pre-generate');
+    }
     let activeLibTab = 'all';
     let activePlaylist = 'all';
     let amShowingCode = false;
@@ -12673,6 +12841,7 @@ function amShowSuccess() {
     function amSetPrompt(t) { document.getElementById('amPrompt').value = t; document.getElementById('amCharCount').textContent = t.length + '/500'; }
     async function generateAnimation() {
       const prompt = document.getElementById('amPrompt').value.trim(); if (!prompt) return;
+      amEnterSplitView('animindWrap');
       const btn = document.getElementById('amGenBtn'); btn.disabled = true;
       document.getElementById('amBtnIcon').textContent = '⏳'; document.getElementById('amBtnText').textContent = 'Generating…';
       document.getElementById('amError').style.display = 'none';
@@ -12827,6 +12996,7 @@ function amShowSuccess() {
         return;
       }
       hidePdfError();
+      amEnterSplitView('animindWrap');
 
       const btn = document.getElementById('book-generate-btn');
       btn.disabled = true;
@@ -14593,6 +14763,7 @@ ${text.substring(0, 4500)}`
     async function generateQuestionAnim() {
       const rawQ = document.getElementById('qaPrompt').value.trim();
       if (!rawQ) return;
+      amEnterSplitView('questionWrap');
 
       const btn = document.getElementById('qaGenBtn');
       btn.disabled = true;
