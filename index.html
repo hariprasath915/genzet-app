@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -9949,105 +9949,252 @@ function amShowSuccess() {
 .lessons-empty h3 { font-size: 18px; font-weight: 800; color: var(--text2); }
 .lessons-empty p  { font-size: 13px; max-width: 340px; line-height: 1.65; }
 /* ── LESSON VIEWER OVERLAY ── */
-.lesson-viewer-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: var(--bg);
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
+.lesson-viewer-overlay { display: none; position: fixed; inset: 0; z-index: 1200; background: var(--bg); flex-direction: column; }
 .lesson-viewer-overlay.open { display: flex; }
-.lesson-viewer-topbar {
+/* ── VIEWER CONTENT AREAS ── */
+
+/* ── Lesson Viewer: 2-Screen architecture ── */
+
+/* Screen 1: Detail / Landing */
+.lv-detail-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  animation: lvFadeIn .3s ease;
+}
+.lv-detail-topbar {
   display: flex;
   align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
   gap: 14px;
-  padding: 14px 24px;
-  background: var(--surface);
-  border-bottom: 1.5px solid var(--border);
   flex-shrink: 0;
-  box-shadow: var(--shadow);
-  flex-wrap: wrap;
 }
-.lesson-viewer-back {
-  padding: 8px 16px;
-  border: 1.5px solid var(--border);
+.lv-detail-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
   border-radius: 10px;
-  background: var(--bg);
-  color: var(--text2);
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   font-family: var(--font-body);
   transition: all .2s;
-  flex-shrink: 0;
 }
-.lesson-viewer-back:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
-.lesson-viewer-title {
+.lv-detail-back-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.lv-detail-body {
   flex: 1;
-  font-size: 16px;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+}
+/* Left panel */
+.lv-detail-left {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 36px;
+  border-right: 1px solid var(--border);
+  gap: 20px;
+  overflow-y: auto;
+  background: var(--surface);
+}
+.lv-detail-thumb {
+  width: 100%;
+  aspect-ratio: 16/10;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+}
+.lv-detail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.lv-detail-lesson-title {
+  font-size: 22px;
   font-weight: 800;
   color: var(--text);
   font-family: var(--font-title);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
-.lesson-mode-tabs {
+.lv-detail-meta {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 8px;
 }
-.lesson-mode-tab-btn {
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  background: var(--bg);
-  color: var(--text2);
-  font-size: 12px;
+/* Right panel */
+.lv-detail-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 64px;
+  gap: 24px;
+  overflow-y: auto;
+}
+.lv-detail-right-title {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.lv-mode-launch-btn {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 480px;
+  padding: 22px 28px;
+  border-radius: 18px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .22s cubic-bezier(.34,1.56,.64,1);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.lv-mode-launch-btn:hover {
+  transform: translateX(8px) scale(1.01);
+  box-shadow: 0 8px 28px rgba(0,0,0,.13);
+}
+.lv-mode-launch-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  transform: none;
+}
+.lv-mode-launch-btn .lmlb-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.lv-mode-launch-btn .lmlb-info { flex: 1; }
+.lv-mode-launch-btn .lmlb-name { font-size: 16px; font-weight: 800; color: var(--text); }
+.lv-mode-launch-btn .lmlb-desc { font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 500; }
+.lv-mode-launch-btn .lmlb-arrow { font-size: 18px; color: var(--text3); transition: transform .2s; }
+.lv-mode-launch-btn:hover .lmlb-arrow { transform: translateX(4px); color: var(--text); }
+/* Mode color accents */
+.lmlb-anim    { background: var(--green-lt);  border-color: var(--green-md);  }
+.lmlb-anim .lmlb-icon  { background: var(--green);  color: #fff; }
+.lmlb-anim:hover       { border-color: var(--green); }
+.lmlb-theory  { background: var(--purple-lt); border-color: var(--purple-md); }
+.lmlb-theory .lmlb-icon { background: var(--purple); color: #fff; }
+.lmlb-theory:hover      { border-color: var(--purple); }
+.lmlb-rw      { background: #e0faf6;           border-color: #5fe0cd; }
+.lmlb-rw .lmlb-icon    { background: #0e9384;  color: #fff; }
+.lmlb-rw:hover          { border-color: #0e9384; }
+/* Screen 2: Fullscreen content */
+.lv-content-screen {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  animation: lvFadeIn .3s ease;
+}
+.lv-content-screen.active { display: flex; }
+.lv-content-topbar {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.lv-content-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   font-family: var(--font-body);
-  transition: all .22s;
-  white-space: nowrap;
+  transition: all .2s;
 }
-.lesson-mode-tab-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
-.lesson-mode-tab-btn.active {
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 3px 12px rgba(13,148,136,.3);
+.lv-content-back-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.lv-content-mode-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-title);
 }
-.lesson-mode-tab-btn:disabled { opacity: .35; cursor: not-allowed; }
-/* ── VIEWER CONTENT AREAS ── */
-.lesson-viewer-body {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
+.lv-content-lesson-name {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 500;
+  margin-left: auto;
+}
+.lv-content-body { flex:1; position:relative; overflow:hidden; display:flex; }
+/* Panes fill the content body — only active one shown */
+.lv-content-body > .lv-mode-pane {
+  position: absolute;
+  inset: 0;
+  display: none;
+  overflow: auto;
+}
+.lv-content-body > .lv-mode-pane.active {
   display: flex;
   flex-direction: column;
 }
-.lv-mode-pane {
+/* Animation fills fullscreen */
+#lvAnimation { background: #000; align-items: center; justify-content: center; }
+#lvAnimVideo { max-width: 100%; max-height: 100%; outline: none; border-radius: 0; }
+/* Theory fills fullscreen */
+#lvTheory { overflow: hidden; }
+#lvTheoryIframe { width: 100% !important; height: 100% !important; border: none; flex: 1; display: block !important; }
+/* Real-world */
+#lvRealworld { background: var(--bg); overflow: hidden; }
+
+@keyframes lvFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+/* ── Lesson detail responsive ── */
+@media (max-width: 700px) {
+  .lv-detail-body { flex-direction: column; }
+  .lv-detail-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 24px 20px; }
+  .lv-detail-right { padding: 28px 20px; }
+  .lv-mode-launch-btn { max-width: 100%; }
+}
+
+.lv-content-body > .lv-mode-pane {
   display: none;
   flex: 1;
   overflow: auto;
   position: absolute;
   inset: 0;
 }
-.lv-mode-pane.active { display: flex; flex-direction: column; }
-/* Present mode — fullscreen image */
-#lvPresent {
-  background: #000;
-  align-items: center;
-  justify-content: center;
-}
-#lvPresent img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
+.lv-content-body > .lv-mode-pane.active { display: flex; flex-direction: column; }
+
 /* Animation mode — fullscreen video */
 #lvAnimation { background: #000; align-items: center; justify-content: center; }
 #lvAnimVideo {
@@ -10059,161 +10206,8 @@ function amShowSuccess() {
 /* Theory mode — iframe */
 #lvTheory { overflow: hidden; }
 #lvTheoryIframe { width: 100%; height: 100%; border: none; flex: 1; }
-/* Quiz mode */
-#lvQuiz {
-  background: var(--bg);
-  align-items: center;
-  overflow-y: auto;
-}
-.quiz-wrap {
-  max-width: 680px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 40px 24px;
-}
-.quiz-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-.quiz-header h3 { font-size: 22px; font-weight: 800; color: var(--text); font-family: var(--font-title); }
-.quiz-header p  { font-size: 14px; color: var(--text3); margin-top: 6px; }
-.quiz-progress-bar {
-  height: 6px;
-  background: var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 12px 0 24px;
-}
-.quiz-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--blue), #6366f1);
-  border-radius: 6px;
-  transition: width .4s ease;
-}
-.quiz-question-box {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-md);
-}
-.quiz-q-num {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--blue);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  font-family: var(--font-mono);
-}
-.quiz-q-text {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.5;
-  margin-bottom: 22px;
-}
-.quiz-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.quiz-opt-btn {
-  width: 100%;
-  text-align: left;
-  padding: 14px 18px;
-  border: 1.5px solid var(--border);
-  border-radius: 13px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.quiz-opt-btn:hover:not(:disabled) { border-color: var(--blue); background: var(--blue-lt); color: var(--blue); transform: translateX(4px); }
-.quiz-opt-btn.correct  { background: var(--green-lt); border-color: var(--green); color: #166534; }
-.quiz-opt-btn.wrong    { background: var(--red-lt);   border-color: var(--red);   color: #991b1b; }
-.quiz-opt-letter {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--border2);
-  color: var(--text2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800;
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  transition: all .2s;
-}
-.quiz-opt-btn.correct .quiz-opt-letter  { background: var(--green); color: #fff; }
-.quiz-opt-btn.wrong   .quiz-opt-letter  { background: var(--red);   color: #fff; }
-.quiz-opt-btn:hover:not(:disabled) .quiz-opt-letter { background: var(--blue); color: #fff; }
-.quiz-feedback {
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: 14px;
-  display: none;
-}
-.quiz-feedback.show { display: block; }
-.quiz-feedback.correct-fb { background: var(--green-lt); color: #166534; border: 1px solid var(--green-md); }
-.quiz-feedback.wrong-fb   { background: var(--red-lt);   color: #991b1b; border: 1px solid #fca5a5; }
-.quiz-next-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 13px;
-  border: none;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  margin-top: 16px;
-  transition: all .25s;
-  box-shadow: 0 4px 16px rgba(13,148,136,.3);
-  display: none;
-}
-.quiz-next-btn.show { display: block; }
-.quiz-next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,.4); }
-.quiz-score-screen {
-  display: none;
-  text-align: center;
-  padding: 40px 24px;
-}
-.quiz-score-screen.show { display: block; }
-.quiz-score-circle {
-  width: 130px; height: 130px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 40px rgba(13,148,136,.35);
-}
-.quiz-score-num  { font-size: 36px; font-weight: 900; color: #fff; font-family: var(--font-title); line-height: 1; }
-.quiz-score-deno { font-size: 14px; color: rgba(255,255,255,.7); }
-.quiz-score-msg  { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
-.quiz-score-sub  { font-size: 14px; color: var(--text3); margin-bottom: 24px; }
-.quiz-restart-btn {
-  padding: 12px 32px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, var(--blue), #6366f1);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all .25s;
-}
-.quiz-restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,.35); }
+
+
 /* Empty mode message */
 .lv-mode-empty {
   display: flex;
@@ -10320,27 +10314,6 @@ function amShowSuccess() {
 .aup-file-name  { font-size: 11px; color: var(--blue); font-weight: 700; margin-top: 4px; word-break: break-all; }
 .aup-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
 /* Quiz builder */
-.aup-quiz-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.aup-quiz-header span { font-size: 12px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
-.aup-add-q-btn {
-  padding: 7px 14px;
-  border-radius: 9px;
-  border: 1.5px solid var(--blue);
-  background: var(--blue-lt);
-  color: var(--blue);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: all .2s;
-}
-.aup-add-q-btn:hover { background: var(--blue-md); }
-.aup-quiz-list { display: flex; flex-direction: column; gap: 12px; }
 /* Real-World image upload preview */
 .aup-rw-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .aup-rw-header span { font-size:12px; font-weight:800; color:var(--text2); text-transform:uppercase; letter-spacing:.06em; }
@@ -10466,7 +10439,7 @@ function amShowSuccess() {
 @media (max-width: 600px) {
   .lessons-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
   .aup-file-row { grid-template-columns: 1fr; }
-  .lesson-mode-tab-btn { padding: 7px 10px; font-size: 11px; }
+
   .lessons-topbar { padding: 14px 16px 12px; }
   .lessons-grid-wrap { padding: 16px; }
 }
@@ -11869,57 +11842,109 @@ function amShowSuccess() {
     </div>
   </div>
 
-  <!-- ══ LESSON VIEWER OVERLAY (fullscreen, 4 modes) ══ -->
+  <!-- ══ LESSON VIEWER OVERLAY — 2-screen (Detail → Fullscreen) ══ -->
   <div class="lesson-viewer-overlay" id="lessonViewerOverlay">
-    <div class="lesson-viewer-topbar">
-      <button class="lesson-viewer-back" onclick="closeLessonViewer()">← Back</button>
-      <span class="lesson-viewer-title" id="lvTitle">Lesson Title</span>
-      <div class="lesson-mode-tabs">
-        <button class="lesson-mode-tab-btn" id="lvBtnAnimation" onclick="switchLessonMode('animation')">&#127916; Animation</button>
-        <button class="lesson-mode-tab-btn" id="lvBtnTheory"   onclick="switchLessonMode('theory')">&#128196; Theory</button>
-        <button class="lesson-mode-tab-btn" id="lvBtnRealWorld" onclick="switchLessonMode('realworld')">&#127757; Real World</button>
+
+    <!-- ─── SCREEN 1: Lesson Detail Page ─── -->
+    <div class="lv-detail-screen" id="lvDetailScreen">
+      <!-- Top bar -->
+      <div class="lv-detail-topbar">
+        <button class="lv-detail-back-btn" onclick="closeLessonViewer()">&#8592; Lessons</button>
+      </div>
+      <!-- Body: left + right -->
+      <div class="lv-detail-body">
+        <!-- LEFT: thumbnail + title -->
+        <div class="lv-detail-left">
+          <div class="lv-detail-thumb" id="lvDetailThumbWrap">
+            <img id="lvDetailThumbImg" src="" alt="" style="display:none" />
+            <span id="lvDetailThumbPlaceholder">&#128218;</span>
+          </div>
+          <h2 class="lv-detail-lesson-title" id="lvDetailTitle">Lesson Title</h2>
+          <div class="lv-detail-meta" id="lvDetailMeta"><!-- chips --></div>
+        </div>
+        <!-- RIGHT: mode launch buttons -->
+        <div class="lv-detail-right">
+          <p class="lv-detail-right-title">Choose a mode to begin</p>
+          <!-- Animation -->
+          <button class="lv-mode-launch-btn lmlb-anim" id="ldBtnAnimation" onclick="launchLessonMode('animation')">
+            <div class="lmlb-icon">&#127916;</div>
+            <div class="lmlb-info">
+              <div class="lmlb-name">Animation</div>
+              <div class="lmlb-desc">Watch the animated explanation video</div>
+            </div>
+            <span class="lmlb-arrow">&#8594;</span>
+          </button>
+          <!-- Theory -->
+          <button class="lv-mode-launch-btn lmlb-theory" id="ldBtnTheory" onclick="launchLessonMode('theory')">
+            <div class="lmlb-icon">&#128196;</div>
+            <div class="lmlb-info">
+              <div class="lmlb-name">Theory</div>
+              <div class="lmlb-desc">Read the detailed theory content</div>
+            </div>
+            <span class="lmlb-arrow">&#8594;</span>
+          </button>
+          <!-- Real-World Applications -->
+          <button class="lv-mode-launch-btn lmlb-rw" id="ldBtnRealWorld" onclick="launchLessonMode('realworld')">
+            <div class="lmlb-icon">&#127757;</div>
+            <div class="lmlb-info">
+              <div class="lmlb-name">Real-World Applications</div>
+              <div class="lmlb-desc">Explore real-world image examples</div>
+            </div>
+            <span class="lmlb-arrow">&#8594;</span>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="lesson-viewer-body">
-        <img id="lvPresentImg" src="" alt="Lesson thumbnail" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
+
+    <!-- ─── SCREEN 2: Fullscreen Content Viewer ─── -->
+    <div class="lv-content-screen" id="lvContentScreen">
+      <!-- Top bar -->
+      <div class="lv-content-topbar">
+        <button class="lv-content-back-btn" onclick="backToLessonDetail()">&#8592; Back</button>
+        <span class="lv-content-mode-label" id="lvContentModeLabel">Animation</span>
+        <span class="lv-content-lesson-name" id="lvContentLessonName"></span>
       </div>
-      <!-- Animation mode: MP4 video -->
-      <div class="lv-mode-pane" id="lvAnimation">
-        <div class="lv-mode-empty" id="lvAnimationEmpty" style="display:none">
-          <span class="lv-mode-empty-icon">🎬</span>
-          <h4>No video uploaded</h4>
-          <p>The admin hasn’t added an animation video for this lesson yet.</p>
+      <!-- Content panes (only one active at a time) -->
+      <div class="lv-content-body">
+        <!-- Animation mode: MP4 video -->
+        <div class="lv-mode-pane" id="lvAnimation">
+          <div class="lv-mode-empty" id="lvAnimationEmpty" style="display:none">
+            <span class="lv-mode-empty-icon">&#127916;</span>
+            <h4>No video uploaded</h4>
+            <p>The admin hasn't added an animation video for this lesson yet.</p>
+          </div>
+          <video id="lvAnimVideo" controls preload="metadata" style="display:none;max-width:100%;max-height:100%;"></video>
         </div>
-        <video id="lvAnimVideo" controls preload="metadata" style="display:none"></video>
-      </div>
-      <!-- Theory mode: HTML iframe -->
-      <div class="lv-mode-pane" id="lvTheory">
-        <div class="lv-mode-empty" id="lvTheoryEmpty" style="display:none">
-          <span class="lv-mode-empty-icon">📄</span>
-          <h4>No theory file uploaded</h4>
-          <p>The admin hasn’t added a theory HTML file for this lesson yet.</p>
+        <!-- Theory mode: HTML iframe -->
+        <div class="lv-mode-pane" id="lvTheory">
+          <div class="lv-mode-empty" id="lvTheoryEmpty" style="display:none">
+            <span class="lv-mode-empty-icon">&#128196;</span>
+            <h4>No theory file uploaded</h4>
+            <p>The admin hasn't added a theory HTML file for this lesson yet.</p>
+          </div>
+          <iframe id="lvTheoryIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Theory Content" style="display:none;width:100%;height:100%;border:none;flex:1;"></iframe>
         </div>
-        <iframe id="lvTheoryIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Theory Content" style="display:none"></iframe>
-      </div>
-      <!-- Real-World Application mode: flashcard image viewer -->
-      <div class="lv-mode-pane" id="lvRealworld">
-        <div class="rw-flashcard-wrap">
-          <div class="rw-slide-counter" id="rwCounter">1 / 1</div>
-          <div class="rw-img-stage" id="rwImgStage">
-            <img id="rwImg" src="" alt="Real-world example" style="display:none" />
-            <div class="lv-mode-empty" id="rwEmpty" style="display:none">
-              <span class="lv-mode-empty-icon">&#127757;</span>
-              <h4>No real-world images</h4>
-              <p>The admin hasn't added any real-world application images yet.</p>
+        <!-- Real-World Application mode: flashcard image viewer -->
+        <div class="lv-mode-pane" id="lvRealworld">
+          <div class="rw-flashcard-wrap">
+            <div class="rw-slide-counter" id="rwCounter">1 / 1</div>
+            <div class="rw-img-stage" id="rwImgStage">
+              <img id="rwImg" src="" alt="Real-world example" style="display:none" />
+              <div class="lv-mode-empty" id="rwEmpty" style="display:none">
+                <span class="lv-mode-empty-icon">&#127757;</span>
+                <h4>No real-world images</h4>
+                <p>The admin hasn't added any real-world application images yet.</p>
+              </div>
+            </div>
+            <div class="rw-nav-row" id="rwNavRow">
+              <button class="rw-nav-btn" id="rwPrevBtn" onclick="rwPrev()">&#8592; Previous</button>
+              <button class="rw-nav-btn rw-nav-next" id="rwNextBtn" onclick="rwNext()">Next &#8594;</button>
             </div>
           </div>
-          <div class="rw-nav-row" id="rwNavRow">
-            <button class="rw-nav-btn" id="rwPrevBtn" onclick="rwPrev()">&#8592; Previous</button>
-            <button class="rw-nav-btn rw-nav-next" id="rwNextBtn" onclick="rwNext()">Next &#8594;</button>
-          </div>
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- ══ ADMIN UPLOAD OVERLAY ══ -->
@@ -16418,72 +16443,120 @@ ${text.substring(0, 4500)}`
     // OPEN / CLOSE LESSON VIEWER
     // ────────────────────────────────────────────────────
     window.openLesson = function (lessonIdOrObj) {
-      // Accept either a lesson ID string (from onclick attr) or a full lesson object
+      // Accept either a lesson ID string or a full lesson object
       let lesson;
       if (typeof lessonIdOrObj === 'string') {
-        // ID-based lookup from the in-memory cache — safe, no JSON in attributes
         const cache = window.lessonsAPI ? window.lessonsAPI.getCache() : [];
         lesson = cache.find(l => l.id === lessonIdOrObj);
-        if (!lesson) { console.warn('[LESSONS] openLesson: ID not found in cache:', lessonIdOrObj); return; }
+        if (!lesson) { console.warn('[LESSONS] openLesson: ID not found:', lessonIdOrObj); return; }
       } else {
         lesson = lessonIdOrObj;
       }
       _currentLesson = lesson;
-      document.getElementById('lvTitle').textContent = lesson.title || 'Lesson';
 
-      // Enable/disable mode buttons based on available content
-      _setModeBtn('animation', 'lvBtnAnimation', !!lesson.animation_url);
-      _setModeBtn('theory',    'lvBtnTheory',    !!lesson.theory_url);
-      _setModeBtn('realworld', 'lvBtnRealWorld', !!(lesson.realworld_images && lesson.realworld_images.length));
+      // ── Populate Detail Screen ──
+      // Thumbnail
+      const thumbImg  = document.getElementById('lvDetailThumbImg');
+      const thumbPh   = document.getElementById('lvDetailThumbPlaceholder');
+      if (lesson.thumbnail_url) {
+        thumbImg.src = lesson.thumbnail_url;
+        thumbImg.style.display = 'block';
+        if (thumbPh) thumbPh.style.display = 'none';
+      } else {
+        if (thumbImg) thumbImg.style.display = 'none';
+        if (thumbPh)  thumbPh.style.display  = '';
+      }
+      // Title
+      const titleEl = document.getElementById('lvDetailTitle');
+      if (titleEl) titleEl.textContent = lesson.title || 'Lesson';
+      // Mode chips (meta)
+      const metaEl = document.getElementById('lvDetailMeta');
+      if (metaEl) {
+        const chips = [
+          lesson.animation_url   ? '<span class="lesson-mode-chip lmc-anim">&#127916; Animation</span>'     : '',
+          lesson.theory_url      ? '<span class="lesson-mode-chip lmc-theory">&#128196; Theory</span>'       : '',
+          (lesson.realworld_images && lesson.realworld_images.length)
+            ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${lesson.realworld_images.length})</span>` : '',
+        ].join('');
+        metaEl.innerHTML = chips;
+      }
+      // Enable/disable launch buttons
+      const ldAnim = document.getElementById('ldBtnAnimation');
+      const ldTheory = document.getElementById('ldBtnTheory');
+      const ldRW   = document.getElementById('ldBtnRealWorld');
+      if (ldAnim)   ldAnim.disabled   = !lesson.animation_url;
+      if (ldTheory) ldTheory.disabled = !lesson.theory_url;
+      if (ldRW)     ldRW.disabled     = !(lesson.realworld_images && lesson.realworld_images.length);
 
-      // Open the viewer overlay
+      // Show the Detail screen, hide Content screen
+      _showDetailScreen();
+
+      // Open the overlay
       document.getElementById('lessonViewerOverlay').classList.add('open');
-
-      // Auto-select first available mode
-      if (lesson.animation_url)                             switchLessonMode('animation');
-      else if (lesson.theory_url)                           switchLessonMode('theory');
-      else if (lesson.realworld_images && lesson.realworld_images.length) switchLessonMode('realworld');
-      else switchLessonMode('animation'); // show empty state
     };
 
-    function _setModeBtn(mode, btnId, enabled) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
-      btn.disabled = !enabled;
-      if (!enabled) btn.title = 'Not available for this lesson';
-      else btn.title = '';
+    function _showDetailScreen() {
+      const detail  = document.getElementById('lvDetailScreen');
+      const content = document.getElementById('lvContentScreen');
+      if (detail)  detail.style.display  = 'flex';
+      if (content) content.classList.remove('active');
     }
+
+    // ── Launch a mode → go to fullscreen content screen ──
+    window.launchLessonMode = function (mode) {
+      if (!_currentLesson) return;
+      const detail  = document.getElementById('lvDetailScreen');
+      const content = document.getElementById('lvContentScreen');
+      if (detail)  detail.style.display = 'none';
+      if (content) content.classList.add('active');
+      // Set top-bar labels
+      const modeLabels = { animation: '&#127916; Animation', theory: '&#128196; Theory', realworld: '&#127757; Real-World Applications' };
+      const modeLabel = document.getElementById('lvContentModeLabel');
+      if (modeLabel) modeLabel.innerHTML = modeLabels[mode] || mode;
+      const lessonNameEl = document.getElementById('lvContentLessonName');
+      if (lessonNameEl) lessonNameEl.textContent = _currentLesson.title || '';
+      // Load content
+      switchLessonMode(mode);
+    };
+
+    // ── Back button from content → detail page ──
+    window.backToLessonDetail = function () {
+      // Pause video if playing
+      const vid = document.getElementById('lvAnimVideo');
+      if (vid) { vid.pause(); }
+      const iframe = document.getElementById('lvTheoryIframe');
+      if (iframe) iframe.src = '';
+      _currentLvMode = null;
+      _showDetailScreen();
+    };
+
 
     window.closeLessonViewer = function () {
       document.getElementById('lessonViewerOverlay').classList.remove('open');
-      // Pause video if playing
       const vid = document.getElementById('lvAnimVideo');
       if (vid) { vid.pause(); vid.src = ''; }
       const iframe = document.getElementById('lvTheoryIframe');
       if (iframe) iframe.src = '';
+      // Reset screens
+      const detail  = document.getElementById('lvDetailScreen');
+      const content = document.getElementById('lvContentScreen');
+      if (detail)  detail.style.display = 'flex';
+      if (content) content.classList.remove('active');
       _currentLesson = null;
       _currentLvMode = null;
     };
 
     // ────────────────────────────────────────────────────
-    // SWITCH MODE (Present / Animation / Theory / Quiz)
+    // SWITCH MODE (Animation / Theory / Real-World)
     // ────────────────────────────────────────────────────
     window.switchLessonMode = function (mode) {
       if (!_currentLesson) return;
       _currentLvMode = mode;
 
-      // Deactivate all panes
+      // Deactivate all panes, activate the selected one
       document.querySelectorAll('.lv-mode-pane').forEach(p => p.classList.remove('active'));
-      // Deactivate all tab buttons
-      document.querySelectorAll('.lesson-mode-tab-btn').forEach(b => b.classList.remove('active'));
-
-      // Activate the selected pane
       const pane = document.getElementById('lv' + mode.charAt(0).toUpperCase() + mode.slice(1));
       if (pane) pane.classList.add('active');
-      // Activate the selected tab
-      const btnMap = { animation: 'lvBtnAnimation', theory: 'lvBtnTheory', realworld: 'lvBtnRealWorld' };
-      const btn = document.getElementById(btnMap[mode]);
-      if (btn) btn.classList.add('active');
 
       // Load content for the mode
       if (mode === 'animation') {
