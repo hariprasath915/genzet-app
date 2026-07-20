@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -8286,6 +8286,18 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
 
     .app-wrap {
       flex-direction: column !important;
+      /* Subtract subnav height so content area fills remaining space */
+      height: calc(100vh - var(--topbar-h) - var(--subnav-h)) !important;
+    }
+
+    /* animind-wrap must also account for the subnav bar */
+    .animind-wrap {
+      height: calc(100vh - var(--topbar-h) - var(--subnav-h) - 12px) !important;
+    }
+
+    /* lessons page should not extend below the visible area */
+    .lessons-page {
+      min-height: calc(100vh - var(--topbar-h) - var(--subnav-h)) !important;
     }
 
     .nav-sidebar {
