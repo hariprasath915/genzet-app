@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -13100,7 +13100,16 @@ function amShowSuccess() {
       }, 3000);
       try {
         const res = await fetch(`${BACKEND_URL}/generate-animation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
+        if (!res.ok) {
+          let msg = `Server error (status ${res.status})`;
+          try {
+            const errData = await res.json();
+            msg = errData.detail || msg;
+          } catch {
+            msg += ' — response was not JSON, likely a platform timeout/crash page';
+          }
+          throw new Error(msg);
+        }
         const data = await res.json();
         const patchedCode = patchAnimHTML(data.animation_code);
         currentAnimation = { id: Date.now().toString(), title: data.title, prompt, explanation: data.explanation, animation_code: patchedCode, created_at: new Date().toISOString(), playlist: null };
@@ -15039,7 +15048,16 @@ ${text.substring(0, 4500)}`
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: rawQ })
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
+        if (!res.ok) {
+          let msg = `Server error (status ${res.status})`;
+          try {
+            const errData = await res.json();
+            msg = errData.detail || msg;
+          } catch {
+            msg += ' — response was not JSON, likely a platform timeout/crash page';
+          }
+          throw new Error(msg);
+        }
         const data = await res.json();
 
         // ✅ ENHANCED CLEANING: Handle all backend escape sequences
