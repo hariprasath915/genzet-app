@@ -16543,7 +16543,7 @@ ${text.substring(0, 4500)}`
       const vid = document.getElementById('lvAnimVideo');
       if (vid) { vid.pause(); }
       const iframe = document.getElementById('lvTheoryIframe');
-      if (iframe) iframe.src = '';
+      if (iframe) { iframe.src = ''; iframe.srcdoc = ''; }
       _currentLvMode = null;
       _showDetailScreen();
     };
@@ -16554,7 +16554,7 @@ ${text.substring(0, 4500)}`
       const vid = document.getElementById('lvAnimVideo');
       if (vid) { vid.pause(); vid.src = ''; }
       const iframe = document.getElementById('lvTheoryIframe');
-      if (iframe) iframe.src = '';
+      if (iframe) { iframe.src = ''; iframe.srcdoc = ''; }
       // Reset screens
       const detail  = document.getElementById('lvDetailScreen');
       const content = document.getElementById('lvContentScreen');
@@ -16593,9 +16593,22 @@ ${text.substring(0, 4500)}`
         const fr   = document.getElementById('lvTheoryIframe');
         const empt = document.getElementById('lvTheoryEmpty');
         if (_currentLesson.theory_url) {
-          fr.src = _currentLesson.theory_url;
+          // Fetch HTML content and inject via srcdoc to bypass
+          // Supabase storage cross-origin / Content-Disposition restrictions
           fr.style.display = 'block';
+          fr.srcdoc = '<p style="font-family:sans-serif;padding:2rem;color:#888">Loading theory…</p>';
           if (empt) empt.style.display = 'none';
+          fetch(_currentLesson.theory_url)
+            .then(function(res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.text();
+            })
+            .then(function(html) {
+              fr.srcdoc = html;
+            })
+            .catch(function(err) {
+              fr.srcdoc = '<p style="font-family:sans-serif;padding:2rem;color:#c00">Failed to load theory content: ' + err.message + '</p>';
+            });
         } else {
           fr.style.display = 'none';
           if (empt) empt.style.display = 'flex';
