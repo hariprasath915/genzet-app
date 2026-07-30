@@ -15122,6 +15122,7 @@ ${text.substring(0, 4500)}`
         const MAX_WAIT_MS = 10 * 60 * 1000; // 10 minute safety cap
         const startedAt = Date.now();
         let data = null;
+        let missingJobPolls = 0;
 
         while (true) {
           if (Date.now() - startedAt > MAX_WAIT_MS) {
@@ -15131,10 +15132,23 @@ ${text.substring(0, 4500)}`
 
           const statusRes = await fetch(`${BACKEND_URL}/generate-question-animation/status/${encodeURIComponent(jobId)}`);
           if (!statusRes.ok) {
+            if (statusRes.status === 404) {
+              // The server has no record of this job at all — it isn't
+              // "still working", it genuinely doesn't exist (e.g. the
+              // backend process restarted mid-generation and its in-memory
+              // job table was wiped). Retrying this for 10 minutes would
+              // just waste the user's time on a job that can never finish.
+              // Fail fast instead, once we're sure it's not a one-off blip.
+              missingJobPolls = (missingJobPolls || 0) + 1;
+              if (missingJobPolls >= 3) {
+                throw new Error('Lost track of this generation on the server (it may have restarted). Please try again.');
+              }
+            }
             // Transient network/proxy hiccup on a poll — keep trying rather
             // than failing the whole generation over one bad poll.
             continue;
           }
+          missingJobPolls = 0;
           const statusData = await statusRes.json();
 
           if (statusData.status === 'done') {
