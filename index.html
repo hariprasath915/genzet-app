@@ -1900,6 +1900,113 @@ footer{border-top:1px solid var(--glass-border);padding:60px 5% 40px;display:gri
       background: var(--teal-lt);
     }
 
+    /* ══ CREATE WITH AI — combined AI Creator + QAnim sub-mode switcher ══ */
+    .create-submode-bar {
+      display: none;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 20px 22px 22px;
+      margin-bottom: 16px;
+    }
+
+    .create-submode-bar.show {
+      display: block;
+    }
+
+    .create-submode-title {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .create-submode-sub {
+      font-size: 12.5px;
+      color: var(--text2);
+      margin-bottom: 14px;
+    }
+
+    .create-submode-tabs {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .create-submode-tab {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      text-align: left;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all .22s var(--spring);
+    }
+
+    .create-submode-tab .cst-icon {
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .create-submode-tab .cst-body {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .create-submode-tab .cst-label {
+      font-family: 'Sora', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .create-submode-tab .cst-desc {
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: var(--text3);
+    }
+
+    .create-submode-tab:hover:not(.active) {
+      border-color: var(--blue);
+      background: var(--blue-lt);
+      transform: translateY(-1px);
+    }
+
+    .create-submode-tab.active {
+      border-color: var(--blue);
+      background: linear-gradient(135deg, var(--blue-lt), var(--surface));
+      box-shadow: 0 4px 16px rgba(13, 148, 136, .18);
+    }
+
+    .create-submode-tab.active .cst-label {
+      color: var(--blue);
+    }
+
+    #subTabQanim.active {
+      border-color: var(--purple);
+      background: linear-gradient(135deg, var(--purple-md), var(--surface));
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .18);
+    }
+
+    #subTabQanim.active .cst-label {
+      color: var(--purple);
+    }
+
+    @media (max-width: 640px) {
+      .create-submode-tabs {
+        flex-direction: column;
+      }
+    }
+
     /* ══ CREATOR-WITH-BOOK — PDF upload ══ */
     .pdf-upload-section {
       padding: 14px 14px 0;
@@ -10629,17 +10736,12 @@ function amShowSuccess() {
       <div class="sidebar-nav">
         <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('animind')">
           <div class="nav-icon">&#10024;</div>
-          <span class="nav-item-text">AI Creator</span>
+          <span class="nav-item-text">Create with AI</span>
           <span class="nav-item-tag">AI</span>
         </button>
         <button class="sidebar-nav-item" id="sideFile" onclick="switchMode('file')">
           <div class="nav-icon">&#128193;</div>
           <span class="nav-item-text">File</span>
-        </button>
-        <button class="sidebar-nav-item" id="sideQanim" onclick="switchMode('question')">
-          <div class="nav-icon">&#10067;</div>
-          <span class="nav-item-text">QAnim</span>
-          <span class="nav-item-tag">New</span>
         </button>
         <button class="sidebar-nav-item" id="sideSimulation" onclick="switchMode('simulation')">
           <div class="nav-icon">&#9881;&#65039;</div>
@@ -10649,7 +10751,7 @@ function amShowSuccess() {
         <!-- LESSONS tab — always shown to all users -->
         <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('lessons')">
           <div class="nav-icon">📚</div>
-          <span class="nav-item-text">Lessons</span>
+          <span class="nav-item-text">Library</span>
           <span class="nav-item-tag" style="background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;border-color:transparent;">Live</span>
         </button>
       </div>
@@ -10715,6 +10817,30 @@ function amShowSuccess() {
           <div class="stream-inner">
 
             <!-- REMOVED: TEACHER PANEL (Teacher Mode fully removed) -->
+
+            <!-- ══ CREATE WITH AI — SUB-MODE SWITCHER (AI Creator + QAnim combined) ══ -->
+            <div class="create-submode-bar show" id="createSubmodeBar">
+              <div class="create-submode-intro">
+                <h2 class="create-submode-title">✨ Create with AI</h2>
+                <p class="create-submode-sub">Pick how you'd like to create an animation</p>
+              </div>
+              <div class="create-submode-tabs">
+                <button class="create-submode-tab active" id="subTabAnimind" onclick="switchMode('animind')">
+                  <span class="cst-icon">✨</span>
+                  <span class="cst-body">
+                    <span class="cst-label">AI Creator</span>
+                    <span class="cst-desc">Describe any concept or topic and AI generates a full visual animation for it.</span>
+                  </span>
+                </button>
+                <button class="create-submode-tab" id="subTabQanim" onclick="switchMode('question')">
+                  <span class="cst-icon">❓</span>
+                  <span class="cst-body">
+                    <span class="cst-label">QAnim</span>
+                    <span class="cst-desc">Ask any question and AI builds a step-by-step animated answer that breaks it down.</span>
+                  </span>
+                </button>
+              </div>
+            </div>
 
             <!-- ANIMIND PANEL — UPDATED: Now the default active panel (Teacher Mode removed) -->
             <div class="panel active" id="animindPanel">
@@ -12313,9 +12439,20 @@ function amShowSuccess() {
         if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      const sideMap = { animind: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', question: 'sideQanim', simulation: 'sideSimulation', lessons: 'sideLessons' };
+      // NOTE: 'question' (QAnim) now lives inside the same "Create with AI"
+      // sidebar entry as 'animind' (AI Creator) — both highlight sideAicreator.
+      const sideMap = { animind: 'sideAicreator', question: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', simulation: 'sideSimulation', lessons: 'sideLessons' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
+
+      // Sync the "Create with AI" sub-mode switcher bar (shown above
+      // both the AI Creator and QAnim panels, hidden for everything else)
+      const createBar = document.getElementById('createSubmodeBar');
+      if (createBar) createBar.classList.toggle('show', mode === 'animind' || mode === 'question');
+      const subTabAnimind = document.getElementById('subTabAnimind');
+      const subTabQanim = document.getElementById('subTabQanim');
+      if (subTabAnimind) subTabAnimind.classList.toggle('active', mode === 'animind');
+      if (subTabQanim) subTabQanim.classList.toggle('active', mode === 'question');
       // REMOVED: teacher mode handler
       if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
