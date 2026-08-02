@@ -10627,9 +10627,6 @@ function amShowSuccess() {
       <span class="logo-name">Gen<em>Zet</em></span>
     </div>
     <div class="topbar-right">
-      <div class="topbar-center-badge">
-        ✨ Animations <span class="badge-num" id="activeCount">0</span>
-      </div>
       <div class="storage-badge" id="storageBadge">
         💾 <span id="storageText">OK</span>
         <div class="storage-bar-wrap">
@@ -10824,7 +10821,7 @@ function amShowSuccess() {
                   <span class="cst-icon">✨</span>
                   <span class="cst-body">
                     <span class="cst-label">AI Creator</span>
-                    <span class="cst-desc">Describe any concept or topic and AI generates a full visual animation for it.</span>
+                    <span class="cst-desc">Describe any concept or topic and AI generates a full visual animation along with PPT-like notes for it.</span>
                   </span>
                 </button>
                 <button class="create-submode-tab" id="subTabQanim" onclick="switchMode('question')">
@@ -11026,7 +11023,7 @@ function amShowSuccess() {
             <div class="panel" id="questionPanel">
               <div class="animind-wrap pre-generate" id="questionWrap">
                 <div class="animind-sidebar">
-                  <div class="am-sid-header" style="background:linear-gradient(135deg,#f5f3ff,#fef3c7);">
+                  <div class="am-sid-header" style="background:linear-gradient(135deg,var(--purple-lt),var(--orange-lt));">
                     <h3>❓ Ask Anything</h3>
                     <p>Type any question and let AI build a beautiful animated visual answer.</p>
                   </div>
@@ -12203,7 +12200,7 @@ function amShowSuccess() {
 
     function updateActiveCount() {
       const total = animindLibrary.length + getTotalCOTopics();
-      document.getElementById('activeCount').textContent = total;
+      const ac = document.getElementById('activeCount'); if (ac) ac.textContent = total;
       const sc = document.getElementById('sideActiveCount'); if (sc) sc.textContent = total;
     }
     function getTotalCOTopics() {
