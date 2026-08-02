@@ -10632,10 +10632,6 @@ function amShowSuccess() {
           <span class="nav-item-text">AI Creator</span>
           <span class="nav-item-tag">AI</span>
         </button>
-        <button class="sidebar-nav-item" id="sideLibrary" onclick="switchMode('library')">
-          <div class="nav-icon">&#128218;</div>
-          <span class="nav-item-text">Library</span>
-        </button>
         <button class="sidebar-nav-item" id="sideFile" onclick="switchMode('file')">
           <div class="nav-icon">&#128193;</div>
           <span class="nav-item-text">File</span>
@@ -10903,36 +10899,6 @@ function amShowSuccess() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- LIBRARY PANEL -->
-            <div class="panel" id="libraryPanel">
-              <div class="library-topbar">
-                <div>
-                  <h2 style="font-size:22px;font-weight:800;color:var(--text);">📚 My Library</h2>
-                  <p style="font-size:12px;color:var(--text2);margin-top:4px;">AI animations stored here</p>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                  <!-- Upload Global button: only shown to main user via JS -->
-                  <button class="lib-export-btn" id="uploadGlobalBtn" onclick="uploadGlobalAnimationFlow()"
-                    style="display:none;background:linear-gradient(135deg,#0d9488,#14b8a6);color:#fff;border:none;" title="Upload animation as global (visible to all users)">🌐 Share Globally</button>
-                  <button class="lib-export-btn" onclick="exportLibraryCSV()">📋 Export CSV</button>
-                  <button class="lib-create-btn" onclick="switchMode('animind')">+ Create Animation</button>
-                </div>
-              </div>
-              <div class="upload-progress" id="uploadProgress">
-                <div class="up-label"><span id="upLabel">Saving…</span><span id="upPct">0%</span></div>
-                <div class="up-bar-bg">
-                  <div class="up-bar-fill" id="upFill"></div>
-                </div>
-              </div>
-              <div class="lib-tabs">
-                <button class="lib-tab active" id="tabAll" onclick="setLibTab('all')">All</button>
-                <button class="lib-tab" id="tabAnimations" onclick="setLibTab('animations')">🎬 Animations</button>
-                <button class="lib-tab" id="tabGlobal" onclick="setLibTab('global')">🌐 Global</button>
-              </div>
-              <div class="playlist-filters" id="playlistFilters"></div>
-              <div class="lib-grid" id="libraryGrid"></div>
             </div>
 
             <!-- QUESTION ANIMATION PANEL -->
@@ -12169,7 +12135,7 @@ function amShowSuccess() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); return; } // noop — search removed
       // REMOVED: Ctrl+1 for teacher mode
       if ((e.ctrlKey || e.metaKey) && e.key === '2') switchMode('animind');
-      if ((e.ctrlKey || e.metaKey) && e.key === '3') switchMode('library');
+      // REMOVED: Ctrl+3 for library mode (Library option removed)
       if ((e.ctrlKey || e.metaKey) && e.key === '4') switchMode('file');
     }
     function closeAllModals() {
