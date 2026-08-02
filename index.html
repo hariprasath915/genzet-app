@@ -9821,13 +9821,13 @@ function amShowSuccess() {
 }
 .lessons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
 }
 .lesson-card {
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
   transition: all .28s cubic-bezier(.34,1.56,.64,1);
@@ -9841,40 +9841,40 @@ function amShowSuccess() {
 }
 .lesson-card-thumb {
   width: 100%;
-  aspect-ratio: 16/9;
+  aspect-ratio: 4/3;
   object-fit: cover;
   display: block;
   background: linear-gradient(135deg, var(--blue-lt), var(--indigo-lt));
 }
 .lesson-card-thumb-placeholder {
   width: 100%;
-  aspect-ratio: 16/9;
+  aspect-ratio: 4/3;
   background: linear-gradient(135deg, var(--blue-lt), var(--indigo-lt));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 28px;
 }
 .lesson-card-body {
-  padding: 14px 16px 16px;
+  padding: 10px 12px 12px;
 }
 .lesson-card-title {
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 800;
   color: var(--text);
-  line-height: 1.35;
-  margin-bottom: 8px;
+  line-height: 1.3;
+  margin-bottom: 6px;
   font-family: var(--font-title);
 }
 .lesson-card-modes {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .lesson-mode-chip {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 20px;
   border: 1.5px solid;
   letter-spacing: .02em;
@@ -9885,15 +9885,15 @@ function amShowSuccess() {
 .lmc-realworld { background: #e0faf6; color: #0e9384; border-color: #5fe0cd; }
 .lesson-card-delete {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   background: rgba(239,68,68,.85);
   border: none;
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   display: none;
   align-items: center;
@@ -10627,14 +10627,6 @@ function amShowSuccess() {
       <span class="logo-name">Gen<em>Zet</em></span>
     </div>
     <div class="topbar-right">
-      <div class="storage-badge" id="storageBadge">
-        💾 <span id="storageText">OK</span>
-        <div class="storage-bar-wrap">
-          <div class="storage-bar-fill" id="storageBarFill" style="width:0%"></div>
-        </div>
-      </div>
-      <button onclick="showShortcuts()" class="shortcuts-btn"
-        style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--text2);font-family:'Sora',sans-serif;font-weight:600;transition:all .2s;">⌨️</button>
       <label class="theme-toggle">
         <input type="checkbox" id="themeToggle" onchange="toggleTheme(this)" />
         <div class="theme-track">
@@ -11470,6 +11462,12 @@ function amShowSuccess() {
                       <p id="lessonCount">Loading lessons…</p>
                     </div>
                     <div class="lessons-topbar-right">
+                      <!-- Search box — filters the concept cards below by title -->
+                      <div class="subjects-search-wrap">
+                        <input class="subjects-search" id="lessonsSearchInput" type="text"
+                          placeholder="Search concepts…" oninput="filterLessonsSearch(this.value)" />
+                      </div>
+
                       <!-- Refresh button — force reload from Supabase -->
                       <button class="lessons-upload-btn" id="lessonsRefreshBtn"
                         style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
@@ -16425,6 +16423,15 @@ ${text.substring(0, 4500)}`
       _lessonsLoaded = false;
       await window.initLessonsMode();
       if (btn) { btn.disabled = false; btn.innerHTML = '↻ Refresh'; }
+    };
+
+    // ── Search: filter the Concept Library grid by title as the user types ──
+    window.filterLessonsSearch = function (val) {
+      if (!window.lessonsAPI || typeof window.lessonsAPI.getCache !== 'function') return;
+      const all = window.lessonsAPI.getCache() || [];
+      const q = (val || '').trim().toLowerCase();
+      const filtered = q ? all.filter(l => (l.title || '').toLowerCase().includes(q)) : all;
+      if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
 
 
