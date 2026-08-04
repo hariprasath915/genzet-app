@@ -688,7 +688,7 @@
     _googleLoginInProgress = true;
 
     var origin = window.location.origin;
-    if (!origin || origin === 'null') origin = 'https://genzet-app.vercel.app';
+    if (!origin || origin === 'null') origin = 'https://haezet.com';
     var callbackUrl = origin + '/oauth_callback.html';
     var apiUrl = BACKEND + '/auth/google?redirect_to=' + encodeURIComponent(callbackUrl);
 
