@@ -17175,15 +17175,23 @@ ${text.substring(0, 4500)}`
       if (confirm) { confirm.disabled = true; confirm.textContent = 'Verifying…'; }
       if (errDiv)  errDiv.classList.remove('pk-err-visible');
 
+      // Retrieve JWT — required for authenticated verify (v3)
+      const jwt = window.authToken || localStorage.getItem('haezet_jwt') || '';
+
       try {
+        // Build request headers; include JWT when available so the backend
+        // can check existing grants and enforce one-user-per-passkey.
+        const headers = { 'Content-Type': 'application/json' };
+        if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+
         const res = await fetch(PK_VERIFY_URL, {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body:    JSON.stringify({ passkey }),
         });
 
         if (!res.ok) {
-          // HTTP 400 / 500 from backend
+          // HTTP 400 / 401 / 500 from backend
           let detail = 'Verification failed. Please try again.';
           try { const j = await res.json(); detail = j.detail || detail; } catch(_) {}
           _pkShowError(errDiv, errMsg, detail);
@@ -17195,30 +17203,44 @@ ${text.substring(0, 4500)}`
         const data = await res.json();
 
         if (data.ok) {
-          // Access granted
+          // ── Access granted ─────────────────────────────────────────────
           grantedModes.add('animind'); grantedModes.add('question'); // single passkey covers both
           const overlay = document.getElementById('pk-overlay');
           if (overlay) overlay.classList.remove('pk-visible');
           _pkPendingMode = null;
 
-          // Persist grant in Supabase so user is not re-prompted on next login.
-          // Fire-and-forget: do not block the UI on this request.
-          (async function _persistGrant() {
-            try {
-              const jwt = window.authToken || localStorage.getItem('haezet_jwt');
-              if (!jwt) return;
-              await fetch('/api/auth/passkey/grant', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
-                body:    JSON.stringify({}),
-              });
-            } catch (_) { /* non-critical */ }
-          })();
+          // If the backend already has a grant record for this user (already_granted),
+          // skip the /grant call — the DB row already exists.
+          if (!data.already_granted && jwt) {
+            // Persist grant in Supabase with full user identity + passkey used.
+            // Fire-and-forget: do not block the UI on this request.
+            (async function _persistGrant() {
+              try {
+                await fetch('/api/auth/passkey/grant', {
+                  method:  'POST',
+                  headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': 'Bearer ' + jwt,
+                  },
+                  // v3: passkey must be sent in the grant body so the backend
+                  // can resolve the passkey_id FK and store passkey_used.
+                  body: JSON.stringify({ passkey }),
+                });
+              } catch (_) { /* non-critical */ }
+            })();
+          }
 
           // Now actually switch to the mode (bypasses the guard)
           if (typeof _switchModeOriginal === 'function') {
             _switchModeOriginal(mode);
           }
+
+        } else if (data.detail === 'already_assigned') {
+          // ── Passkey is already claimed by a different user ────────────
+          _pkShowError(errDiv, errMsg, 'This passkey is already in use by another user.');
+          if (confirm) { confirm.disabled = false; confirm.textContent = 'Unlock'; }
+          if (input) { input.value = ''; input.focus(); }
+
         } else {
           // ── Wrong passkey ─────────────────────────────────────────────
           _pkShowError(errDiv, errMsg, 'Incorrect passkey. Please try again.');
