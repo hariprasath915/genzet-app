@@ -801,6 +801,9 @@
       _setSyncStatus('Loading your data…');
       await _syncAll();
       _setSyncStatus('');
+      // Pre-fetch lessons immediately so Library Mode loads instantly
+      // (it is the default panel — no sense waiting for user navigation).
+      _loadLessons().catch(() => {});
 
     } catch (err) {
       console.warn('[AUTH] Backend unreachable:', err.message);
@@ -837,6 +840,8 @@
     _setSyncStatus('Syncing…');
     await _syncAll();
     _setSyncStatus('');
+    // Pre-fetch lessons in background so Library Mode is instant
+    _loadLessons().catch(() => {});
   }
 
 
