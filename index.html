@@ -12376,6 +12376,12 @@ function amShowSuccess() {
       document.addEventListener('keydown', globalKeyHandler);
       // UPDATED: Library Mode (lessons) is default active panel
       switchMode('lessons');
+      // Kick off the lessons fetch immediately so Library Mode content
+      // is ready (or nearly ready) before the user sees the skeleton state.
+      // The _lessonsLoaded guard inside initLessonsMode prevents double-fetch.
+      if (typeof window.initLessonsMode === 'function') {
+        window.initLessonsMode();
+      }
 
       setTimeout(() => {
         document.querySelectorAll('.skeleton-card').forEach(el => el.remove());
