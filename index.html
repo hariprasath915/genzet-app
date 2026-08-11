@@ -10905,7 +10905,7 @@ function amShowSuccess() {
       </div>
       <div class="sidebar-nav-label">Navigation</div>
       <div class="sidebar-nav">
-        <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('animind')">
+        <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('lessons')">
           <div class="nav-icon">&#10024;</div>
           <span class="nav-item-text">Library Mode</span>
           <span class="nav-item-tag">AI</span>
@@ -10920,7 +10920,7 @@ function amShowSuccess() {
           <span class="nav-item-tag">New</span>
         </button>
         <!-- LESSONS tab — always shown to all users -->
-        <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('lessons')">
+        <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('animind')">
           <div class="nav-icon">📚</div>
           <span class="nav-item-text">Creator with AI</span>
           <span class="nav-item-tag" style="background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;border-color:transparent;">Live</span>
@@ -10989,10 +10989,10 @@ function amShowSuccess() {
 
             <!-- REMOVED: TEACHER PANEL (Teacher Mode fully removed) -->
 
-            <!-- ══ LIBRARY MODE — SUB-MODE SWITCHER (AI Creator + QAnim combined) ══ -->
+            <!-- ══ CREATOR WITH AI — SUB-MODE SWITCHER (AI Creator + QAnim combined) ══ -->
             <div class="create-submode-bar show" id="createSubmodeBar">
               <div class="create-submode-intro">
-                <h2 class="create-submode-title">✨ Library Mode</h2>
+                <h2 class="create-submode-title">✨ Creator with AI</h2>
                 <p class="create-submode-sub">Pick how you'd like to create an animation</p>
               </div>
               <div class="create-submode-tabs">
@@ -11645,7 +11645,7 @@ function amShowSuccess() {
                 <div class="lessons-topbar-sticky">
                   <div class="lessons-topbar">
                     <div class="lessons-topbar-left">
-                      <h2>📚 Creator with AI</h2>
+                      <h2>📚 Library Mode</h2>
                       <p id="lessonCount">Loading lessons…</p>
                     </div>
                     <div class="lessons-topbar-right">
@@ -12616,9 +12616,10 @@ function amShowSuccess() {
         if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
       // Sync premium sidebar active state
-      // NOTE: 'question' (QAnim) now lives inside the same "Create with AI"
-      // sidebar entry as 'animind' (AI Creator) — both highlight sideAicreator.
-      const sideMap = { animind: 'sideAicreator', question: 'sideAicreator', library: 'sideLibrary', file: 'sideFile', simulation: 'sideSimulation', lessons: 'sideLessons' };
+      // NOTE: 'question' (QAnim) lives inside the same "Creator with AI"
+      // sidebar entry as 'animind' (AI Creator) — both highlight sideLessons.
+      // 'lessons' mode is now under "Library Mode" — highlights sideAicreator.
+      const sideMap = { animind: 'sideLessons', question: 'sideLessons', library: 'sideLibrary', file: 'sideFile', simulation: 'sideSimulation', lessons: 'sideAicreator' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
 
