@@ -10990,7 +10990,7 @@ function amShowSuccess() {
             <!-- REMOVED: TEACHER PANEL (Teacher Mode fully removed) -->
 
             <!-- ══ CREATOR WITH AI — SUB-MODE SWITCHER (AI Creator + QAnim combined) ══ -->
-            <div class="create-submode-bar show" id="createSubmodeBar">
+            <div class="create-submode-bar" id="createSubmodeBar">
               <div class="create-submode-intro">
                 <h2 class="create-submode-title">✨ Creator with AI</h2>
                 <p class="create-submode-sub">Pick how you'd like to create an animation</p>
@@ -11014,7 +11014,7 @@ function amShowSuccess() {
             </div>
 
             <!-- ANIMIND PANEL — UPDATED: Now the default active panel (Teacher Mode removed) -->
-            <div class="panel active" id="animindPanel">
+            <div class="panel" id="animindPanel">
               <div class="animind-wrap pre-generate" id="animindWrap">
                 <div class="animind-sidebar">
 
@@ -12374,8 +12374,8 @@ function amShowSuccess() {
       ta.addEventListener('input', () => document.getElementById('amCharCount').textContent = ta.value.length + '/500');
       ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateAnimation(); } });
       document.addEventListener('keydown', globalKeyHandler);
-      // UPDATED: Set animind as default active panel (teacher mode removed)
-      switchMode('animind');
+      // UPDATED: Library Mode (lessons) is default active panel
+      switchMode('lessons');
 
       setTimeout(() => {
         document.querySelectorAll('.skeleton-card').forEach(el => el.remove());
