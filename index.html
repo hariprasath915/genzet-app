@@ -10191,6 +10191,40 @@ function amShowSuccess() {
   .lib-ct-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .lib-ct-grid-wrap { padding: 16px; }
 }
+/* ── Inline class switcher (View B topbar) ── */
+.lib-class-switcher {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg2);
+  color: var(--text1);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 8px 36px 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color .18s, box-shadow .18s;
+}
+.lib-class-switcher:hover,
+.lib-class-switcher:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent);
+}
+/* ── Content-type chip on lesson cards ── */
+.lesson-ct-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 /* ── LESSON VIEWER OVERLAY ── */
 .lesson-viewer-overlay { display: none; position: fixed; inset: 0; z-index: 1200; background: var(--bg); flex-direction: column; }
 .lesson-viewer-overlay.open { display: flex; }
@@ -11927,11 +11961,23 @@ function amShowSuccess() {
                   <div class="lessons-topbar-sticky">
                     <div class="lessons-topbar">
                       <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
-                        <button class="lib-back-btn" onclick="backToLibraryClasses()" title="Back to classes">←</button>
+                        <button class="lib-back-btn" onclick="backToLibraryClasses()" title="Back to all classes">←</button>
                         <div>
                           <h2>📚 Library Mode</h2>
                           <p id="lessonCatSubtitle">Choose a subject to explore</p>
                         </div>
+                      </div>
+                      <div class="lessons-topbar-right">
+                        <!-- Inline class switcher so user can switch without going back -->
+                        <select id="libClassSwitcher" class="lib-class-switcher"
+                          onchange="selectLibraryClass(this.value)"
+                          title="Switch class">
+                          <option value="Class 9">🏫 Class 9</option>
+                          <option value="Class 10" selected>🏫 Class 10</option>
+                          <option value="Class 11">🏫 Class 11</option>
+                          <option value="Class 12">🏫 Class 12</option>
+                          <option value="Other">🗂️ Other</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -17097,6 +17143,9 @@ ${text.substring(0, 4500)}`
       const cls = LIB_CLASSES.find(c => c.id === classId);
       // Show VIEW B, hide all others
       _showOnlyView('lessonsCategoryView');
+      // Sync the inline class switcher dropdown
+      const switcher = document.getElementById('libClassSwitcher');
+      if (switcher) switcher.value = classId;
       // Update subtitle breadcrumb
       const sub = document.getElementById('lessonCatSubtitle');
       if (sub) sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${cls ? cls.label : classId}</span> — Choose a subject`;
@@ -17253,35 +17302,39 @@ ${text.substring(0, 4500)}`
 
     // ────────────────────────────────────────────────────
     // INIT — called by switchMode('lessons')
+    // Default landing: Class 10 subjects view (View B).
+    // Users can go back with ← to see all classes.
     // ────────────────────────────────────────────────────
     window.initLessonsMode = async function () {
       // Show admin upload button only for admin
       const adminBtn = document.getElementById('adminUploadBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
 
-      // Always start at the class selector (VIEW A)
-      window.backToLibraryClasses();
+      // Default landing: jump straight to Class 10 → View B
+      window.selectLibraryClass('Class 10');
 
-      if (_lessonsLoaded) { window.renderLibraryClasses(); return; }
+      if (_lessonsLoaded) { window.renderLibraryCategories(); return; }
 
       if (window.lessonsAPI) {
         const result = await window.lessonsAPI.load();
         if (result !== undefined) {
           _lessonsLoaded = true;
+          // Re-apply Class 10 selection so tile counts populate with loaded data
+          window.renderLibraryCategories();
           window.renderLibraryClasses();
           // After first load, subscribe Realtime so new lessons push instantly
           window.lessonsAPI.subscribeRealtime();
           // Safety net: re-sync tile counts a moment later
           setTimeout(function () {
-            if (typeof window.renderLibraryClasses === 'function') window.renderLibraryClasses();
+            if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
           }, 400);
         } else {
-          // Load failed — show error in class grid
-          const classGrid = document.getElementById('libClassGrid');
-          if (classGrid) classGrid.innerHTML = `
+          // Load failed — show error in subject grid
+          const catGrid = document.getElementById('libCategoryGrid');
+          if (catGrid) catGrid.innerHTML = `
             <div class="lessons-empty" style="grid-column:1/-1">
               <div class="lessons-empty-icon">⚠️</div>
-              <h3>Couldn't load lessons</h3>
+              <h3>Couldn't load content</h3>
               <p>Check your connection and try again.</p>
               <button onclick="window.refreshLessons()" style="margin-top:14px;padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">↻ Retry</button>
             </div>`;
