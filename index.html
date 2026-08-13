@@ -9930,6 +9930,97 @@ function amShowSuccess() {
 }
 .lessons-empty h3 { font-size: 18px; font-weight: 800; color: var(--text2); }
 .lessons-empty p  { font-size: 13px; max-width: 340px; line-height: 1.65; }
+
+/* ── LIBRARY MODE: CATEGORY SELECTOR ── */
+.lib-category-grid-wrap { padding: 28px; }
+.lib-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.lib-category-card {
+  --cat-color: #0d9488;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all .28s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: var(--shadow);
+}
+.lib-category-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, var(--cat-color)1a, transparent 65%);
+  opacity: 0;
+  transition: opacity .28s;
+}
+.lib-category-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--cat-color);
+  box-shadow: 0 16px 48px rgba(13,148,136,.18);
+}
+.lib-category-card:hover::before { opacity: 1; }
+.lib-category-card > * { position: relative; z-index: 1; }
+.lib-category-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  background: color-mix(in srgb, var(--cat-color) 16%, transparent);
+  border: 2px solid color-mix(in srgb, var(--cat-color) 40%, transparent);
+}
+.lib-category-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-title);
+}
+.lib-category-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+}
+/* ── Back button on the lessons grid view ── */
+.lib-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.lib-back-btn:hover {
+  background: var(--blue-lt);
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translateX(-2px);
+}
+@media (max-width: 640px) {
+  .lib-category-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+  .lib-category-grid-wrap { padding: 16px; }
+  .lib-category-card { padding: 20px 14px; }
+  .lib-category-icon { width: 52px; height: 52px; font-size: 24px; }
+}
 /* ── LESSON VIEWER OVERLAY ── */
 .lesson-viewer-overlay { display: none; position: fixed; inset: 0; z-index: 1200; background: var(--bg); flex-direction: column; }
 .lesson-viewer-overlay.open { display: flex; }
@@ -11643,55 +11734,86 @@ function amShowSuccess() {
             <div class="panel" id="lessonsPanel">
               <div class="lessons-page">
 
-                <!-- Fixed/sticky header: stays in place while the lesson cards scroll -->
-                <div class="lessons-topbar-sticky">
-                  <div class="lessons-topbar">
-                    <div class="lessons-topbar-left">
-                      <h2>📚 Library Mode</h2>
-                      <p id="lessonCount">Loading lessons…</p>
-                    </div>
-                    <div class="lessons-topbar-right">
-                      <!-- Search box — filters the concept cards below by title -->
-                      <div class="subjects-search-wrap">
-                        <input class="subjects-search" id="lessonsSearchInput" type="text"
-                          placeholder="Search concepts…" oninput="filterLessonsSearch(this.value)" />
+                <!-- ═══ VIEW A: Category selector (default view on entering Library Mode) ═══ -->
+                <div id="lessonsCategoryView">
+                  <div class="lessons-topbar-sticky">
+                    <div class="lessons-topbar">
+                      <div class="lessons-topbar-left">
+                        <h2>📚 Library Mode</h2>
+                        <p id="lessonCatSubtitle">Choose a subject to explore</p>
                       </div>
+                    </div>
+                  </div>
 
-                      <!-- Refresh button — force reload from Supabase -->
-                      <button class="lessons-upload-btn" id="lessonsRefreshBtn"
-                        style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
-                        title="Reload lessons from server"
-                        onclick="window.refreshLessons()">
-                        ↻ Refresh
-                      </button>
-
-                      <!-- Admin-only upload button (shown by JS after login) -->
-                      <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Upload Lesson
-                      </button>
+                  <div class="lib-category-grid-wrap">
+                    <div class="lib-category-grid" id="libCategoryGrid">
+                      <!-- Skeleton category tiles shown while loading -->
+                      <div class="lib-category-card" style="pointer-events:none;opacity:.5;--cat-color:#94a3b8;">
+                        <div class="lib-category-icon">📚</div>
+                        <div class="lib-category-name">Loading…</div>
+                        <div class="lib-category-count">&nbsp;</div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Grid -->
-                <div class="lessons-grid-wrap">
-                  <div class="lessons-grid" id="lessonsGrid">
-                    <!-- Skeleton loaders shown while loading -->
-                    <div class="lesson-card" style="pointer-events:none;opacity:.5">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></div>
-                    </div>
-                    <div class="lesson-card" style="pointer-events:none;opacity:.3">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:55%;"></div></div>
-                    </div>
-                    <div class="lesson-card" style="pointer-events:none;opacity:.15">
-                      <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
-                      <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:40%;"></div></div>
+                <!-- ═══ VIEW B: Lessons grid for the selected category ═══ -->
+                <div id="lessonsGridView" style="display:none;">
+
+                  <!-- Fixed/sticky header: stays in place while the lesson cards scroll -->
+                  <div class="lessons-topbar-sticky">
+                    <div class="lessons-topbar">
+                      <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
+                        <button class="lib-back-btn" onclick="backToLibraryCategories()" title="Back to subjects">←</button>
+                        <div>
+                          <h2 id="lessonsGridTitle">📚 Library Mode</h2>
+                          <p id="lessonCount">Loading lessons…</p>
+                        </div>
+                      </div>
+                      <div class="lessons-topbar-right">
+                        <!-- Search box — filters the concept cards below by title -->
+                        <div class="subjects-search-wrap">
+                          <input class="subjects-search" id="lessonsSearchInput" type="text"
+                            placeholder="Search concepts…" oninput="filterLessonsSearch(this.value)" />
+                        </div>
+
+                        <!-- Refresh button — force reload from Supabase -->
+                        <button class="lessons-upload-btn" id="lessonsRefreshBtn"
+                          style="background:var(--bg2);color:var(--text2);border-color:var(--border2);gap:6px;"
+                          title="Reload lessons from server"
+                          onclick="window.refreshLessons()">
+                          ↻ Refresh
+                        </button>
+
+                        <!-- Admin-only upload button (shown by JS after login) -->
+                        <button class="lessons-upload-btn" id="adminUploadBtn" style="display:none" onclick="openAdminUpload()">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          Upload Lesson
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  <!-- Grid -->
+                  <div class="lessons-grid-wrap">
+                    <div class="lessons-grid" id="lessonsGrid">
+                      <!-- Skeleton loaders shown while loading -->
+                      <div class="lesson-card" style="pointer-events:none;opacity:.5">
+                        <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+                        <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></div>
+                      </div>
+                      <div class="lesson-card" style="pointer-events:none;opacity:.3">
+                        <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+                        <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:80%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:55%;"></div></div>
+                      </div>
+                      <div class="lesson-card" style="pointer-events:none;opacity:.15">
+                        <div class="lesson-card-thumb-placeholder"><span style="opacity:.3">📚</span></div>
+                        <div class="lesson-card-body"><div class="skeleton" style="height:16px;width:60%;margin-bottom:8px;"></div><div class="skeleton" style="height:10px;width:40%;"></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div><!-- end lessonsGridView -->
+
               </div>
             </div><!-- end lessonsPanel -->
 
@@ -12102,6 +12224,17 @@ function amShowSuccess() {
         <div class="aup-field">
           <label class="aup-label">Lesson Title *</label>
           <input type="text" class="aup-input" id="aupTitle" placeholder="e.g. Photosynthesis Process" maxlength="150" />
+        </div>
+
+        <!-- Category -->
+        <div class="aup-field">
+          <label class="aup-label">Category</label>
+          <select class="aup-input" id="aupCategory">
+            <option value="science">🔬 Science</option>
+            <option value="social">🌍 Social Science</option>
+            <option value="maths">📐 Maths</option>
+            <option value="other">🗂️ Others</option>
+          </select>
         </div>
 
         <!-- File uploads -->
@@ -16579,6 +16712,91 @@ ${text.substring(0, 4500)}`
     let _lessonsLoaded = false;
 
     // ────────────────────────────────────────────────────
+    // LIBRARY MODE — top-level category selector
+    // Lessons are grouped into Science / Social Science / Maths / Others.
+    // A lesson can carry an explicit `category` field (set at upload time
+    // via the admin form); if it doesn't have one (e.g. older lessons),
+    // we fall back to guessing from keywords in the title.
+    // ────────────────────────────────────────────────────
+    const LIB_CATEGORIES = [
+      { id: 'science', label: 'Science', icon: '🔬', color: '#0ea5e9',
+        keywords: ['physic','chemistr','biolog','newton','law of','photosynthes','atom','molecul','gravit',
+          'energy','force','electric','magnet','cell','organism','chemical','reaction','gas','motion','wave',
+          'light','sound','heat','thermodynam','ohm','current','voltage','dna','evolution','ecosystem',
+          'microscope','joule','momentum','avogadro','ideal gas','conservation of'] },
+      { id: 'social', label: 'Social Science', icon: '🌍', color: '#f59e0b',
+        keywords: ['histor','geograph','civics','economic','polity','constitution','democra','culture','societ',
+          'government','trade','war','revolution','empire','map','climate','population','resource','rights',
+          'independence','freedom','nationalis'] },
+      { id: 'maths', label: 'Maths', icon: '📐', color: '#8b5cf6',
+        keywords: ['algebra','geometr','calculus','theorem','equation','trigonometr','probabilit','statistic',
+          'fraction','number','integer','matrix','function','derivative','integral','pythagor'] },
+      { id: 'other', label: 'Others', icon: '🗂️', color: '#64748b', keywords: [] }
+    ];
+    let _libActiveCategory = null;   // currently selected category id, or null when on the selector screen
+
+    function classifyLesson(lesson) {
+      // Prefer an explicit category set at upload time
+      if (lesson && lesson.category) {
+        const c = String(lesson.category).toLowerCase().trim();
+        const match = LIB_CATEGORIES.find(cat => cat.id === c || cat.label.toLowerCase() === c);
+        if (match) return match.id;
+      }
+      // Fall back to keyword-matching the title
+      const t = ((lesson && lesson.title) || '').toLowerCase();
+      for (const cat of LIB_CATEGORIES) {
+        if (cat.id === 'other') continue;
+        if (cat.keywords.some(k => t.includes(k))) return cat.id;
+      }
+      return 'other';
+    }
+
+    // Render the top-level "choose a subject" tiles with live counts
+    window.renderLibraryCategories = function () {
+      const wrap = document.getElementById('libCategoryGrid');
+      if (!wrap) return;
+      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      wrap.innerHTML = LIB_CATEGORIES.map(cat => {
+        const count = all.filter(l => classifyLesson(l) === cat.id).length;
+        return `
+          <div class="lib-category-card" style="--cat-color:${cat.color};" onclick="selectLibraryCategory('${cat.id}')">
+            <div class="lib-category-icon">${cat.icon}</div>
+            <div class="lib-category-name">${cat.label}</div>
+            <div class="lib-category-count">${count} lesson${count !== 1 ? 's' : ''}</div>
+          </div>`;
+      }).join('');
+    };
+
+    // User picked a category tile — show the filtered lesson grid
+    window.selectLibraryCategory = function (catId) {
+      _libActiveCategory = catId;
+      const cat = LIB_CATEGORIES.find(c => c.id === catId);
+      const catView  = document.getElementById('lessonsCategoryView');
+      const gridView = document.getElementById('lessonsGridView');
+      if (catView)  catView.style.display  = 'none';
+      if (gridView) gridView.style.display = 'block';
+      const titleEl = document.getElementById('lessonsGridTitle');
+      if (titleEl) titleEl.textContent = cat ? `${cat.icon} ${cat.label}` : '📚 Library Mode';
+      const searchInput = document.getElementById('lessonsSearchInput');
+      if (searchInput) searchInput.value = '';
+      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      const filtered = all.filter(l => classifyLesson(l) === catId);
+      if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
+    };
+
+    // Back arrow on the grid view — return to the category tiles
+    window.backToLibraryCategories = function () {
+      _libActiveCategory = null;
+      const catView  = document.getElementById('lessonsCategoryView');
+      const gridView = document.getElementById('lessonsGridView');
+      if (gridView) gridView.style.display = 'none';
+      if (catView)  catView.style.display  = 'block';
+      window.renderLibraryCategories();
+    };
+
+    // ────────────────────────────────────────────────────
     // INIT — called by switchMode('lessons')
     // ────────────────────────────────────────────────────
     window.initLessonsMode = async function () {
@@ -16586,7 +16804,10 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('adminUploadBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
 
-      if (_lessonsLoaded) return; // already fetched successfully — skip
+      // Always show the category selector screen first when entering Library Mode
+      window.backToLibraryCategories();
+
+      if (_lessonsLoaded) { window.renderLibraryCategories(); return; } // already fetched — just refresh counts
 
       if (window.lessonsAPI) {
         const result = await window.lessonsAPI.load();
@@ -16594,20 +16815,21 @@ ${text.substring(0, 4500)}`
         // If result is undefined/null it means the _api call returned {ok:false}
         if (result !== undefined) {
           _lessonsLoaded = true;
+          window.renderLibraryCategories();
           // After first load, subscribe Realtime so new lessons push instantly
           window.lessonsAPI.subscribeRealtime();
         } else {
-          // Load failed — show error state and let user retry
-          const grid = document.getElementById('lessonsGrid');
-          if (grid) grid.innerHTML = `
+          // Load failed — show error state (on the category screen) and let user retry
+          const catGrid = document.getElementById('libCategoryGrid');
+          if (catGrid) catGrid.innerHTML = `
             <div class="lessons-empty" style="grid-column:1/-1">
               <div class="lessons-empty-icon">⚠️</div>
               <h3>Couldn't load lessons</h3>
               <p>Check your connection and try again.</p>
               <button onclick="window.refreshLessons()" style="margin-top:14px;padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">↻ Retry</button>
             </div>`;
-          const count = document.getElementById('lessonCount');
-          if (count) count.textContent = 'Failed to load';
+          const catSub = document.getElementById('lessonCatSubtitle');
+          if (catSub) catSub.textContent = 'Failed to load';
         }
       }
     };
@@ -16625,8 +16847,10 @@ ${text.substring(0, 4500)}`
     window.filterLessonsSearch = function (val) {
       if (!window.lessonsAPI || typeof window.lessonsAPI.getCache !== 'function') return;
       const all = window.lessonsAPI.getCache() || [];
+      // Scope the search to whichever category tile the user picked
+      const scoped = _libActiveCategory ? all.filter(l => classifyLesson(l) === _libActiveCategory) : all;
       const q = (val || '').trim().toLowerCase();
-      const filtered = q ? all.filter(l => (l.title || '').toLowerCase().includes(q)) : all;
+      const filtered = q ? scoped.filter(l => (l.title || '').toLowerCase().includes(q)) : scoped;
       if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
 
@@ -16921,6 +17145,7 @@ ${text.substring(0, 4500)}`
       if (!isAdmin()) return;
       // Reset form
       document.getElementById('aupTitle').value = '';
+      const aupCatEl = document.getElementById('aupCategory'); if (aupCatEl) aupCatEl.value = 'science';
       _aupFiles = { thumb: null, anim: null, html: null };
       _aupRwFiles = [];
       ['aupThumbBox','aupAnimBox','aupHtmlBox'].forEach(id => document.getElementById(id)?.classList.remove('has-file'));
@@ -17023,8 +17248,10 @@ ${text.substring(0, 4500)}`
 
       // Save lesson row
       if (prog) prog.textContent = 'Saving lesson…';
+      const category = (document.getElementById('aupCategory')?.value || 'other');
       const r = await window.lessonsAPI.createLesson({
         title,
+        category,
         ...urls,
         realworld_images: rwUrls,
       });
