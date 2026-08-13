@@ -16720,10 +16720,43 @@ ${text.substring(0, 4500)}`
     // ────────────────────────────────────────────────────
     const LIB_CATEGORIES = [
       { id: 'science', label: 'Science', icon: '🔬', color: '#0ea5e9',
-        keywords: ['physic','chemistr','biolog','newton','law of','photosynthes','atom','molecul','gravit',
-          'energy','force','electric','magnet','cell','organism','chemical','reaction','gas','motion','wave',
-          'light','sound','heat','thermodynam','ohm','current','voltage','dna','evolution','ecosystem',
-          'microscope','joule','momentum','avogadro','ideal gas','conservation of'] },
+        keywords: [
+          // General
+          'physic','chemistr','biolog','science','experiment',
+          // Physics — mechanics, forces, motion
+          'newton','law of','momentum','gravit','motion','mechanic','pressure','pascal','buoyan','archimedes',
+          'friction','inertia','projectile','rotation','equilibrium','elasticity','fluid','propulsion','rocket',
+          'satellite','orbit','planet','solar system','universe','cosmolog','relativ','kepler',
+          // Physics — energy, heat, waves
+          'energy','work','power','heat','temperature','thermodynam','calorimetry','boiling','melting','freezing',
+          'evaporation','condensation','expansion','thermal','boyle','charles','kinetic theory','ideal gas',
+          'conservation of','wave','sound','doppler','vibration','resonance','oscillat',
+          // Physics — light & optics
+          'light','optic','reflection','refraction','lens','mirror','prism','dispersion','eye','vision',
+          'hypermetropia','myopia','presbyopia','astigmatism','refractive','snell','laser','fiber optic',
+          'convex','concave','spectrum',
+          // Physics — electricity & magnetism
+          'electric','current','circuit','resistance','resistor','potential','voltage','capacitor','capacitance',
+          'magnet','induction','motor','generator','transformer','semiconductor','diode','transistor','ohm',
+          'fleming','joule','coulomb','faraday',
+          // Physics — atomic & nuclear
+          'radioactiv','radiation','nuclear','isotope','atom','atomic','particle','proton','neutron','electron',
+          'quantum','modern atomic',
+          // Chemistry
+          'element','compound','mixture','periodic table','valency','molecul','chemical','reaction','ionic',
+          'covalent','acid','base','alkali','salt','ph scale','neutralization','oxidation','reduction','redox',
+          'corrosion','rusting','catalyst','crystal','metallurg','smelting','ore','alloy','polymer','organic',
+          'hydrocarbon','combustion','electrolysis','electroplating','distillation','chromatography','titration',
+          'solution','solubility','concentration','molarity','mole concept','stoichiometry','avogadro','fermentation',
+          // Biology
+          'cell','tissue','organ','organism','photosynthes','respirat','digest','excretion','circulation',
+          'nervous system','reflex','stimulus','response','hormone','gland','endocrine','reproduction','genetic',
+          'heredity','chromosome','dna','rna','gene','evolution','natural selection','adaptation','ecosystem',
+          'food chain','food web','biodivers','classification','taxonomy','kingdom','virus','bacteria','fungi',
+          'skeleton','muscle','bone','joint','blood','heart','lung','kidney','liver','brain','skin',
+          'sense organ','microscope','vaccination','immunity','disease','pathogen','nutrition','vitamin',
+          'mineral','protein','carbohydrate','enzyme'
+        ] },
       { id: 'social', label: 'Social Science', icon: '🌍', color: '#f59e0b',
         keywords: ['histor','geograph','civics','economic','polity','constitution','democra','culture','societ',
           'government','trade','war','revolution','empire','map','climate','population','resource','rights',
@@ -16735,6 +16768,11 @@ ${text.substring(0, 4500)}`
     ];
     let _libActiveCategory = null;   // currently selected category id, or null when on the selector screen
 
+    // Named-law titles like "Snell's Law" / "Fleming's Hand Rule" are almost
+    // always Physics/Chemistry in this app's curriculum, so we catch that
+    // possessive pattern generically in addition to the keyword list above.
+    const SCIENCE_LAW_PATTERN = /'s\s+(law|rule|principle|theory)\b/i;
+
     function classifyLesson(lesson) {
       // Prefer an explicit category set at upload time
       if (lesson && lesson.category) {
@@ -16743,11 +16781,15 @@ ${text.substring(0, 4500)}`
         if (match) return match.id;
       }
       // Fall back to keyword-matching the title
-      const t = ((lesson && lesson.title) || '').toLowerCase();
+      const rawTitle = (lesson && lesson.title) || '';
+      const t = rawTitle.toLowerCase();
       for (const cat of LIB_CATEGORIES) {
         if (cat.id === 'other') continue;
         if (cat.keywords.some(k => t.includes(k))) return cat.id;
       }
+      // "X's Law / Rule / Principle / Theory" titles that didn't match a
+      // specific keyword above are still almost always Science in this app.
+      if (SCIENCE_LAW_PATTERN.test(rawTitle)) return 'science';
       return 'other';
     }
 
@@ -16818,6 +16860,11 @@ ${text.substring(0, 4500)}`
           window.renderLibraryCategories();
           // After first load, subscribe Realtime so new lessons push instantly
           window.lessonsAPI.subscribeRealtime();
+          // Safety net: re-sync tile counts a moment later in case the
+          // cache finishes populating slightly after load() resolves.
+          setTimeout(function () {
+            if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
+          }, 400);
         } else {
           // Load failed — show error state (on the category screen) and let user retry
           const catGrid = document.getElementById('libCategoryGrid');
@@ -16856,7 +16903,7 @@ ${text.substring(0, 4500)}`
 
 
     // ────────────────────────────────────────────────────
-    window.renderLessonsGrid = function (lessons) {
+    function _renderLessonsGridInternal(lessons) {
       const grid  = document.getElementById('lessonsGrid');
       const count = document.getElementById('lessonCount');
       if (!grid) return;
@@ -16901,6 +16948,15 @@ ${text.substring(0, 4500)}`
             ${deleteBtn}
           </div>`;
       }).join('');
+    }
+
+    // Public entry point — always re-syncs the Library Mode category tile
+    // counts whenever the grid is (re)rendered, no matter which code path
+    // triggered it (initial backend load, search filter, category select,
+    // or a realtime push of a newly-added lesson).
+    window.renderLessonsGrid = function (lessons) {
+      _renderLessonsGridInternal(lessons);
+      if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
     };
 
     // ────────────────────────────────────────────────────
