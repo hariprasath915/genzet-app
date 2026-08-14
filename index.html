@@ -12092,12 +12092,23 @@ function amShowSuccess() {
                   <div class="lessons-topbar-sticky">
                     <div class="lessons-topbar">
                       <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
+                        <button class="lib-back-btn" onclick="backToLibraryClasses()" title="Back to all classes">←</button>
                         <div>
                           <h2>📚 Library Mode</h2>
                           <p id="lessonCatSubtitle">Choose a subject to explore</p>
                         </div>
                       </div>
                       <div class="lessons-topbar-right">
+                        <!-- Inline class switcher so user can switch without going back -->
+                        <select id="libClassSwitcher" class="lib-class-switcher"
+                          onchange="selectLibraryClass(this.value)"
+                          title="Switch class">
+                          <option value="Class 9">🏫 Class 9</option>
+                          <option value="Class 10" selected>🏫 Class 10</option>
+                          <option value="Class 11">🏫 Class 11</option>
+                          <option value="Class 12">🏫 Class 12</option>
+                          <option value="Other">🗂️ Other</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -12597,8 +12608,17 @@ function amShowSuccess() {
           <input type="text" class="aup-input" id="aupTitle" placeholder="e.g. Photosynthesis Process" maxlength="150" />
         </div>
 
-        <!-- Class field hidden — class selection removed -->
-        <input type="hidden" id="aupClass" value="Other" />
+        <!-- Class -->
+        <div class="aup-field">
+          <label class="aup-label">Class *</label>
+          <select class="aup-input" id="aupClass">
+            <option value="Class 9">🏫 Class 9</option>
+            <option value="Class 10" selected>🏫 Class 10</option>
+            <option value="Class 11">🏫 Class 11</option>
+            <option value="Class 12">🏫 Class 12</option>
+            <option value="Other">🗂️ Other</option>
+          </select>
+        </div>
 
         <!-- Subject -->
         <div class="aup-field">
@@ -12606,6 +12626,8 @@ function amShowSuccess() {
           <select class="aup-input" id="aupCategory">
             <option value="science">🔬 Science</option>
             <option value="social">🌍 Social Science</option>
+            <option value="maths">📐 Maths</option>
+            <option value="other">🗂️ Others</option>
           </select>
         </div>
 
@@ -17144,11 +17166,19 @@ ${text.substring(0, 4500)}`
         keywords: ['histor','geograph','civics','economic','polity','constitution','democra','culture','societ',
           'government','trade','war','revolution','empire','map','climate','population','resource','rights',
           'independence','freedom','nationalis'] },
+      { id: 'maths', label: 'Maths', icon: '📐', color: '#8b5cf6',
+        keywords: ['algebra','geometr','calculus','theorem','equation','trigonometr','probabilit','statistic',
+          'fraction','number','integer','matrix','function','derivative','integral','pythagor'] },
+      { id: 'other', label: 'Others', icon: '🗂️', color: '#64748b', keywords: [] }
     ];
 
-    // ── Class list — class selection removed; single catch-all entry ──
+    // ── Class list — extensible for future classes ──
     const LIB_CLASSES = [
-      { id: 'Other', label: 'Library', icon: '📚', color: '#0ea5e9', num: '?' },
+      { id: 'Class 9',  label: 'Class 9',  icon: '🏫', color: '#0ea5e9', num: '9'  },
+      { id: 'Class 10', label: 'Class 10', icon: '🏫', color: '#8b5cf6', num: '10' },
+      { id: 'Class 11', label: 'Class 11', icon: '🏫', color: '#0d9488', num: '11' },
+      { id: 'Class 12', label: 'Class 12', icon: '🏫', color: '#f59e0b', num: '12' },
+      { id: 'Other',    label: 'Other',    icon: '🗂️', color: '#64748b', num: '?'  },
     ];
     let _libActiveClass       = null;  // selected class id
     let _libActiveCategory    = null;  // selected subject id
@@ -17249,7 +17279,7 @@ ${text.substring(0, 4500)}`
       if (switcher) switcher.value = classId;
       // Update subtitle breadcrumb
       const sub = document.getElementById('lessonCatSubtitle');
-      if (sub) sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library</span> — Choose a subject`;
+      if (sub) sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${cls ? cls.label : classId}</span> — Choose a subject`;
       // Render subject tiles filtered to this class
       window.renderLibraryCategories();
     };
@@ -17288,8 +17318,9 @@ ${text.substring(0, 4500)}`
       const cat = LIB_CATEGORIES.find(c => c.id === catId);
       const sub = document.getElementById('lessonCtSubtitle');
       if (sub) {
+        const clsLabel = cls ? cls.label : (_libActiveClass || '');
         const catLabel = cat ? `${cat.icon} ${cat.label}` : catId;
-        sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${catLabel}</span> — Choose content type`;
+        sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${clsLabel} → ${catLabel}</span> — Choose content type`;
       }
       window.renderLibraryContentTypes();
     };
@@ -17341,9 +17372,10 @@ ${text.substring(0, 4500)}`
       // Update breadcrumb title in VIEW C header
       const titleEl = document.getElementById('lessonsGridTitle');
       if (titleEl) {
+        const clsLabel = cls ? cls.label : (_libActiveClass || '');
         const catLabel = cat ? `${cat.icon} ${cat.label}` : '';
         const ctLabel  = ct  ? `${ct.icon} ${ct.label}` : '📚 Library';
-        titleEl.textContent = [ctLabel, catLabel].filter(Boolean).join(' · ');
+        titleEl.textContent = [ctLabel, catLabel, clsLabel].filter(Boolean).join(' · ');
       }
       const searchInput = document.getElementById('lessonsSearchInput');
       if (searchInput) searchInput.value = '';
@@ -17409,8 +17441,8 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('adminUploadBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
 
-      // Go straight to subjects view (class selection removed)
-      window.selectLibraryClass('Other');
+      // Default landing: jump straight to Class 10 → View B
+      window.selectLibraryClass('Class 10');
 
       if (_lessonsLoaded) { window.renderLibraryCategories(); return; }
 
@@ -17418,7 +17450,7 @@ ${text.substring(0, 4500)}`
         const result = await window.lessonsAPI.load();
         if (result !== undefined) {
           _lessonsLoaded = true;
-          // Re-apply subject selection so tile counts populate with loaded data
+          // Re-apply Class 10 selection so tile counts populate with loaded data
           window.renderLibraryCategories();
           window.renderLibraryClasses();
           // After first load, subscribe Realtime so new lessons push instantly
@@ -17503,7 +17535,8 @@ ${text.substring(0, 4500)}`
           ? `<button class="lesson-card-delete" title="Delete lesson" onclick="event.stopPropagation();deleteLessonCard('${lesson.id}', this)">✕</button>`
           : '';
         // Class + subject chips for the card header
-        const classChip   = ''; // class chips removed
+        const classChip   = getLessonClass(lesson) && getLessonClass(lesson) !== 'Other'
+          ? `<span class="lesson-class-chip">🏫 ${getLessonClass(lesson)}</span>` : '';
         const subjectCat  = LIB_CATEGORIES.find(c => c.id === classifyLesson(lesson));
         const subjectChip = subjectCat && subjectCat.id !== 'other'
           ? `<span class="lesson-mode-chip" style="background:color-mix(in srgb,${subjectCat.color} 14%,transparent);color:${subjectCat.color};border-color:color-mix(in srgb,${subjectCat.color} 28%,transparent);">${subjectCat.icon} ${subjectCat.label}</span>` : '';
@@ -17587,7 +17620,8 @@ ${text.substring(0, 4500)}`
       const metaEl = document.getElementById('lvDetailMeta');
       if (metaEl) {
         const clsName    = getLessonClass(lesson);
-        const clsChip    = ''; // class chips removed
+        const clsChip    = clsName && clsName !== 'Other'
+          ? `<span class="lesson-class-chip">\ud83c\udfeb ${clsName}</span>` : '';
         const subjCat    = LIB_CATEGORIES.find(c => c.id === classifyLesson(lesson));
         const subjChip   = subjCat && subjCat.id !== 'other'
           ? `<span class="lesson-mode-chip" style="background:color-mix(in srgb,${subjCat.color} 14%,transparent);color:${subjCat.color};border-color:color-mix(in srgb,${subjCat.color} 28%,transparent);">${subjCat.icon} ${subjCat.label}</span>` : '';
@@ -17807,7 +17841,7 @@ ${text.substring(0, 4500)}`
       document.getElementById('aupTitle').value = '';
       // Pre-select the class + subject + content type the admin is currently browsing (smart default)
       const aupClsEl = document.getElementById('aupClass');
-      if (aupClsEl) aupClsEl.value = 'Other';
+      if (aupClsEl) aupClsEl.value = _libActiveClass || 'Class 10';
       const aupCatEl = document.getElementById('aupCategory');
       if (aupCatEl) aupCatEl.value = _libActiveCategory || 'science';
       const aupCtEl  = document.getElementById('aupContentType');
