@@ -7009,26 +7009,6 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
       display: block;
     }
 
-
-    /* Subject sub-tabs (for AI mode only) */
-    .sim-mode-tabs {
-      display: flex; gap: 0; padding: 10px 16px 0;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      flex-shrink: 0; overflow-x: auto;
-    }
-    .sim-mode-tab {
-      display: flex; align-items: center; gap: 7px;
-      padding: 8px 16px; background: none; border: none;
-      border-bottom: 2.5px solid transparent;
-      color: var(--text3); font-family: 'Sora', sans-serif;
-      font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: all .2s; white-space: nowrap; margin-bottom: -1px;
-    }
-    .sim-mode-tab:hover { color: var(--text); background: var(--blue-lt); border-radius: 8px 8px 0 0; }
-    .sim-mode-tab.active { color: #0d9488; border-bottom-color: #0d9488; font-weight: 700; }
-    .sim-tab-icon { font-size: 14px; }
-
     /* Shared preview panel (used by all 3 tabs) */
     .sim-preview-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -11202,11 +11182,6 @@ function amShowSuccess() {
           <div class="nav-icon">&#128193;</div>
           <span class="nav-item-text">File</span>
         </button>
-        <button class="sidebar-nav-item" id="sideSimulation" onclick="switchMode('simulation')">
-          <div class="nav-icon">&#9881;&#65039;</div>
-          <span class="nav-item-text">Simulation</span>
-          <span class="nav-item-tag">New</span>
-        </button>
         <!-- LESSONS tab — always shown to all users -->
         <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('animind')">
           <div class="nav-icon">📚</div>
@@ -11293,6 +11268,13 @@ function amShowSuccess() {
                   <span class="cst-body">
                     <span class="cst-label">QAnim</span>
                     <span class="cst-desc">Ask any question and AI builds a step-by-step animated answer that breaks it down.</span>
+                  </span>
+                </button>
+                <button class="create-submode-tab" id="subTabSimulation" onclick="switchMode('simulation')">
+                  <span class="cst-icon">⚡</span>
+                  <span class="cst-body">
+                    <span class="cst-label">Simulation <span style="display:inline-block;font-size:10px;font-weight:700;background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:middle;">New</span></span>
+                    <span class="cst-desc">Describe any concept and let AI generate an interactive simulation you can control in real time.</span>
                   </span>
                 </button>
               </div>
@@ -11599,32 +11581,19 @@ function amShowSuccess() {
             <!-- SIMULATION PANEL -->
             <div class="panel" id="simulationPanel" style="flex-direction:column;height:calc(100vh - var(--topbar-h) - 48px);overflow:hidden;">
 
-              <!-- ── Topics Simulations / Experiments tabs removed —
-                   Create with AI is now the only mode in this panel. ── -->
+              <!-- ── Topics Simulations / Experiments tabs removed, and the
+                   Physics/Chemistry/Mathematics/Biology subject sub-tabs
+                   removed too — Simulation is now a single, generic AI
+                   generator with no mode switcher. ── -->
 
-              <!-- ── Create with AI ──────────────────────────── -->
+              <!-- ── Simulation (formerly "Create with AI") ──────────── -->
               <div class="sim-tab-panel active" id="simPanel-ai">
-                <!-- Subject sub-tabs -->
-                <div class="sim-mode-tabs">
-                  <button class="sim-mode-tab active" data-sim-mode="physics" onclick="simSetMode('physics')">
-                    <span class="sim-tab-icon">⚛️</span> Physics
-                  </button>
-                  <button class="sim-mode-tab" data-sim-mode="chemistry" onclick="simSetMode('chemistry')">
-                    <span class="sim-tab-icon">🧪</span> Chemistry
-                  </button>
-                  <button class="sim-mode-tab" data-sim-mode="math" onclick="simSetMode('math')">
-                    <span class="sim-tab-icon">📐</span> Mathematics
-                  </button>
-                  <button class="sim-mode-tab" data-sim-mode="biology" onclick="simSetMode('biology')">
-                    <span class="sim-tab-icon">🔬</span> Biology
-                  </button>
-                </div>
 
                 <div class="sim-ai-layout pre-generate" id="simAiLayout">
                   <!-- Left sidebar: input -->
                   <div class="sim-ai-sidebar">
                     <div class="sim-hero-header">
-                      <h3>⚡ Create with AI</h3>
+                      <h3>⚡ Simulation</h3>
                       <p>Describe any concept and let AI generate an interactive simulation.</p>
                     </div>
                     <div class="sim-input-card">
@@ -12897,18 +12866,20 @@ function amShowSuccess() {
       // NOTE: 'question' (QAnim) lives inside the same "Creator with AI"
       // sidebar entry as 'animind' (AI Creator) — both highlight sideLessons.
       // 'lessons' mode is now under "Library Mode" — highlights sideAicreator.
-      const sideMap = { animind: 'sideLessons', question: 'sideLessons', library: 'sideLibrary', file: 'sideFile', simulation: 'sideSimulation', lessons: 'sideAicreator' };
+      const sideMap = { animind: 'sideLessons', question: 'sideLessons', library: 'sideLibrary', file: 'sideFile', simulation: 'sideLessons', lessons: 'sideAicreator' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
 
       // Sync the "Create with AI" sub-mode switcher bar (shown above
-      // both the AI Creator and QAnim panels, hidden for everything else)
+      // AI Creator, QAnim, and Simulation panels, hidden for everything else)
       const createBar = document.getElementById('createSubmodeBar');
-      if (createBar) createBar.classList.toggle('show', mode === 'animind' || mode === 'question');
+      if (createBar) createBar.classList.toggle('show', mode === 'animind' || mode === 'question' || mode === 'simulation');
       const subTabAnimind = document.getElementById('subTabAnimind');
       const subTabQanim = document.getElementById('subTabQanim');
+      const subTabSimulation = document.getElementById('subTabSimulation');
       if (subTabAnimind) subTabAnimind.classList.toggle('active', mode === 'animind');
       if (subTabQanim) subTabQanim.classList.toggle('active', mode === 'question');
+      if (subTabSimulation) subTabSimulation.classList.toggle('active', mode === 'simulation');
       // REMOVED: teacher mode handler
       if (mode === 'library') renderLibrary();
       if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
@@ -12970,24 +12941,6 @@ function amShowSuccess() {
       if (simInitDone) return;
       simInitDone = true;
       simRenderExamples();
-    }
-
-    // ── Subject mode (for AI tab) ───────────────────────────────────────
-    function simSetMode(mode) {
-      simCurrentMode = mode;
-      document.querySelectorAll('.sim-mode-tab').forEach(function(t) {
-        t.classList.toggle('active', t.dataset.simMode === mode);
-      });
-      simRenderExamples();
-
-      var placeholders = {
-        physics: 'e.g. Projectile motion with adjustable angle and initial velocity…',
-        chemistry: 'e.g. Titration curve with HCl and NaOH…',
-        math: 'e.g. Derivative visualizer showing tangent line on any function…',
-        biology: 'e.g. Enzyme kinetics — Michaelis-Menten curve with substrate concentration…'
-      };
-      var ta = document.getElementById('simPrompt');
-      if (ta) ta.placeholder = placeholders[mode] || '';
     }
 
     function simRenderExamples() {
