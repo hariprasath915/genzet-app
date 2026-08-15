@@ -12626,8 +12626,6 @@ function amShowSuccess() {
           <select class="aup-input" id="aupCategory">
             <option value="science">🔬 Science</option>
             <option value="social">🌍 Social Science</option>
-            <option value="maths">📐 Maths</option>
-            <option value="other">🗂️ Others</option>
           </select>
         </div>
 
@@ -17118,7 +17116,7 @@ ${text.substring(0, 4500)}`
 
     // ────────────────────────────────────────────────────
     // LIBRARY MODE — top-level category selector
-    // Lessons are grouped into Science / Social Science / Maths / Others.
+    // Lessons are grouped into Science / Social Science.
     // A lesson can carry an explicit `category` field (set at upload time
     // via the admin form); if it doesn't have one (e.g. older lessons),
     // we fall back to guessing from keywords in the title.
@@ -17166,10 +17164,7 @@ ${text.substring(0, 4500)}`
         keywords: ['histor','geograph','civics','economic','polity','constitution','democra','culture','societ',
           'government','trade','war','revolution','empire','map','climate','population','resource','rights',
           'independence','freedom','nationalis'] },
-      { id: 'maths', label: 'Maths', icon: '📐', color: '#8b5cf6',
-        keywords: ['algebra','geometr','calculus','theorem','equation','trigonometr','probabilit','statistic',
-          'fraction','number','integer','matrix','function','derivative','integral','pythagor'] },
-      { id: 'other', label: 'Others', icon: '🗂️', color: '#64748b', keywords: [] }
+
     ];
 
     // ── Class list — extensible for future classes ──
@@ -17245,7 +17240,7 @@ ${text.substring(0, 4500)}`
         if (cat.keywords.some(k => t.includes(k))) return cat.id;
       }
       if (SCIENCE_LAW_PATTERN.test(rawTitle)) return 'science';
-      return 'other';
+      return 'science';
     }
 
     // ── VIEW A: Render class-selector tiles ──
@@ -17949,7 +17944,7 @@ ${text.substring(0, 4500)}`
       // Save lesson row
       if (prog) prog.textContent = 'Saving lesson…';
       const class_name   = (document.getElementById('aupClass')?.value       || 'Other');
-      const subject      = (document.getElementById('aupCategory')?.value    || 'other');
+      const subject      = (document.getElementById('aupCategory')?.value    || 'science');
       const content_type = (document.getElementById('aupContentType')?.value || 'mixed');
       const r = await window.lessonsAPI.createLesson({
         title,
