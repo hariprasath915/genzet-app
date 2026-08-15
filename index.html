@@ -25,20 +25,38 @@
   // flash either way, because there's only ONE place left that decides
   // visibility (this script + authShowGate/authHideGate), not five.
   (function () {
-    // PRE-PAINT GATE v2 — only a real JWT grants instant dashboard access.
-    // The old haezet_local_session bypass is gone: it let users appear
-    // logged-in on the originating device only, breaking cross-device login.
+    // PRE-PAINT GATE v3 — bugfix: v2's code only checked 'haezet_jwt',
+    // even though its own comment said it should also honor the
+    // post-login bridge flag ('haezet_authenticated' + 'haezet_user').
+    // That mismatch is exactly what caused the landing page ("Turn your
+    // curriculum…") to flash for a moment right after signing in: the
+    // login flow sets the bridge flag and redirects here *before* the
+    // JWT is necessarily the thing checked, this pre-paint script saw
+    // hasToken === false, painted the landing page first, and only the
+    // later DOMContentLoaded handler swapped it to the dashboard —
+    // by which time the landing page had already been visible on screen.
+    //
+    // Fix: treat EITHER a real JWT OR the post-login bridge flag as
+    // "logged in" for this instant, pre-paint decision. authInit() still
+    // runs afterward to verify with the backend — if the session turns
+    // out to be invalid, it cleanly swaps to the login screen, so this
+    // optimistic check never leaves a stale/broken state on screen.
     var hasToken = !!localStorage.getItem('haezet_jwt');
+    var hasBridgeFlag = localStorage.getItem('haezet_authenticated') === 'true'
+      && !!localStorage.getItem('haezet_user');
+    var likelyLoggedIn = hasToken || hasBridgeFlag;
 
-    window.__haezetLikelyLoggedIn = hasToken;
+    window.__haezetLikelyLoggedIn = likelyLoggedIn;
 
-    var css = hasToken
-      // Real JWT found: show dashboard shell immediately (authInit will
-      // verify it with the backend and pull cloud data).
+    var css = likelyLoggedIn
+      // Real JWT or fresh post-login flag found: show dashboard shell
+      // immediately (authInit will verify with the backend and pull
+      // cloud data; showDashboard()/authHideGate() take it from here).
       ? '#gz-landing{display:none!important;}' +
         '#gz-dashboard{display:block!important;opacity:1!important;}' +
         '#authGate{display:none!important;}'
-      // No JWT: show landing page; login modal will be triggered by user.
+      // Neither signal present: show landing page; login modal will be
+      // triggered by the user.
       : '#gz-dashboard{display:none!important;}' +
         '#authGate{display:none!important;}';
 
@@ -11104,7 +11122,6 @@ function amShowSuccess() {
         <!-- Bottom Contact Row -->
         <div class="ag-left-contact">
           <a href="mailto:haezet@gmail.com"><span>📧</span> haezet@gmail.com</a>
-          <a href="tel:+919080202377"><span>📞</span> +91 90802 02377</a>
           <a href="https://wa.me/919080202377" target="_blank" rel="noopener"><span>💬</span> WhatsApp Us</a>
         </div>
       </div>
@@ -11232,6 +11249,52 @@ function amShowSuccess() {
 
   <!-- ═══ END AUTH OVERLAY ═══ -->
 
+  <!-- ═══ Animated Haezet logo (bird flying out of book) — replaces the
+       static "U" initial avatar in the topbar user pill ═══ -->
+  <style>
+    .haezet-logo-anim{display:flex;align-items:center;justify-content:center;}
+    .haezet-logo-anim .haezet-bird{
+      transform-origin:32px 22px;
+      animation:haezetBirdFloat 2.6s ease-in-out infinite;
+    }
+    .haezet-logo-anim .haezet-cap{
+      transform-origin:30px 12px;
+      animation:haezetBirdFloat 2.6s ease-in-out infinite;
+    }
+    .haezet-logo-anim .haezet-trail{
+      stroke-dasharray:26;
+      animation:haezetTrailFlow 2.6s ease-in-out infinite;
+    }
+    .haezet-logo-anim .haezet-sparkle{
+      transform-box:fill-box;
+      transform-origin:center;
+      animation:haezetSparkle 2.2s ease-in-out infinite;
+    }
+    .haezet-logo-anim .haezet-sparkle.s2{animation-delay:.55s;}
+    .haezet-logo-anim .haezet-sparkle.s3{animation-delay:1.1s;}
+    .haezet-logo-anim .haezet-book{
+      animation:haezetBookBreathe 2.6s ease-in-out infinite;
+      transform-origin:32px 48px;
+    }
+    @keyframes haezetBirdFloat{
+      0%,100%{transform:translateY(0) rotate(0deg);}
+      50%{transform:translateY(-5px) rotate(-5deg);}
+    }
+    @keyframes haezetTrailFlow{
+      0%{opacity:.25;stroke-dashoffset:26;}
+      50%{opacity:.9;stroke-dashoffset:0;}
+      100%{opacity:.25;stroke-dashoffset:-26;}
+    }
+    @keyframes haezetSparkle{
+      0%,100%{opacity:0;transform:scale(.4);}
+      50%{opacity:1;transform:scale(1);}
+    }
+    @keyframes haezetBookBreathe{
+      0%,100%{transform:scaleX(1);}
+      50%{transform:scaleX(1.03);}
+    }
+  </style>
+
   <!-- TOPBAR -->
   <div class="topbar">
     <button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Open navigation menu" title="Menu">☰</button>
@@ -11251,12 +11314,37 @@ function amShowSuccess() {
         <!-- User avatar + name chip -->
         <div class="user-chip" style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
              background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
-          <!-- Avatar circle with user initial -->
-          <div id="authUserAvatar" style="width:28px;height:28px;border-radius:50%;
-               background:linear-gradient(135deg,#6B4FFF,#00D4FF);
+          <!-- Animated Haezet logo: bird flying out of the book, replaces the plain "U" avatar -->
+          <div id="authUserAvatar" class="haezet-logo-anim" style="width:32px;height:32px;border-radius:50%;
+               background:var(--bg2);
                display:flex;align-items:center;justify-content:center;
-               font-size:12px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0;">
-            U
+               flex-shrink:0;overflow:hidden;">
+            <svg viewBox="0 0 64 64" width="30" height="30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="haezetBirdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6B4FFF"/>
+                  <stop offset="100%" stop-color="#00D4FF"/>
+                </linearGradient>
+              </defs>
+              <!-- open book -->
+              <path class="haezet-book" d="M6 46 C16 40,26 40,32 46 C38 40,48 40,58 46 L58 50 C48 44,38 44,32 50 C26 44,16 44,6 50 Z" fill="var(--text)" opacity="0.85"/>
+              <!-- swoosh trail rising from the book -->
+              <path class="haezet-trail" d="M32 44 C30 34,30 26,34 18" stroke="url(#haezetBirdGrad)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+              <!-- sparkles -->
+              <circle class="haezet-sparkle s1" cx="41" cy="13" r="1.7" fill="url(#haezetBirdGrad)"/>
+              <circle class="haezet-sparkle s2" cx="47" cy="19" r="1.1" fill="url(#haezetBirdGrad)"/>
+              <circle class="haezet-sparkle s3" cx="37" cy="8" r="1" fill="url(#haezetBirdGrad)"/>
+              <!-- bird -->
+              <g class="haezet-bird">
+                <path d="M34 24 C30 19,23 17,18 19 C25 19,29 23,32 27 C34 23,38 19,45 19 C40 17,36 19,34 24 Z" fill="url(#haezetBirdGrad)"/>
+              </g>
+              <!-- graduation cap -->
+              <g class="haezet-cap">
+                <rect x="29" y="12" width="2" height="4" fill="#1E2338"/>
+                <path d="M30 4 L41 9 L30 14 L19 9 Z" fill="#1E2338"/>
+                <circle cx="30" cy="9" r="1.3" fill="#1E2338"/>
+              </g>
+            </svg>
           </div>
           <div class="user-name-block" style="display:flex;flex-direction:column;line-height:1.2;">
             <span id="authUserName" style="font-weight:600;color:var(--text);max-width:110px;
@@ -11372,9 +11460,6 @@ function amShowSuccess() {
         <div class="sidebar-contact-wrap" style="margin-top:10px;padding:0 2px;">
           <a class="sidebar-contact-row" href="mailto:haezet@gmail.com" title="Email: haezet@gmail.com">
             <span class="sc-icon">📧</span><span class="sc-label"> haezet@gmail.com</span>
-          </a>
-          <a class="sidebar-contact-row" href="tel:+919080202377" title="Call: +91 90802 02377">
-            <span class="sc-icon">📞</span><span class="sc-label"> +91 90802 02377</span>
           </a>
         </div>
       </div>
@@ -16559,12 +16644,8 @@ ${text.substring(0, 4500)}`
       // Set user name
       const nameEl = document.getElementById('authUserName');
       if (nameEl) nameEl.textContent = authUser.name;
-      // Set avatar initial (first letter of name or email)
-      const avatarEl = document.getElementById('authUserAvatar');
-      if (avatarEl) {
-        const initial = (authUser.name || authUser.email || 'U').charAt(0).toUpperCase();
-        avatarEl.textContent = initial;
-      }
+      // Avatar now shows the animated Haezet logo (bird out of the book)
+      // instead of a plain text initial — nothing to set here anymore.
     }
 
     // ── Logout handler — called by the Sign Out button in the topbar ──────
