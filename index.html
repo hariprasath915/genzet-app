@@ -11719,59 +11719,7 @@ function amShowSuccess() {
                 <div class="subjects-grid" id="subjectsGrid"></div>
               </div>
 
-              <!-- VIEW 2: Subject Detail (COs) + AI Picks -->
-              <div id="subjectDetail" style="display:none;">
-                <div class="subject-detail-header">
-                  <button class="subj-back-btn" onclick="backToSubjects()">← All Subjects</button>
-                  <div class="subj-detail-title">
-                    <h2 id="sdTitle">Engineering Physics</h2>
-                    <p id="sdCode">Course Outcomes (COs)</p>
-                  </div>
-                  <div class="subj-actions">
-                    <!-- PDF Upload Button -->
-                    <label class="pdf-upload-btn" id="pdfUploadLabel" style="cursor:pointer;">
-                      <input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;"
-                        onchange="handleSyllabusUpload(event)" />
-                      📄 Upload Syllabus PDF
-                    </label>
-                    <button class="co-create-btn" onclick="openCreateCOModal()">➕ Create CO</button>
-                    <button class="co-del-mode-btn" onclick="toggleDeleteCOMode()">🗑️ Delete CO</button>
-                  </div>
-                </div>
-                <div class="co-section-header">
-                  <h3 style="font-size:16px;font-weight:800;color:var(--text);">Course Outcomes</h3>
-                  <span id="coCount" style="font-size:12px;color:var(--text3);font-weight:600;"></span>
-                </div>
-                <div class="co-grid" id="coGrid"></div>
 
-                <!-- ✨ AI PICKS FOR YOU SECTION -->
-                <div class="ai-picks-section" id="aiPicksSection">
-                  <div class="ai-picks-header">
-                    <div class="ai-picks-title">
-                      <div>
-                        <h3>🤖 AI Picks for You</h3>
-                        <p>Topics from your uploaded syllabus — click any to auto-fill AI Creator</p>
-                      </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <span id="aiPicksTopicCount" style="font-size:11px;color:var(--text3);font-weight:600;"></span>
-                      <button id="clearSyllabusBtn" onclick="clearSyllabus()"
-                        style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--red-lt);background:var(--red-lt);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;display:none;">🗑️
-                        Clear</button>
-                    </div>
-                  </div>
-                  <div class="ai-picks-body" id="aiPicksBody">
-                    <div class="ai-picks-empty">
-                      <div class="ai-picks-empty-icon">📄</div>
-                      <p style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">No syllabus
-                        uploaded
-                        yet</p>
-                      <p style="font-size:12px;">Click <strong>"📄 Upload Syllabus PDF"</strong> above to extract topics
-                        automatically</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <!-- VIEW 3: CO Detail (Topics) -->
               <div id="coDetail" style="display:none;">
@@ -14083,26 +14031,17 @@ function amShowSuccess() {
       deleteSubjectMode = false; modifyMode = false;
       currentSubjectId = id;
       const s = engineeringCourses.find(x => x.id === id); if (!s) return;
+      // subjectDetail view has been removed; navigate directly to fileHome
       document.getElementById('fileHome').style.display = 'none';
-      document.getElementById('subjectDetail').style.display = 'block';
-      document.getElementById('coDetail').style.display = 'none';
-      document.getElementById('sdTitle').textContent = s.icon + ' ' + s.name;
-      document.getElementById('sdCode').textContent = s.code || 'Course Outcomes';
-      // Update PDF upload label
-      const hasPdf = s.syllabus && s.syllabus.modules && s.syllabus.modules.length > 0;
-      const lbl = document.getElementById('pdfUploadLabel');
-      lbl.className = 'pdf-upload-btn' + (hasPdf ? ' has-pdf' : '');
-      lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>` +
-        (hasPdf ? `✅ Syllabus Loaded (Re-upload)` : `📄 Upload Syllabus PDF`);
-      renderCOGrid();
-      renderAIPicks();
+      const coDetailEl = document.getElementById('coDetail');
+      if (coDetailEl) coDetailEl.style.display = 'none';
     }
     function backToSubjects() {
       currentSubjectId = null; currentCOId = null;
       deleteSubjectMode = false; modifyMode = false; deleteCOMode = false;
       document.getElementById('fileHome').style.display = 'block';
-      document.getElementById('subjectDetail').style.display = 'none';
-      document.getElementById('coDetail').style.display = 'none';
+      const coDetailEl = document.getElementById('coDetail');
+      if (coDetailEl) coDetailEl.style.display = 'none';
       renderSubjectsGrid();
     }
 
@@ -14112,7 +14051,9 @@ function amShowSuccess() {
     function renderCOGrid() {
       const s = engineeringCourses.find(x => x.id === currentSubjectId); if (!s) return;
       const grid = document.getElementById('coGrid');
-      document.getElementById('coCount').textContent = s.cos.length + ' CO' + (s.cos.length !== 1 ? 's' : '');
+      if (!grid) return;
+      const coCountEl = document.getElementById('coCount');
+      if (coCountEl) coCountEl.textContent = s.cos.length + ' CO' + (s.cos.length !== 1 ? 's' : '');
       if (s.cos.length === 0) {
         grid.innerHTML = `<div class="co-empty-state" style="grid-column:1/-1;">
       <div style="font-size:40px;margin-bottom:12px;">📋</div>
@@ -14158,7 +14099,8 @@ function amShowSuccess() {
       currentCOId = coId;
       const s = engineeringCourses.find(x => x.id === currentSubjectId);
       const co = s?.cos.find(c => c.id === coId); if (!co) return;
-      document.getElementById('subjectDetail').style.display = 'none';
+      const subjectDetailEl = document.getElementById('subjectDetail');
+      if (subjectDetailEl) subjectDetailEl.style.display = 'none';
       document.getElementById('coDetail').style.display = 'block';
       document.getElementById('coDetailTitle').textContent = co.coNum + ' — ' + co.name;
       document.getElementById('coDetailSub').textContent = s.name;
@@ -14167,7 +14109,8 @@ function amShowSuccess() {
     function backToCOList() {
       currentCOId = null; deleteCOMode = false;
       document.getElementById('coDetail').style.display = 'none';
-      document.getElementById('subjectDetail').style.display = 'block';
+      const subjectDetailEl = document.getElementById('subjectDetail');
+      if (subjectDetailEl) subjectDetailEl.style.display = 'block';
       renderCOGrid(); renderAIPicks();
     }
 
@@ -14341,7 +14284,7 @@ ${text.substring(0, 4500)}`
 
       // Show loading state
       const body = document.getElementById('aiPicksBody');
-      body.innerHTML = `
+      if (body) body.innerHTML = `
     <div class="pdf-parsing-loader">
       <div class="pdf-parsing-spin"></div>
       <div class="pdf-parsing-text">
@@ -14351,8 +14294,10 @@ ${text.substring(0, 4500)}`
     </div>`;
 
       const lbl = document.getElementById('pdfUploadLabel');
-      lbl.className = 'pdf-upload-btn';
-      lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>⏳ Processing…`;
+      if (lbl) {
+        lbl.className = 'pdf-upload-btn';
+        lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>⏳ Processing…`;
+      }
 
       try {
         // Step 1: Extract PDF text
@@ -14361,7 +14306,7 @@ ${text.substring(0, 4500)}`
         if (!pdfText || pdfText.length < 50) throw new Error('Could not extract readable text from PDF. Try a text-based PDF.');
 
         // Step 2: Parse with AI
-        body.innerHTML = `
+        if (body) body.innerHTML = `
       <div class="pdf-parsing-loader">
         <div class="pdf-parsing-spin"></div>
         <div class="pdf-parsing-text">
@@ -14383,22 +14328,26 @@ ${text.substring(0, 4500)}`
         await saveECourses();
 
         // Update UI
-        lbl.className = 'pdf-upload-btn has-pdf';
-        lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>✅ Syllabus Loaded (Re-upload)`;
+        if (lbl) {
+          lbl.className = 'pdf-upload-btn has-pdf';
+          lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>✅ Syllabus Loaded (Re-upload)`;
+        }
 
         renderAIPicks();
         renderSubjectsGrid();
         const totalTopics = modules.reduce((sum, m) => sum + m.topics.length, 0);
         notify(`🎉 Syllabus parsed! Found ${modules.length} modules, ${totalTopics} topics.`);
       } catch (err) {
-        body.innerHTML = `
+        if (body) body.innerHTML = `
       <div style="padding:20px;background:var(--red-lt);border:1.5px solid #fca5a5;border-radius:12px;">
         <p style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px;">❌ Failed to parse syllabus</p>
         <p style="font-size:12px;color:var(--red);">${esc(err.message)}</p>
         <p style="font-size:11px;color:var(--text3);margin-top:8px;">Make sure your backend is running and the PDF has readable text (not a scanned image).</p>
       </div>`;
-        lbl.className = 'pdf-upload-btn';
-        lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>📄 Upload Syllabus PDF`;
+        if (lbl) {
+          lbl.className = 'pdf-upload-btn';
+          lbl.innerHTML = `<input type="file" id="syllabusFileInput" accept=".pdf" style="display:none;" onchange="handleSyllabusUpload(event)"/>📄 Upload Syllabus PDF`;
+        }
         notify('❌ ' + err.message, 'error');
       }
     }
@@ -14409,7 +14358,7 @@ ${text.substring(0, 4500)}`
       const body = document.getElementById('aiPicksBody');
       const countEl = document.getElementById('aiPicksTopicCount');
       const clearBtn = document.getElementById('clearSyllabusBtn');
-      if (!s) return;
+      if (!s || !body) return;
 
       if (!s.syllabus || !s.syllabus.modules || s.syllabus.modules.length === 0) {
         countEl.textContent = '';
