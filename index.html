@@ -16305,7 +16305,31 @@ ${text.substring(0, 4500)}`
     // SECTION 1: INITIALIZATION
     // ══════════════════════════════════════════════════════════════════════
 
-    async function authInit() {
+    async function authInit(_isRetry) {
+      // ── Landing-page flash fix ────────────────────────────────────────
+      // The pre-paint gate in <head> optimistically shows the dashboard the
+      // instant it sees EITHER a real JWT OR the post-login bridge flag
+      // ('haezet_authenticated' + 'haezet_user'). That bridge flag exists
+      // because some login paths (e.g. the Google OAuth redirect handled by
+      // cloud_sync_v3.js) land the user back on this page a beat before the
+      // real JWT has finished being written to 'haezet_jwt'.
+      //
+      // The old code below immediately deleted that bridge flag and, finding
+      // no JWT yet, called authShowGate() — which flipped the pre-paint
+      // gate's correct "show dashboard" guess back to the landing page. THAT
+      // was the "curriculum..." landing page flashing for a moment after
+      // sign-in. Fix: capture the bridge/local session BEFORE wiping it, and
+      // if there's no JWT yet but a bridge session says we just signed in,
+      // keep the dashboard up (don't flash to landing) and give the JWT
+      // write one short retry before falling back to the login screen.
+      const hasBridgeSession = (
+        localStorage.getItem('haezet_authenticated') === 'true' ||
+        localStorage.getItem('haezet_local_session') === 'true'
+      ) && !!localStorage.getItem('haezet_user');
+      const bridgeUser = (() => {
+        try { return JSON.parse(localStorage.getItem('haezet_user') || 'null'); } catch { return null; }
+      })();
+
       // ── Clean up legacy local-only session flags ────────────────────
       // The old 'haezet_local_session' and 'haezet_authenticated' flags
       // allowed users to appear logged-in without a real JWT. These are
@@ -16322,6 +16346,16 @@ ${text.substring(0, 4500)}`
       })();
 
       if (!storedToken) {
+        if (!_isRetry && hasBridgeSession && bridgeUser) {
+          // Just signed in via a flow that hasn't finished writing the real
+          // JWT yet — keep the dashboard visible (matches the pre-paint
+          // gate) and check again shortly instead of bouncing to landing.
+          window.authUser = bridgeUser;
+          authHideGate();
+          authUpdateStatusBar();
+          setTimeout(() => authInit(true), 600);
+          return;
+        }
         // No JWT at all — show landing/login page.
         authShowGate();
         return;
