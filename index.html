@@ -12065,50 +12065,13 @@ function amShowSuccess() {
             <div class="panel" id="lessonsPanel">
               <div class="lessons-page">
 
-                <!-- ═══ VIEW A: Class selector (shown first on entering Library Mode) ═══ -->
-                <div id="lessonsClassView">
+                <!-- ═══ VIEW B: Subject selector (Science / Social Science) ═══ -->
+                <div id="lessonsCategoryView">
                   <div class="lessons-topbar-sticky">
                     <div class="lessons-topbar">
                       <div class="lessons-topbar-left">
                         <h2>📚 Library Mode</h2>
-                        <p>Choose a class to explore</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="lib-category-grid-wrap">
-                    <div class="lib-category-grid" id="libClassGrid">
-                      <!-- Skeleton while loading -->
-                      <div class="lib-category-card" style="pointer-events:none;opacity:.5;--cat-color:#94a3b8;">
-                        <div class="lib-category-icon">🏫</div>
-                        <div class="lib-category-name">Loading…</div>
-                        <div class="lib-category-count">&nbsp;</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- ═══ VIEW B: Subject selector for selected class ═══ -->
-                <div id="lessonsCategoryView" style="display:none;">
-                  <div class="lessons-topbar-sticky">
-                    <div class="lessons-topbar">
-                      <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
-                        <button class="lib-back-btn" onclick="backToLibraryClasses()" title="Back to all classes">←</button>
-                        <div>
-                          <h2>📚 Library Mode</h2>
-                          <p id="lessonCatSubtitle">Choose a subject to explore</p>
-                        </div>
-                      </div>
-                      <div class="lessons-topbar-right">
-                        <!-- Inline class switcher so user can switch without going back -->
-                        <select id="libClassSwitcher" class="lib-class-switcher"
-                          onchange="selectLibraryClass(this.value)"
-                          title="Switch class">
-                          <option value="Class 9">🏫 Class 9</option>
-                          <option value="Class 10" selected>🏫 Class 10</option>
-                          <option value="Class 11">🏫 Class 11</option>
-                          <option value="Class 12">🏫 Class 12</option>
-                          <option value="Other">🗂️ Other</option>
-                        </select>
+                        <p id="lessonCatSubtitle"><span class="lib-breadcrumb-pill">📚 Library</span> — Choose a subject</p>
                       </div>
                     </div>
                   </div>
@@ -17243,52 +17206,26 @@ ${text.substring(0, 4500)}`
       return 'science';
     }
 
-    // ── VIEW A: Render class-selector tiles ──
-    window.renderLibraryClasses = function () {
-      const wrap = document.getElementById('libClassGrid');
-      if (!wrap) return;
-      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
-        ? (window.lessonsAPI.getCache() || []) : [];
-      wrap.innerHTML = LIB_CLASSES.map(cls => {
-        const count = all.filter(l => getLessonClass(l) === cls.id).length;
-        return `
-          <div class="lib-category-card" style="--cat-color:${cls.color};" onclick="selectLibraryClass('${cls.id}')">
-            <div class="lib-category-icon">${cls.icon}</div>
-            <div class="lib-class-number" style="font-size:22px;font-weight:900;color:var(--cat-color);letter-spacing:-.02em;">Class ${cls.num}</div>
-            <div class="lib-category-name">${cls.label}</div>
-            <div class="lib-category-count">${count} lesson${count !== 1 ? 's' : ''}</div>
-          </div>`;
-      }).join('');
-    };
+    // ── renderLibraryClasses — no-op (class view removed) ──
+    window.renderLibraryClasses = function () { /* class selector removed */ };
 
-    // ── VIEW A → VIEW B: User picked a class tile ──
+    // ── selectLibraryClass — redirects straight to subject selector (class filter removed) ──
     window.selectLibraryClass = function (classId) {
-      _libActiveClass       = classId;
+      _libActiveClass       = null;  // no class filter
       _libActiveCategory    = null;
       _libActiveContentType = null;
-      const cls = LIB_CLASSES.find(c => c.id === classId);
-      // Show VIEW B, hide all others
       _showOnlyView('lessonsCategoryView');
-      // Sync the inline class switcher dropdown
-      const switcher = document.getElementById('libClassSwitcher');
-      if (switcher) switcher.value = classId;
-      // Update subtitle breadcrumb
-      const sub = document.getElementById('lessonCatSubtitle');
-      if (sub) sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${cls ? cls.label : classId}</span> — Choose a subject`;
-      // Render subject tiles filtered to this class
       window.renderLibraryCategories();
     };
 
-    // ── VIEW B: Render subject tiles (filtered to _libActiveClass) ──
+    // ── VIEW B: Render subject tiles (Science / Social Science) ──
     window.renderLibraryCategories = function () {
       const wrap = document.getElementById('libCategoryGrid');
       if (!wrap) return;
       const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
         ? (window.lessonsAPI.getCache() || []) : [];
-      // When a class is active, only count lessons for that class
-      const scoped = _libActiveClass
-        ? all.filter(l => getLessonClass(l) === _libActiveClass)
-        : all;
+      // No class filter — all lessons count regardless of class
+      const scoped = all;
       wrap.innerHTML = LIB_CATEGORIES.map(cat => {
         const count = scoped.filter(l => classifyLesson(l) === cat.id).length;
         return `
@@ -17298,8 +17235,7 @@ ${text.substring(0, 4500)}`
             <div class="lib-category-count">${count} lesson${count !== 1 ? 's' : ''}</div>
           </div>`;
       }).join('');
-      // Also re-render class counts in case we're refreshing from back-navigation
-      if (typeof window.renderLibraryClasses === 'function') window.renderLibraryClasses();
+      // (class view removed — no renderLibraryClasses call needed)
     };
 
     // ── VIEW B → VIEW D [NEW]: User picked a subject tile → show Content Type selector ──
@@ -17313,9 +17249,8 @@ ${text.substring(0, 4500)}`
       const cat = LIB_CATEGORIES.find(c => c.id === catId);
       const sub = document.getElementById('lessonCtSubtitle');
       if (sub) {
-        const clsLabel = cls ? cls.label : (_libActiveClass || '');
         const catLabel = cat ? `${cat.icon} ${cat.label}` : catId;
-        sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${clsLabel} → ${catLabel}</span> — Choose content type`;
+        sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${catLabel}</span> — Choose content type`;
       }
       window.renderLibraryContentTypes();
     };
@@ -17326,11 +17261,10 @@ ${text.substring(0, 4500)}`
       if (!wrap) return;
       const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
         ? (window.lessonsAPI.getCache() || []) : [];
-      // Scope to active class + subject
+      // Scope to active subject only (no class filter)
       const scoped = all.filter(l => {
-        const classOk   = !_libActiveClass    || getLessonClass(l)  === _libActiveClass;
         const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
-        return classOk && subjectOk;
+        return subjectOk;
       });
 
       // Admin "Add Contents" tile
@@ -17367,10 +17301,9 @@ ${text.substring(0, 4500)}`
       // Update breadcrumb title in VIEW C header
       const titleEl = document.getElementById('lessonsGridTitle');
       if (titleEl) {
-        const clsLabel = cls ? cls.label : (_libActiveClass || '');
         const catLabel = cat ? `${cat.icon} ${cat.label}` : '';
         const ctLabel  = ct  ? `${ct.icon} ${ct.label}` : '📚 Library';
-        titleEl.textContent = [ctLabel, catLabel, clsLabel].filter(Boolean).join(' · ');
+        titleEl.textContent = [ctLabel, catLabel].filter(Boolean).join(' · ');
       }
       const searchInput = document.getElementById('lessonsSearchInput');
       if (searchInput) searchInput.value = '';
@@ -17379,10 +17312,9 @@ ${text.substring(0, 4500)}`
         ? (window.lessonsAPI.getCache() || []) : [];
       const ctDef = LIB_CONTENT_TYPES.find(c => c.id === ctId);
       const filtered = all.filter(l => {
-        const classOk   = !_libActiveClass    || getLessonClass(l)  === _libActiveClass;
         const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
         const ctOk      = !ctDef || ctDef.matchFn(getLessonContentType(l));
-        return classOk && subjectOk && ctOk;
+        return subjectOk && ctOk;
       });
       if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
@@ -17390,7 +17322,6 @@ ${text.substring(0, 4500)}`
     // ── Helper: show only one view panel, hide the rest ──
     function _showOnlyView(activeId) {
       const allViews = [
-        'lessonsClassView',
         'lessonsCategoryView',
         'lessonsContentTypeView',
         'lessonsGridView',
@@ -17408,7 +17339,7 @@ ${text.substring(0, 4500)}`
       window.renderLibraryContentTypes();
     };
 
-    // ── Back: VIEW D → VIEW B (content type → subject selector) ──
+    // ── Back: content type → subject selector ──
     window.backToLibraryCategories = function () {
       _libActiveCategory    = null;
       _libActiveContentType = null;
@@ -17416,13 +17347,12 @@ ${text.substring(0, 4500)}`
       window.renderLibraryCategories();
     };
 
-    // ── Back: VIEW B → VIEW A (subject selector → class selector) ──
+    // ── Back: (kept for safety, now unused) ──
     window.backToLibraryClasses = function () {
-      _libActiveClass       = null;
       _libActiveCategory    = null;
       _libActiveContentType = null;
-      _showOnlyView('lessonsClassView');
-      window.renderLibraryClasses();
+      _showOnlyView('lessonsCategoryView');
+      window.renderLibraryCategories();
     };
 
 
@@ -17436,8 +17366,9 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('adminUploadBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
 
-      // Default landing: jump straight to Class 10 → View B
-      window.selectLibraryClass('Class 10');
+      // Land directly on subject selector (Science / Social Science)
+      _showOnlyView('lessonsCategoryView');
+      window.renderLibraryCategories();
 
       if (_lessonsLoaded) { window.renderLibraryCategories(); return; }
 
@@ -17445,9 +17376,8 @@ ${text.substring(0, 4500)}`
         const result = await window.lessonsAPI.load();
         if (result !== undefined) {
           _lessonsLoaded = true;
-          // Re-apply Class 10 selection so tile counts populate with loaded data
+          // Refresh subject tiles with loaded data
           window.renderLibraryCategories();
-          window.renderLibraryClasses();
           // After first load, subscribe Realtime so new lessons push instantly
           window.lessonsAPI.subscribeRealtime();
           // Safety net: re-sync tile counts a moment later
@@ -17482,12 +17412,11 @@ ${text.substring(0, 4500)}`
       if (!window.lessonsAPI || typeof window.lessonsAPI.getCache !== 'function') return;
       const all = window.lessonsAPI.getCache() || [];
       const ctDef = LIB_CONTENT_TYPES.find(c => c.id === _libActiveContentType);
-      // Scope to class + subject + content type
+      // Scope to subject + content type (no class filter)
       const scoped = all.filter(l => {
-        const classOk   = !_libActiveClass       || getLessonClass(l)       === _libActiveClass;
         const subjectOk = !_libActiveCategory    || classifyLesson(l)       === _libActiveCategory;
         const ctOk      = !ctDef || ctDef.matchFn(getLessonContentType(l));
-        return classOk && subjectOk && ctOk;
+        return subjectOk && ctOk;
       });
       const q = (val || '').trim().toLowerCase();
       const filtered = q ? scoped.filter(l => (l.title || '').toLowerCase().includes(q)) : scoped;
@@ -17561,9 +17490,9 @@ ${text.substring(0, 4500)}`
     // class+subject filter so the user's view is not disrupted.
     window.renderLessonsGrid = function (lessons) {
       // Re-apply active filter if the user is in a filtered view
-      if (_libActiveClass || _libActiveCategory) {
+      if (_libActiveCategory) {
         const filtered = (lessons || []).filter(function (l) {
-          const classOk   = !_libActiveClass    || getLessonClass(l)  === _libActiveClass;
+          const classOk   = true;
           const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
           return classOk && subjectOk;
         });
