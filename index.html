@@ -12089,7 +12089,7 @@ function amShowSuccess() {
                   <div class="lessons-topbar-sticky">
                     <div class="lessons-topbar">
                       <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
-                        <button class="lib-back-btn" onclick="backToLibraryContentTypes()" title="Back to content types">←</button>
+                        <button class="lib-back-btn" onclick="backToLibraryCategories()" title="Back to subjects">←</button>
                         <div>
                           <h2 id="lessonsGridTitle">📚 Library Mode</h2>
                           <p id="lessonCount">Loading lessons…</p>
@@ -17238,21 +17238,26 @@ ${text.substring(0, 4500)}`
       // (class view removed — no renderLibraryClasses call needed)
     };
 
-    // ── VIEW B → VIEW D [NEW]: User picked a subject tile → show Content Type selector ──
+    // ── VIEW B → VIEW C: User picked a subject tile → skip content-type picker,
+    //    go straight to the lessons grid showing all content types for that subject ──
     window.selectLibraryCategory = function (catId) {
       _libActiveCategory    = catId;
       _libActiveContentType = null;
-      // Show VIEW D, hide all others
-      _showOnlyView('lessonsContentTypeView');
-      // Update breadcrumb subtitle
-      const cls = LIB_CLASSES.find(c => c.id === _libActiveClass);
       const cat = LIB_CATEGORIES.find(c => c.id === catId);
-      const sub = document.getElementById('lessonCtSubtitle');
-      if (sub) {
-        const catLabel = cat ? `${cat.icon} ${cat.label}` : catId;
-        sub.innerHTML = `<span class="lib-breadcrumb-pill">📚 Library → ${catLabel}</span> — Choose content type`;
+      // Show VIEW C directly, hide all others
+      _showOnlyView('lessonsGridView');
+      // Update breadcrumb title — just the subject name
+      const titleEl = document.getElementById('lessonsGridTitle');
+      if (titleEl) {
+        titleEl.textContent = cat ? `${cat.icon} ${cat.label}` : '📚 Library';
       }
-      window.renderLibraryContentTypes();
+      const searchInput = document.getElementById('lessonsSearchInput');
+      if (searchInput) searchInput.value = '';
+      // Filter by subject only — all content types included
+      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      const filtered = all.filter(l => !_libActiveCategory || classifyLesson(l) === _libActiveCategory);
+      if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
 
     // ── VIEW D [NEW]: Render content-type tiles ──
