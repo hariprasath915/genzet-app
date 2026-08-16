@@ -9776,6 +9776,13 @@ function amShowSuccess() {
   border-color: var(--blue);
   box-shadow: 0 16px 48px rgba(13,148,136,.18);
 }
+/* Selected state during the "Add Lesson" picker workflow — the tick and
+   colors are also set inline by toggleLessonSelection() for an instant
+   response, but this class gives the same look after any full re-render. */
+.lesson-card-selected {
+  outline: 3px solid var(--teal, #0d9488);
+  outline-offset: -3px;
+}
 .lesson-card-thumb {
   width: 100%;
   aspect-ratio: 4/3;
@@ -14615,14 +14622,33 @@ ${text.substring(0, 4500)}`
 
     // Toggles a single lesson card's selected state (used instead of
     // openLesson() while lessonSelectionActive is true).
+    // Directly repaints the checkbox + card outline on the clicked card,
+    // since the tick/colors are baked into the card's HTML at render time
+    // and won't update from a CSS class alone.
     function toggleLessonSelection(lessonId, cardEl) {
+      let isSel;
       if (lessonSelectionChosenIds.has(lessonId)) {
         lessonSelectionChosenIds.delete(lessonId);
-        if (cardEl) cardEl.classList.remove('lesson-card-selected');
+        isSel = false;
       } else {
         lessonSelectionChosenIds.add(lessonId);
-        if (cardEl) cardEl.classList.add('lesson-card-selected');
+        isSel = true;
       }
+
+      if (cardEl) {
+        cardEl.classList.toggle('lesson-card-selected', isSel);
+        cardEl.style.outline = isSel ? '3px solid var(--teal,#0d9488)' : '';
+        cardEl.style.outlineOffset = isSel ? '-3px' : '';
+
+        const check = cardEl.querySelector('.lesson-sel-check');
+        if (check) {
+          check.textContent = isSel ? '✓' : '';
+          check.style.background = isSel ? 'var(--teal,#0d9488)' : 'rgba(255,255,255,.9)';
+          check.style.color = isSel ? '#fff' : 'var(--text3)';
+          check.style.borderColor = isSel ? 'var(--teal,#0d9488)' : 'var(--border2)';
+        }
+      }
+
       updateLessonSelectionBar();
     }
 
@@ -14652,37 +14678,59 @@ ${text.substring(0, 4500)}`
       const ids = Array.from(lessonSelectionChosenIds);
       if (!ids.length) { notify('Select at least one lesson first!', 'error'); return; }
 
-      if (lessonSelectionPendingSubject) {
-        // ── Creating a brand-new subject with these lessons ──
-        const p = lessonSelectionPendingSubject;
-        let cloudId = null;
-        if (typeof window.syncCreateSubject === 'function') {
-          try {
-            const desc = p.code ? 'Code: ' + p.code : '';
-            const created = await window.syncCreateSubject(p.name, desc);
-            if (created && created.id) cloudId = created.id;
-          } catch (e) {
-            console.warn('[SYNC] syncCreateSubject error — falling back to legacy:', e.message);
-          }
-        }
-        const newSubj = {
-          id: cloudId || ('s_' + Date.now()),
-          name: p.name, code: p.code, icon: p.icon, color: p.color,
-          cos: [], syllabus: null, lessons: ids
-        };
-        engineeringCourses.push(newSubj);
-        if (!cloudId) await saveECourses();
-        notify('✅ "' + p.name + '" created with ' + ids.length + ' lesson' + (ids.length !== 1 ? 's' : '') + '!');
-      } else if (lessonSelectionSubjectId) {
-        // ── Adding/updating lessons on an existing subject ──
-        const s = engineeringCourses.find(x => x.id === lessonSelectionSubjectId);
-        if (s) {
-          s.lessons = ids;
-          await saveECourses();
-          notify('✅ Lessons saved to "' + s.name + '"!');
-        }
+      // Guard against a stale/empty target (e.g. selection mode entered
+      // without going through the proper "Add Lesson" flow) — without this
+      // the function used to fall through silently, looking like the
+      // button "did nothing".
+      if (!lessonSelectionPendingSubject && !lessonSelectionSubjectId) {
+        notify('No subject selected to save lessons to — please try again from "Add Lesson".', 'error');
+        return;
       }
 
+      const saveBtn = document.querySelector('#lessonSelectionBar .modal-save-btn');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Saving…'; }
+
+      try {
+        if (lessonSelectionPendingSubject) {
+          // ── Creating a brand-new subject with these lessons ──
+          const p = lessonSelectionPendingSubject;
+          let cloudId = null;
+          if (typeof window.syncCreateSubject === 'function') {
+            try {
+              const desc = p.code ? 'Code: ' + p.code : '';
+              const created = await window.syncCreateSubject(p.name, desc);
+              if (created && created.id) cloudId = created.id;
+            } catch (e) {
+              console.warn('[SYNC] syncCreateSubject error — falling back to legacy:', e.message);
+            }
+          }
+          const newSubj = {
+            id: cloudId || ('s_' + Date.now()),
+            name: p.name, code: p.code, icon: p.icon, color: p.color,
+            cos: [], syllabus: null, lessons: ids
+          };
+          engineeringCourses.push(newSubj);
+          if (!cloudId) await saveECourses();
+          notify('✅ "' + p.name + '" created with ' + ids.length + ' lesson' + (ids.length !== 1 ? 's' : '') + '!');
+        } else if (lessonSelectionSubjectId) {
+          // ── Adding/updating lessons on an existing subject ──
+          const s = engineeringCourses.find(x => x.id === lessonSelectionSubjectId);
+          if (s) {
+            s.lessons = ids;
+            await saveECourses();
+            notify('✅ Lessons saved to "' + s.name + '"!');
+          } else {
+            notify('Could not find that subject — it may have been deleted.', 'error');
+          }
+        }
+      } catch (err) {
+        console.error('[LESSONS] saveLessonSelection failed:', err);
+        notify('⚠️ Something went wrong saving lessons. Please try again.', 'error');
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Lessons'; }
+        return; // stay in selection mode so the user doesn't lose their picks
+      }
+
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Lessons'; }
       cancelLessonSelection();
       switchMode('file');
     }
@@ -17233,7 +17281,7 @@ ${text.substring(0, 4500)}`
           return `
           <div class="lesson-card${isSel ? ' lesson-card-selected' : ''}" style="cursor:pointer;position:relative;${isSel ? 'outline:3px solid var(--teal,#0d9488);outline-offset:-3px;' : ''}"
             onclick="toggleLessonSelection('${lesson.id}', this)">
-            <div style="position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:6px;z-index:2;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;
+            <div class="lesson-sel-check" style="position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:6px;z-index:2;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;pointer-events:none;
               background:${isSel ? 'var(--teal,#0d9488)' : 'rgba(255,255,255,.9)'};color:${isSel ? '#fff' : 'var(--text3)'};border:2px solid ${isSel ? 'var(--teal,#0d9488)' : 'var(--border2)'};">
               ${isSel ? '✓' : ''}
             </div>
