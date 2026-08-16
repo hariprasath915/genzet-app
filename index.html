@@ -11721,6 +11721,24 @@ function amShowSuccess() {
                 <div class="subjects-grid" id="subjectsGrid"></div>
               </div>
 
+              <!-- VIEW 2: Subject Detail — shows the lessons saved for this subject,
+                   or a "no lessons stored" empty state when none have been added yet. -->
+              <div id="subjectDetail" style="display:none;">
+                <div class="co-detail-header">
+                  <button class="co-back-btn" onclick="backToSubjects()">← Back to Subjects</button>
+                  <div class="co-detail-title">
+                    <h3 id="subjectDetailTitle">Subject</h3>
+                    <p id="subjectDetailSub">Lessons saved to this subject</p>
+                  </div>
+                  <button class="file-action-btn create" onclick="startAddLessonsForExistingSubject(currentSubjectId)">📚 Add Lesson</button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                  <span style="font-size:14px;font-weight:800;color:var(--text);">Saved Lessons</span>
+                  <span id="subjectDetailCount" style="font-size:12px;color:var(--text3);font-weight:600;"></span>
+                </div>
+                <div class="lessons-grid" id="subjectDetailLessonsGrid"></div>
+              </div>
+
 
 
               <!-- VIEW 3: CO Detail (Topics) -->
@@ -14035,10 +14053,16 @@ function amShowSuccess() {
       deleteSubjectMode = false; modifyMode = false;
       currentSubjectId = id;
       const s = engineeringCourses.find(x => x.id === id); if (!s) return;
-      // subjectDetail view has been removed; navigate directly to fileHome
       document.getElementById('fileHome').style.display = 'none';
       const coDetailEl = document.getElementById('coDetail');
       if (coDetailEl) coDetailEl.style.display = 'none';
+      const subjectDetailEl = document.getElementById('subjectDetail');
+      if (subjectDetailEl) subjectDetailEl.style.display = 'block';
+      const titleEl = document.getElementById('subjectDetailTitle');
+      if (titleEl) titleEl.textContent = (s.icon ? s.icon + ' ' : '') + s.name;
+      const subEl = document.getElementById('subjectDetailSub');
+      if (subEl) subEl.textContent = s.code ? ('Code: ' + s.code) : 'Lessons saved to this subject';
+      renderSubjectDetailLessons();
     }
     function backToSubjects() {
       currentSubjectId = null; currentCOId = null;
@@ -14046,8 +14070,74 @@ function amShowSuccess() {
       document.getElementById('fileHome').style.display = 'block';
       const coDetailEl = document.getElementById('coDetail');
       if (coDetailEl) coDetailEl.style.display = 'none';
+      const subjectDetailEl = document.getElementById('subjectDetail');
+      if (subjectDetailEl) subjectDetailEl.style.display = 'none';
       renderSubjectsGrid();
     }
+
+    // ═══════════════════════════════════════════════
+    // SUBJECT DETAIL — LESSONS
+    // Renders the lessons saved to the currently open subject (s.lessons,
+    // an array of lesson ids chosen via the "Add Lesson" workflow), or a
+    // "no lessons stored" empty state when none have been added yet.
+    // ═══════════════════════════════════════════════
+    function renderSubjectDetailLessons() {
+      const s = engineeringCourses.find(x => x.id === currentSubjectId);
+      const grid = document.getElementById('subjectDetailLessonsGrid');
+      const countEl = document.getElementById('subjectDetailCount');
+      if (!grid || !s) return;
+
+      const ids = Array.isArray(s.lessons) ? s.lessons : [];
+      const cache = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      const lessons = ids
+        .map(id => cache.find(l => l.id === id))
+        .filter(Boolean);
+
+      if (countEl) countEl.textContent = lessons.length + ' lesson' + (lessons.length !== 1 ? 's' : '');
+
+      if (!lessons.length) {
+        grid.innerHTML = `
+          <div class="lessons-empty" style="grid-column:1/-1">
+            <div class="lessons-empty-icon">📚</div>
+            <h3>No lessons stored</h3>
+            <p>This subject doesn't have any lessons yet. Tap "Add Lesson" to select some.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = lessons.map(lesson => {
+        const hasAnim  = !!lesson.animation_url;
+        const hasTheory= !!lesson.theory_url;
+        const hasRW    = lesson.realworld_images && lesson.realworld_images.length > 0;
+        const chips = [
+          hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
+          hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
+          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${lesson.realworld_images.length})</span>` : '',
+        ].join('');
+        const thumbHTML = lesson.thumbnail_url
+          ? `<img class="lesson-card-thumb" src="${lesson.thumbnail_url}" alt="${esc(lesson.title)}" loading="lazy" />`
+          : `<div class="lesson-card-thumb-placeholder">📚</div>`;
+        return `
+          <div class="lesson-card" onclick="openLesson('${lesson.id}')">
+            ${thumbHTML}
+            <div class="lesson-card-body">
+              <div class="lesson-card-title">${esc(lesson.title)}</div>
+              <div class="lesson-card-modes" style="gap:4px;flex-wrap:wrap;">
+                ${chips || '<span class="lesson-mode-chip" style="background:var(--border);color:var(--text3);border-color:var(--border2);">No content yet</span>'}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    // Keep the subject detail view in sync if lessons load/refresh in the
+    // background (e.g. Realtime push) while it's open.
+    window.refreshSubjectDetailIfOpen = function () {
+      if (currentSubjectId && document.getElementById('subjectDetail') &&
+          document.getElementById('subjectDetail').style.display !== 'none') {
+        renderSubjectDetailLessons();
+      }
+    };
 
     // ═══════════════════════════════════════════════
     // CO GRID
@@ -17197,6 +17287,8 @@ ${text.substring(0, 4500)}`
       if (typeof window.renderLibraryClasses       === 'function') window.renderLibraryClasses();
       if (typeof window.renderLibraryCategories    === 'function') window.renderLibraryCategories();
       if (typeof window.renderLibraryContentTypes  === 'function') window.renderLibraryContentTypes();
+      // Keep an open Subject Detail view (File Mode) in sync too
+      if (typeof window.refreshSubjectDetailIfOpen === 'function') window.refreshSubjectDetailIfOpen();
     };
 
     // ────────────────────────────────────────────────────
