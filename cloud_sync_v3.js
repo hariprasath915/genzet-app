@@ -975,8 +975,8 @@
       }
       return _lessonsCache;
     }
-    console.warn('[LESSONS] Failed to load lessons:', r.error);
-    return [];
+    console.warn('[LESSONS] Failed to load lessons:', r.error, '| HTTP status:', r.status);
+    return null;
   }
 
   /**
@@ -1012,7 +1012,7 @@
 
   /**
    * Create a lesson row in the DB (admin only).
-   * @param {object} lesson — { title, thumbnail_url, theory_url, animation_url, realworld_images[] }
+   * @param {object} lesson — { title, class_name, subject, thumbnail_url, theory_url, animation_url, realworld_images[] }
    */
   async function _createLesson(lesson) {
     return _api('POST', '/sync/lessons', lesson);
