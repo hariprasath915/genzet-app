@@ -11873,19 +11873,6 @@ function amShowSuccess() {
                 </div><!-- end lessonsContentTypeView -->
 
               </div>
-
-              <!-- Floating selection bar — shown while picking lessons for a
-                   subject via the "Add Lesson" workflow started in File Mode. -->
-              <div id="lessonSelectionBar" style="display:none;position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:500;
-                background:var(--panel,#fff);border:1px solid var(--border2,#e5e7eb);box-shadow:0 10px 30px rgba(0,0,0,.18);
-                border-radius:14px;padding:12px 16px;align-items:center;gap:14px;">
-                <span style="font-size:13px;font-weight:700;color:var(--text,#111827);">
-                  📚 <span id="lessonSelectionCount">0 lessons selected</span>
-                  <span id="lessonSelectionTarget" style="font-weight:500;color:var(--text3,#6b7280);"></span>
-                </span>
-                <button class="modal-cancel-btn" onclick="cancelLessonSelectionAndReturn()">Cancel</button>
-                <button class="modal-save-btn teal" onclick="saveLessonSelection()">💾 Save Lessons</button>
-              </div>
             </div><!-- end lessonsPanel -->
 
           </div>
@@ -11893,6 +11880,26 @@ function amShowSuccess() {
       </div>
     </div><!-- /main-area -->
   </div><!-- /app-wrap -->
+
+  <!-- Floating selection bar — shown while picking lessons for a subject via
+       the "Add Lesson" workflow started in File Mode. Deliberately placed
+       here, OUTSIDE .app-wrap and .panel: .panel has a CSS `transform` on it
+       (used for its open/close animation), and any ancestor with a transform
+       creates a new containing block for `position: fixed` descendants — so
+       when this bar lived inside .lessonsPanel it was actually positioned
+       relative to that panel instead of the viewport, which made it look
+       "stuck" at the bottom of the content instead of floating over it while
+       scrolling. Living at the top level here keeps it truly viewport-fixed. -->
+  <div id="lessonSelectionBar" style="display:none;position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:500;
+    background:var(--panel,#fff);border:1px solid var(--border2,#e5e7eb);box-shadow:0 10px 30px rgba(0,0,0,.18);
+    border-radius:14px;padding:12px 16px;align-items:center;gap:14px;">
+    <span style="font-size:13px;font-weight:700;color:var(--text,#111827);">
+      📚 <span id="lessonSelectionCount">0 lessons selected</span>
+      <span id="lessonSelectionTarget" style="font-weight:500;color:var(--text3,#6b7280);"></span>
+    </span>
+    <button class="modal-cancel-btn" onclick="cancelLessonSelectionAndReturn()">Cancel</button>
+    <button class="modal-save-btn teal" onclick="saveLessonSelection()">💾 Save Lessons</button>
+  </div>
 
   <!-- ═══════════════════════════════════════════════════════
        PUBLIC SHARE PAGE — rendered when ?share=<token> is in the URL
