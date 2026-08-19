@@ -10,7 +10,7 @@ export async function GET(
 
   try {
     const res = await fetch(
-      `${API_URL}/generate-question-animation/status/${encodeURIComponent(jobId)}`,
+      `${API_URL}/generate-animation/status/${encodeURIComponent(jobId)}`,
       { signal: AbortSignal.timeout(20_000) }
     );
 
