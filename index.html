@@ -13362,18 +13362,76 @@ function amShowSuccess() {
         amStepEls.forEach((el, i) => { el.classList.toggle('active', i === mi); el.classList.toggle('done', i < mi); });
       }, 3000);
       try {
-        const res = await fetch(`${BACKEND_URL}/generate-animation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
-        if (!res.ok) {
-          let msg = `Server error (status ${res.status})`;
+
+        // --- Step 1: kick off the job. This call returns almost instantly
+        // (just enqueues the work), so it can never be killed by a proxy's
+        // long-request timeout no matter how long generation itself takes. ---
+        const startRes = await fetch(`${BACKEND_URL}/generate-animation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        if (!startRes.ok) {
+          let msg = `Server error (status ${startRes.status})`;
           try {
-            const errData = await res.json();
+            const errData = await startRes.json();
             msg = errData.detail || msg;
           } catch {
             msg += ' — response was not JSON, likely a platform timeout/crash page';
           }
           throw new Error(msg);
         }
-        const data = await res.json();
+        const startData = await startRes.json();
+        const jobId = startData.job_id;
+        if (!jobId) {
+          throw new Error('Backend did not return a job_id — is it still using the old synchronous endpoint?');
+        }
+
+        // --- Step 2: poll for the result. Each poll is a cheap, fast
+        // request, so it's never at risk of any request timeout either. ---
+        const POLL_INTERVAL_MS = 3000;
+        const MAX_WAIT_MS = 10 * 60 * 1000; // 10 minute safety cap
+        const startedAt = Date.now();
+        let data = null;
+        let missingJobPolls = 0;
+
+        while (true) {
+          if (Date.now() - startedAt > MAX_WAIT_MS) {
+            throw new Error('Generation is taking much longer than expected. Please try again.');
+          }
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+
+          const statusRes = await fetch(`${BACKEND_URL}/generate-animation/status/${encodeURIComponent(jobId)}`);
+          if (!statusRes.ok) {
+            if (statusRes.status === 404) {
+              // The server has no record of this job at all — it isn't
+              // "still working", it genuinely doesn't exist (e.g. the
+              // backend process restarted mid-generation and its in-memory
+              // job table was wiped). Retrying this for 10 minutes would
+              // just waste the user's time on a job that can never finish.
+              // Fail fast instead, once we're sure it's not a one-off blip.
+              missingJobPolls = (missingJobPolls || 0) + 1;
+              if (missingJobPolls >= 3) {
+                throw new Error('Lost track of this generation on the server (it may have restarted). Please try again.');
+              }
+            }
+            // Transient network/proxy hiccup on a poll — keep trying rather
+            // than failing the whole generation over one bad poll.
+            continue;
+          }
+          missingJobPolls = 0;
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'done') {
+            data = statusData.result;
+            break;
+          }
+          if (statusData.status === 'error') {
+            throw new Error(statusData.detail || 'Generation failed on the server.');
+          }
+          // status === 'pending' / 'running' -> loop again
+        }
+
         const patchedCode = patchAnimHTML(data.animation_code);
         currentAnimation = { id: Date.now().toString(), title: data.title, prompt, explanation: data.explanation, animation_code: patchedCode, created_at: new Date().toISOString(), playlist: null };
         clearInterval(pt); clearInterval(mt);
@@ -13392,6 +13450,7 @@ function amShowSuccess() {
         clearInterval(pt); clearInterval(mt);
         document.getElementById('amLoading').style.display = 'none'; document.getElementById('amEmpty').style.display = 'flex';
         const err = document.getElementById('amError'); err.style.display = 'block'; err.textContent = '⚠ ' + e.message;
+        console.error('[AI_CREATOR] Generation failed:', e);
       } finally {
         btn.disabled = false; document.getElementById('amBtnIcon').textContent = '🚀'; document.getElementById('amBtnText').textContent = 'Generate';
       }
