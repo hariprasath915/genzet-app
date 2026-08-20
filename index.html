@@ -5060,7 +5060,536 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
       flex-wrap: wrap;
     }
 
+    /* ══ NEW FILE MODE — 3-Level Hierarchy CSS ══ */
+
+    /* Empty state container with centered + button */
+    .fm-empty-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 340px;
+      border: 2.5px dashed var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      margin: 32px auto;
+      max-width: 520px;
+      position: relative;
+      transition: border-color .25s, background .25s;
+    }
+    .fm-empty-container:hover {
+      border-color: var(--violet, #8b5cf6);
+      background: color-mix(in srgb, var(--violet, #8b5cf6) 4%, var(--surface));
+    }
+
+    /* The large center "+" button */
+    .fm-add-btn {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 2.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text2);
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .22s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      position: relative;
+    }
+    .fm-add-btn:hover {
+      border-color: var(--violet, #8b5cf6);
+      color: var(--violet, #8b5cf6);
+      background: color-mix(in srgb, var(--violet, #8b5cf6) 10%, var(--bg));
+      transform: scale(1.10);
+      box-shadow: 0 6px 22px rgba(139,92,246,.18);
+    }
+    .fm-add-btn-label {
+      font-size: 13px;
+      color: var(--text3);
+      margin-top: 14px;
+      font-weight: 500;
+    }
+
+    /* Inline popover for name input (shown below + button) */
+    .fm-popover {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 10px);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.16);
+      padding: 22px 24px 18px;
+      width: 310px;
+      z-index: 100;
+      animation: fadeUp .18s ease;
+      display: none;
+    }
+    .fm-popover.show { display: block; }
+    .fm-popover-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .fm-popover-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .fm-popover input, .fm-popover select {
+      flex: 1;
+      padding: 9px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .fm-popover input:focus, .fm-popover select:focus {
+      border-color: var(--violet, #8b5cf6);
+    }
+    .fm-popover-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    .fm-pop-cancel {
+      padding: 7px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text3);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .fm-pop-cancel:hover { background: var(--border); color: var(--text); }
+    .fm-pop-create {
+      padding: 7px 16px;
+      border-radius: 9px;
+      border: none;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .18s;
+      box-shadow: 0 3px 10px rgba(139,92,246,.3);
+    }
+    .fm-pop-create:hover { opacity: .92; transform: translateY(-1px); }
+
+    /* Subject folder cards grid */
+    .fm-subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+      padding: 4px 0 24px;
+    }
+    .fm-subject-folder {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all .22s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .fm-subject-folder:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      border-color: var(--border2);
+    }
+    .fm-folder-top {
+      height: 6px;
+      border-radius: 0;
+      width: 100%;
+    }
+    .fm-folder-body {
+      padding: 18px 18px 14px;
+    }
+    .fm-folder-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .fm-folder-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    .fm-folder-meta {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+    }
+    .fm-folder-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .fm-folder-stat {
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid;
+    }
+    .fm-folder-del {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text3);
+      font-size: 11px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all .18s;
+      z-index: 2;
+    }
+    .fm-subject-folder:hover .fm-folder-del { display: flex; }
+    .fm-folder-del:hover { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+    /* "+" add folder card at end of grid */
+    .fm-add-folder-card {
+      background: transparent;
+      border: 2px dashed var(--border);
+      border-radius: 20px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .22s;
+      gap: 8px;
+      color: var(--text3);
+    }
+    .fm-add-folder-card:hover {
+      border-color: var(--violet, #8b5cf6);
+      color: var(--violet, #8b5cf6);
+      background: color-mix(in srgb, var(--violet, #8b5cf6) 5%, transparent);
+    }
+
+    /* Breadcrumb navigation inside subject/unit views */
+    .fm-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .fm-back-btn {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .fm-back-btn:hover { border-color: var(--violet,#8b5cf6); color: var(--violet,#8b5cf6); }
+    .fm-breadcrumb-trail {
+      font-size: 13px;
+      color: var(--text3);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .fm-breadcrumb-trail span { color: var(--text); }
+    .fm-breadcrumb-sep { color: var(--border2); }
+
+    /* Unit / Lesson cards grid */
+    .fm-units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 16px;
+      padding: 4px 0 24px;
+    }
+    .fm-unit-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 18px 14px;
+      cursor: pointer;
+      transition: all .22s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .fm-unit-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.1);
+      border-color: var(--violet,#8b5cf6);
+    }
+    .fm-unit-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 8px;
+    }
+    .fm-unit-badge.unit-type {
+      background: rgba(99,102,241,.12);
+      color: #6366f1;
+      border: 1px solid rgba(99,102,241,.25);
+    }
+    .fm-unit-badge.lesson-type {
+      background: rgba(16,185,129,.12);
+      color: #10b981;
+      border: 1px solid rgba(16,185,129,.25);
+    }
+    .fm-unit-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .fm-unit-meta {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+    }
+    .fm-unit-del {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text3);
+      font-size: 10px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all .18s;
+    }
+    .fm-unit-card:hover .fm-unit-del { display: flex; }
+    .fm-unit-del:hover { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+    /* Unit detail — action buttons */
+    .fm-unit-actions {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .fm-action-btn {
+      flex: 1;
+      min-width: 180px;
+      padding: 22px 20px;
+      border-radius: 20px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+      text-align: left;
+    }
+    .fm-action-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.12);
+    }
+    .fm-action-btn.add-topics {
+      border-color: rgba(16,185,129,.35);
+      background: rgba(16,185,129,.06);
+    }
+    .fm-action-btn.add-topics:hover {
+      border-color: #10b981;
+      box-shadow: 0 8px 24px rgba(16,185,129,.18);
+    }
+    .fm-action-btn.create-ai {
+      border-color: rgba(139,92,246,.35);
+      background: rgba(139,92,246,.06);
+    }
+    .fm-action-btn.create-ai:hover {
+      border-color: #8b5cf6;
+      box-shadow: 0 8px 24px rgba(139,92,246,.18);
+    }
+    .fm-action-icon {
+      font-size: 28px;
+    }
+    .fm-action-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .fm-action-desc {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* Unit topic list (library lessons saved to this unit) */
+    .fm-unit-topics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .fm-unit-topics-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .fm-unit-topics-count {
+      font-size: 12px;
+      color: var(--text3);
+      font-weight: 600;
+    }
+    .fm-unit-topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .fm-topic-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all .2s;
+      cursor: pointer;
+    }
+    .fm-topic-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.09);
+    }
+    .fm-topic-thumb {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+    }
+    .fm-topic-thumb-placeholder {
+      width: 100%;
+      height: 110px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: var(--text3);
+    }
+    .fm-topic-body {
+      padding: 10px 12px 12px;
+    }
+    .fm-topic-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .fm-topic-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .fm-topic-remove-btn {
+      margin-top: 8px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .fm-topic-remove-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
+
+    /* File Mode topbar (breadcrumb row) */
+    .fm-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .fm-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .fm-topbar-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(245,158,11,.25);
+    }
+    .fm-topbar-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .fm-topbar-subtitle {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
     /* HTML Full-Screen Preview Overlay */
+
     .html-preview-overlay {
       position: fixed;
       inset: 0;
@@ -11870,90 +12399,139 @@ function amShowSuccess() {
             <!-- FILE PANEL — ENGINEERING COURSES -->
             <div class="panel" id="filePanel">
 
-              <!-- VIEW 1: Subjects Home -->
+              <!-- ══════════════════════════════════════════════
+                   VIEW 1: Subjects Home — grid of Subject Folders
+                   ══════════════════════════════════════════════ -->
               <div id="fileHome">
-                <!-- Fixed/sticky header block: stays in place while subjects grid scrolls -->
-                <div class="file-home-sticky">
-                  <div class="file-topbar">
-                    <div class="file-topbar-identity">
-                      <div class="file-topbar-icon">📁</div>
-                      <div class="file-topbar-left">
-                        <h2>Engineering Courses — Subjects</h2>
-                        <p>Manage subjects, course outcomes (COs) and AI animations per CO</p>
-                      </div>
-                    </div>
-                    <div class="file-topbar-actions">
-                      <button class="file-action-btn create" onclick="openCreateSubjectModal()">➕ Create Subject</button>
-                      <button class="file-action-btn modify" onclick="toggleModifyMode()">✏ Modify</button>
-                      <button class="file-action-btn delbtn" onclick="toggleDeleteSubjectMode()">🗑 Delete</button>
+
+                <!-- Topbar -->
+                <div class="fm-topbar">
+                  <div class="fm-topbar-left">
+                    <div class="fm-topbar-icon">📁</div>
+                    <div>
+                      <div class="fm-topbar-title">My Subject Folders</div>
+                      <div class="fm-topbar-subtitle">Organise content into subjects, units and lessons</div>
                     </div>
                   </div>
-                  <!-- Storage info banner -->
-                  <div class="storage-info-banner" id="storageInfoBanner">
+                  <!-- Storage badge (kept for compat with updateStorageBadge()) -->
+                  <div class="storage-info-banner" id="storageInfoBanner" style="margin:0;border-radius:10px;">
                     <span>☁️</span>
-                    <span id="storageInfoText">Loading storage info…</span>
-                  </div>
-                  <!-- Filter bar: All subjects tab + search -->
-                  <div class="subjects-filterbar">
-                    <div class="subjects-filterbar-left">
-                      <div class="subjects-tab">
-                        All subjects
-                        <span class="subjects-tab-count" id="subjectsTabCount">0</span>
-                      </div>
-                    </div>
-                    <div class="subjects-search-wrap">
-                      <input class="subjects-search" id="subjectsSearchInput" type="text" placeholder="Search subjects…" oninput="filterSubjectsGrid(this.value)" />
-                    </div>
+                    <span id="storageInfoText">Loading…</span>
                   </div>
                 </div>
-                <div class="subjects-grid" id="subjectsGrid"></div>
+
+                <!-- Subject popover (shown when user clicks the global + button) -->
+                <div class="fm-popover" id="fmSubjectPopover">
+                  <div class="fm-popover-title">📁 Create Subject Folder</div>
+                  <div class="fm-popover-row">
+                    <input id="fmSubjectNameInput" type="text" placeholder="Subject name (e.g. Math, Science)" maxlength="80"
+                      onkeydown="if(event.key==='Enter')fmSaveNewSubject()" />
+                  </div>
+                  <div class="fm-popover-actions">
+                    <button class="fm-pop-cancel" onclick="fmCloseSubjectPopover()">Cancel</button>
+                    <button class="fm-pop-create" id="fmSubjectCreateBtn" onclick="fmSaveNewSubject()">Create</button>
+                  </div>
+                </div>
+
+                <!-- Subject folders grid (filled by renderSubjectsGrid()) -->
+                <div class="fm-subjects-grid" id="fmSubjectsGrid"></div>
+
+                <!-- Hidden compat IDs used by legacy JS (subjectsGrid, subjectsTabCount, etc.) -->
+                <!-- These are kept as invisible stubs so existing functions don't throw -->
+                <div id="subjectsGrid"       style="display:none;"></div>
+                <span id="subjectsTabCount"  style="display:none;"></span>
+                <input id="subjectsSearchInput" style="display:none;" type="text" />
               </div>
 
-              <!-- VIEW 2: Subject Detail — shows the lessons saved for this subject,
-                   or a "no lessons stored" empty state when none have been added yet. -->
-              <div id="subjectDetail" style="display:none;">
-                <div class="co-detail-header">
-                  <button class="co-back-btn" onclick="backToSubjects()">← Back to Subjects</button>
-                  <div class="co-detail-title">
-                    <h3 id="subjectDetailTitle">Subject</h3>
-                    <p id="subjectDetailSub">Lessons saved to this subject</p>
+              <!-- ══════════════════════════════════════════════
+                   VIEW 2: Subject Detail — Units & Lessons inside a Subject
+                   ══════════════════════════════════════════════ -->
+              <div id="fmUnitHome" style="display:none;">
+
+                <!-- Breadcrumb -->
+                <div class="fm-breadcrumb" id="fmUnitBreadcrumb">
+                  <button class="fm-back-btn" onclick="fmBackToSubjects()">← Subjects</button>
+                  <div class="fm-breadcrumb-trail">
+                    <span id="fmUnitBreadSubject">Subject</span>
                   </div>
-                  <button class="file-action-btn create" onclick="startAddLessonsForExistingSubject(currentSubjectId)">📚 Add Lesson</button>
                 </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                  <span style="font-size:14px;font-weight:800;color:var(--text);">Saved Lessons</span>
-                  <span id="subjectDetailCount" style="font-size:12px;color:var(--text3);font-weight:600;"></span>
+
+                <!-- Unit popover -->
+                <div class="fm-popover" id="fmUnitPopover">
+                  <div class="fm-popover-title">📦 Create Unit or Lesson</div>
+                  <div class="fm-popover-row">
+                    <select id="fmUnitTypeSelect" style="flex:0 0 110px;">
+                      <option value="unit">Unit</option>
+                      <option value="lesson">Lesson</option>
+                    </select>
+                    <input id="fmUnitNumberInput" type="number" min="1" max="99" value="1"
+                      placeholder="Number" style="flex:0 0 80px;"
+                      onkeydown="if(event.key==='Enter')fmSaveNewUnit()" />
+                  </div>
+                  <div class="fm-popover-actions">
+                    <button class="fm-pop-cancel" onclick="fmCloseUnitPopover()">Cancel</button>
+                    <button class="fm-pop-create" id="fmUnitCreateBtn" onclick="fmSaveNewUnit()">Create</button>
+                  </div>
                 </div>
-                <div class="lessons-grid" id="subjectDetailLessonsGrid"></div>
+
+                <!-- Units grid (filled by fmRenderUnitsGrid()) -->
+                <div class="fm-units-grid" id="fmUnitsGrid"></div>
+
+                <!-- Legacy compat stubs for subjectDetail -->
+                <div id="subjectDetail"            style="display:none;"></div>
+                <h3  id="subjectDetailTitle"        style="display:none;"></h3>
+                <p   id="subjectDetailSub"          style="display:none;"></p>
+                <span id="subjectDetailCount"       style="display:none;"></span>
+                <div id="subjectDetailLessonsGrid"  style="display:none;"></div>
               </div>
 
+              <!-- ══════════════════════════════════════════════
+                   VIEW 3: Unit/Lesson Detail — Topics inside a Unit
+                   ══════════════════════════════════════════════ -->
+              <div id="fmUnitDetail" style="display:none;">
 
-
-              <!-- VIEW 3: CO Detail (Topics) -->
-              <div id="coDetail" style="display:none;">
-                <div class="co-detail-header">
-                  <button class="co-back-btn" onclick="backToCOList()">← Back to COs</button>
-                  <div class="co-detail-title">
-                    <h3 id="coDetailTitle">CO1</h3>
-                    <p id="coDetailSub">Topics saved in this CO</p>
+                <!-- Breadcrumb -->
+                <div class="fm-breadcrumb" id="fmDetailBreadcrumb">
+                  <button class="fm-back-btn" onclick="fmBackToUnits()">← Units</button>
+                  <div class="fm-breadcrumb-trail">
+                    <span id="fmDetailBreadSubject">Subject</span>
+                    <span class="fm-breadcrumb-sep">›</span>
+                    <span id="fmDetailBreadUnit">Unit</span>
                   </div>
-                  <button class="html-upload-btn" onclick="openUploadHTMLModal()"
-                    title="Upload any HTML file or paste HTML code as a topic">
-                    📤 Upload HTML Code
+                </div>
+
+                <!-- Two action buttons -->
+                <div class="fm-unit-actions">
+                  <button class="fm-action-btn add-topics" id="fmAddTopicsBtn" onclick="fmHandleAddTopics()">
+                    <div class="fm-action-icon">📚</div>
+                    <div class="fm-action-title">Add Topics</div>
+                    <div class="fm-action-desc">Browse Library Mode and pick lessons/topics to save here</div>
                   </button>
-                  <button class="ppt-upload-btn" onclick="openUploadPPTModal()"
-                    title="Upload a PowerPoint (.pptx) file as a topic">
-                    📊 Upload PPT
+                  <button class="fm-action-btn create-ai" id="fmCreateAiBtn" onclick="fmHandleCreateWithAI()">
+                    <div class="fm-action-icon">✨</div>
+                    <div class="fm-action-title">Create with AI</div>
+                    <div class="fm-action-desc">Jump to AI Creator — generate animations for this unit</div>
                   </button>
                 </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                  <span style="font-size:14px;font-weight:800;color:var(--text);">Saved Topics</span>
-                  <span id="topicCountLabel" style="font-size:12px;color:var(--text3);font-weight:600;"></span>
+
+                <!-- Topics saved to this unit -->
+                <div class="fm-unit-topics-header">
+                  <div class="fm-unit-topics-title">Saved Topics</div>
+                  <div class="fm-unit-topics-count" id="fmUnitTopicsCount">0 topics</div>
                 </div>
-                <div class="topic-list" id="topicList"></div>
+                <div class="fm-unit-topics-grid" id="fmUnitTopicsGrid"></div>
+
+                <!-- Legacy compat stubs (coDetail, topicList, etc.) -->
+                <div id="coDetail"       style="display:none;"></div>
+                <h3  id="coDetailTitle"  style="display:none;"></h3>
+                <p   id="coDetailSub"    style="display:none;"></p>
+                <span id="topicCountLabel" style="display:none;"></span>
+                <div id="topicList"      style="display:none;"></div>
               </div>
 
             </div>
+
+
 
             <!-- ══ LESSONS PANEL ══ -->
             <div class="panel" id="lessonsPanel">
@@ -13065,7 +13643,11 @@ function amShowSuccess() {
       if (subTabSimulation) subTabSimulation.classList.toggle('active', mode === 'simulation');
       // REMOVED: teacher mode handler
       if (mode === 'library') renderLibrary();
-      if (mode === 'file') { renderSubjectsGrid(); updateStorageBadge(); }
+      if (mode === 'file') {
+        renderSubjectsGrid(); updateStorageBadge();
+        // Reset to subjects home view when entering File Mode
+        if (typeof fmShowView === 'function') fmShowView('home');
+      }
       if (mode === 'simulation') simInit();
       if (mode === 'lessons') initLessonsMode();
     }
@@ -14190,11 +14772,436 @@ function amShowSuccess() {
       }
     }
 
+
+    // ═══════════════════════════════════════════════════════════════
+    // ★ NEW FILE MODE — 3-Level Hierarchy (Subject → Unit → Topics)
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── State ──────────────────────────────────────────────────────
+    let _fmCurrentSubjectId = null;   // subject opened in View 2
+    let _fmCurrentUnitId    = null;   // unit opened in View 3
+    let _fmUnitLessonContext = null;  // {unitId} — set when "Add Topics" starts
+
+    // Expose hydrateUnits so cloud_sync_v3 can call it after /sync/all
+    window._fileMode = {
+      hydrateUnits(subjects) {
+        // Units are already embedded on each subject object as s.units[]
+        // Just re-render if File Mode is currently visible
+        if (typeof fmRenderSubjectsGrid === 'function') fmRenderSubjectsGrid();
+      }
+    };
+
+    // ── Helper: escape HTML ────────────────────────────────────────
+    // (reuses the existing esc() function defined earlier in index.html)
+
+    // ── VIEW SWITCHING ─────────────────────────────────────────────
+    function fmShowView(view) {
+      // 'home' | 'unitHome' | 'unitDetail'
+      const ids = ['fileHome', 'fmUnitHome', 'fmUnitDetail'];
+      const map = { home: 'fileHome', unitHome: 'fmUnitHome', unitDetail: 'fmUnitDetail' };
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (id === map[view]) ? '' : 'none';
+      });
+    }
+
+    // ── VIEW 1: SUBJECTS GRID ─────────────────────────────────────
+    function fmRenderSubjectsGrid() {
+      const grid = document.getElementById('fmSubjectsGrid');
+      if (!grid) return;
+
+      if (!engineeringCourses || engineeringCourses.length === 0) {
+        // Empty state: just the center "+" button
+        grid.innerHTML = `
+          <div class="fm-empty-container" id="fmSubjectEmptyContainer">
+            <button class="fm-add-btn" id="fmSubjectAddBtn"
+              onclick="fmOpenSubjectPopover(event)">+</button>
+            <div class="fm-add-btn-label">Create Subject Folder</div>
+          </div>`;
+        return;
+      }
+
+      // Render folder cards + "+" add card at the end
+      grid.innerHTML = engineeringCourses.map(s => {
+        const units = Array.isArray(s.units) ? s.units : [];
+        const totalTopics = units.reduce((sum, u) => sum + (u.lesson_ids || []).length, 0);
+        const color = s.color || '#6366f1';
+        const icon  = s.icon  || '📁';
+        return `
+          <div class="fm-subject-folder" onclick="fmOpenSubject('${s.id}')">
+            <div class="fm-folder-top" style="background:linear-gradient(90deg,${color},${color}88);"></div>
+            <div class="fm-folder-body">
+              <div class="fm-folder-icon" style="background:linear-gradient(135deg,${color},${color}bb);">${icon}</div>
+              <div class="fm-folder-name">${esc(s.name)}</div>
+              <div class="fm-folder-meta">${esc(s.code || '')}</div>
+              <div class="fm-folder-stats">
+                <span class="fm-folder-stat" style="background:${color}14;color:${color};border-color:${color}40;">
+                  ${units.length} ${units.length !== 1 ? 'Units' : 'Unit'}
+                </span>
+                <span class="fm-folder-stat" style="background:var(--teal-lt);color:var(--teal);border-color:var(--teal-md);">
+                  ${totalTopics} Topic${totalTopics !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+            <button class="fm-folder-del" title="Delete subject"
+              onclick="event.stopPropagation();fmDeleteSubject('${s.id}')">✕</button>
+          </div>`;
+      }).join('') + `
+        <div class="fm-add-folder-card" onclick="fmOpenSubjectPopover(event)">
+          <div style="font-size:24px;opacity:.5;">+</div>
+          <div style="font-size:12px;font-weight:600;">Add Subject</div>
+        </div>`;
+    }
+
+    // ── Subject Popover ────────────────────────────────────────────
+    function fmOpenSubjectPopover(e) {
+      e && e.stopPropagation();
+      const pop = document.getElementById('fmSubjectPopover');
+      const inp = document.getElementById('fmSubjectNameInput');
+      if (!pop) return;
+      pop.classList.add('show');
+      if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 80); }
+      // close on outside click
+      setTimeout(() => document.addEventListener('click', _fmSubjectPopoverOutside, { once: true }), 50);
+    }
+    function _fmSubjectPopoverOutside(e) {
+      const pop = document.getElementById('fmSubjectPopover');
+      if (pop && !pop.contains(e.target)) fmCloseSubjectPopover();
+    }
+    function fmCloseSubjectPopover() {
+      const pop = document.getElementById('fmSubjectPopover');
+      if (pop) pop.classList.remove('show');
+    }
+
+    async function fmSaveNewSubject() {
+      const inp = document.getElementById('fmSubjectNameInput');
+      const btn = document.getElementById('fmSubjectCreateBtn');
+      const name = inp ? inp.value.trim() : '';
+      if (!name) { if (inp) { inp.style.borderColor='#ef4444'; setTimeout(()=>inp.style.borderColor='',900); } return; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+      let cloudId = null;
+      if (typeof window.syncCreateSubject === 'function') {
+        try { const r = await window.syncCreateSubject(name, ''); if (r && r.id) cloudId = r.id; }
+        catch (e) { console.warn('[FM] syncCreateSubject error:', e.message); }
+      }
+
+      const newSubj = {
+        id: cloudId || ('s_' + Date.now()),
+        name, code: '', icon: '📁', color: '#6366f1',
+        cos: [], syllabus: null, lessons: [], units: []
+      };
+      engineeringCourses.push(newSubj);
+      if (!cloudId) await saveECourses();
+
+      fmCloseSubjectPopover();
+      fmRenderSubjectsGrid();
+      notify('✅ "' + name + '" created!');
+      if (btn) { btn.disabled = false; btn.textContent = 'Create'; }
+    }
+
+    async function fmDeleteSubject(id) {
+      if (!confirm('Delete this subject folder and all its units?')) return;
+      engineeringCourses = engineeringCourses.filter(s => s.id !== id);
+
+      let deleted = false;
+      if (typeof window.syncDeleteSubject === 'function') {
+        try { deleted = await window.syncDeleteSubject(id); } catch (e) {}
+      }
+      if (!deleted) await saveECourses();
+
+      fmRenderSubjectsGrid();
+      notify('🗑️ Subject deleted');
+    }
+
+    // ── VIEW 2: UNITS GRID ─────────────────────────────────────────
+    function fmOpenSubject(id) {
+      _fmCurrentSubjectId = id;
+      _fmCurrentUnitId    = null;
+      const s = engineeringCourses.find(x => x.id === id);
+      if (!s) return;
+      const breadEl = document.getElementById('fmUnitBreadSubject');
+      if (breadEl) breadEl.textContent = (s.icon ? s.icon + ' ' : '') + s.name;
+      fmRenderUnitsGrid(id);
+      fmShowView('unitHome');
+    }
+
+    function fmBackToSubjects() {
+      _fmCurrentSubjectId = null;
+      _fmCurrentUnitId    = null;
+      fmRenderSubjectsGrid();
+      fmShowView('home');
+    }
+
+    function fmRenderUnitsGrid(subjectId) {
+      const grid = document.getElementById('fmUnitsGrid');
+      if (!grid) return;
+      const s = engineeringCourses.find(x => x.id === subjectId);
+      const units = (s && Array.isArray(s.units)) ? s.units : [];
+
+      if (units.length === 0) {
+        grid.innerHTML = `
+          <div class="fm-empty-container" id="fmUnitEmptyContainer">
+            <button class="fm-add-btn" onclick="fmOpenUnitPopover(event)">+</button>
+            <div class="fm-add-btn-label">Create Unit or Lesson</div>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = units.map(u => {
+        const isLesson = u.unit_type === 'lesson';
+        const badgeClass = isLesson ? 'lesson-type' : 'unit-type';
+        const badgeLabel = isLesson ? '📖 Lesson' : '📦 Unit';
+        const topicCount = (u.lesson_ids || []).length;
+        return `
+          <div class="fm-unit-card" onclick="fmOpenUnit('${u.id}')">
+            <div class="fm-unit-badge ${badgeClass}">${badgeLabel}</div>
+            <div class="fm-unit-name">${esc(u.name)}</div>
+            <div class="fm-unit-meta">${topicCount} topic${topicCount !== 1 ? 's' : ''} saved</div>
+            <button class="fm-unit-del" title="Delete" onclick="event.stopPropagation();fmDeleteUnit('${u.id}')">✕</button>
+          </div>`;
+      }).join('') + `
+        <div class="fm-unit-card" style="border-style:dashed;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;color:var(--text3);cursor:pointer;"
+          onclick="fmOpenUnitPopover(event)">
+          <div style="font-size:20px;opacity:.5;">+</div>
+          <div style="font-size:11px;font-weight:600;margin-top:4px;">Add Unit/Lesson</div>
+        </div>`;
+    }
+
+    // ── Unit Popover ───────────────────────────────────────────────
+    function fmOpenUnitPopover(e) {
+      e && e.stopPropagation();
+      const pop = document.getElementById('fmUnitPopover');
+      const inp = document.getElementById('fmUnitNumberInput');
+      if (!pop) return;
+      pop.classList.add('show');
+      // Auto-set next number
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      const units = (s && Array.isArray(s.units)) ? s.units : [];
+      if (inp) { inp.value = units.length + 1; setTimeout(() => inp.focus(), 80); }
+      setTimeout(() => document.addEventListener('click', _fmUnitPopoverOutside, { once: true }), 50);
+    }
+    function _fmUnitPopoverOutside(e) {
+      const pop = document.getElementById('fmUnitPopover');
+      if (pop && !pop.contains(e.target)) fmCloseUnitPopover();
+    }
+    function fmCloseUnitPopover() {
+      const pop = document.getElementById('fmUnitPopover');
+      if (pop) pop.classList.remove('show');
+    }
+
+    async function fmSaveNewUnit() {
+      const typeEl   = document.getElementById('fmUnitTypeSelect');
+      const numEl    = document.getElementById('fmUnitNumberInput');
+      const btn      = document.getElementById('fmUnitCreateBtn');
+      const unitType = typeEl ? typeEl.value : 'unit';
+      const unitNum  = parseInt(numEl ? numEl.value : 1, 10) || 1;
+      const name     = (unitType === 'lesson' ? 'Lesson' : 'Unit') + ' - ' + unitNum;
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+      let cloudUnit = null;
+      if (typeof window.syncCreateUnit === 'function') {
+        try { cloudUnit = await window.syncCreateUnit(_fmCurrentSubjectId, unitType, unitNum); }
+        catch (e) { console.warn('[FM] syncCreateUnit error:', e.message); }
+      }
+
+      const newUnit = cloudUnit || {
+        id: 'u_' + Date.now(),
+        subject_id: _fmCurrentSubjectId,
+        unit_type: unitType, unit_number: unitNum,
+        name, sort_order: unitNum - 1, lesson_ids: []
+      };
+      newUnit.lesson_ids = newUnit.lesson_ids || [];
+
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      if (s) {
+        if (!Array.isArray(s.units)) s.units = [];
+        s.units.push(newUnit);
+        s.units.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      }
+
+      fmCloseUnitPopover();
+      fmRenderUnitsGrid(_fmCurrentSubjectId);
+      notify('✅ "' + name + '" created!');
+      if (btn) { btn.disabled = false; btn.textContent = 'Create'; }
+    }
+
+    async function fmDeleteUnit(unitId) {
+      if (!confirm('Delete this unit and its saved topics?')) return;
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      if (s && Array.isArray(s.units)) s.units = s.units.filter(u => u.id !== unitId);
+
+      if (typeof window.syncDeleteUnit === 'function') {
+        try { await window.syncDeleteUnit(unitId); } catch (e) {}
+      }
+      fmRenderUnitsGrid(_fmCurrentSubjectId);
+      notify('🗑️ Unit deleted');
+    }
+
+    // ── VIEW 3: UNIT DETAIL ────────────────────────────────────────
+    function fmOpenUnit(unitId) {
+      _fmCurrentUnitId = unitId;
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      const u = s && Array.isArray(s.units) ? s.units.find(u => u.id === unitId) : null;
+      if (!u) return;
+
+      const breadSub  = document.getElementById('fmDetailBreadSubject');
+      const breadUnit = document.getElementById('fmDetailBreadUnit');
+      if (breadSub)  breadSub.textContent  = s.name;
+      if (breadUnit) breadUnit.textContent = u.name;
+
+      fmRenderUnitTopics(unitId);
+      fmShowView('unitDetail');
+    }
+
+    function fmBackToUnits() {
+      _fmCurrentUnitId = null;
+      fmRenderUnitsGrid(_fmCurrentSubjectId);
+      fmShowView('unitHome');
+    }
+
+    function fmRenderUnitTopics(unitId) {
+      const grid     = document.getElementById('fmUnitTopicsGrid');
+      const countEl  = document.getElementById('fmUnitTopicsCount');
+      if (!grid) return;
+
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      const u = s && Array.isArray(s.units) ? s.units.find(u => u.id === unitId) : null;
+      const lessonIds = (u && Array.isArray(u.lesson_ids)) ? u.lesson_ids : [];
+
+      // Get lesson objects from the lessons cache
+      const cache = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      const lessons = lessonIds.map(id => cache.find(l => l.id === id)).filter(Boolean);
+
+      if (countEl) countEl.textContent = lessons.length + ' topic' + (lessons.length !== 1 ? 's' : '');
+
+      if (!lessons.length) {
+        grid.innerHTML = `
+          <div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text3);">
+            <div style="font-size:44px;margin-bottom:12px;">📚</div>
+            <p style="font-size:14px;font-weight:700;color:var(--text);">No topics yet</p>
+            <p style="font-size:12px;margin-top:6px;">Click <strong>Add Topics</strong> to pick from the Library, or<br>
+            <strong>Create with AI</strong> to generate new content.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = lessons.map(lesson => {
+        const hasAnim  = !!lesson.animation_url;
+        const hasTheory= !!lesson.theory_url;
+        const hasRW    = lesson.realworld_images && lesson.realworld_images.length > 0;
+        const chips = [
+          hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>' : '',
+          hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'  : '',
+          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">🌍 Real World</span>` : '',
+        ].join('');
+        const thumbHTML = lesson.thumbnail_url
+          ? `<img class="fm-topic-thumb" src="${lesson.thumbnail_url}" alt="${esc(lesson.title)}" loading="lazy" />`
+          : `<div class="fm-topic-thumb-placeholder">📚</div>`;
+        return `
+          <div class="fm-topic-card" onclick="openLesson('${lesson.id}')">
+            ${thumbHTML}
+            <div class="fm-topic-body">
+              <div class="fm-topic-title">${esc(lesson.title)}</div>
+              <div class="fm-topic-chips">
+                ${chips || '<span class="lesson-mode-chip" style="background:var(--border);color:var(--text3);">No content</span>'}
+              </div>
+              <button class="fm-topic-remove-btn" onclick="event.stopPropagation();fmRemoveTopicFromUnit('${unitId}','${lesson.id}')">✕ Remove</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function fmRemoveTopicFromUnit(unitId, lessonId) {
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      const u = s && Array.isArray(s.units) ? s.units.find(u => u.id === unitId) : null;
+      if (!u) return;
+      u.lesson_ids = (u.lesson_ids || []).filter(id => id !== lessonId);
+
+      if (typeof window.syncSaveUnitLessons === 'function') {
+        try { await window.syncSaveUnitLessons(unitId, u.lesson_ids); } catch (e) {}
+      }
+      fmRenderUnitTopics(unitId);
+      notify('✅ Topic removed from unit');
+    }
+
+    // ── ACTION: Add Topics ─────────────────────────────────────────
+    function fmHandleAddTopics() {
+      if (!_fmCurrentUnitId) return;
+      // Store the unit context so the save-back knows where to write
+      _fmUnitLessonContext = { unitId: _fmCurrentUnitId };
+
+      // Load current lesson selection into the library selection system
+      const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+      const u = s && Array.isArray(s.units) ? s.units.find(u => u.id === _fmCurrentUnitId) : null;
+      const existingIds = new Set((u && u.lesson_ids) || []);
+
+      // Activate library selection mode (existing system)
+      lessonSelectionActive    = true;
+      lessonSelectionSubjectId = null;   // not a subject-level save
+      lessonSelectionPendingSubject = null;
+      lessonSelectionChosenIds = existingIds;
+
+      switchMode('lessons');
+      notify('📚 Select topics for "' + (u ? u.name : 'unit') + '", then tap Save');
+    }
+
+    // ── ACTION: Create with AI ─────────────────────────────────────
+    function fmHandleCreateWithAI() {
+      // Switch to AI Creator — the existing passkey guard handles everything
+      switchMode('animind');
+    }
+
+    // ── SAVE LESSONS BACK TO UNIT (called after Library save) ─────
+    // Override/extend the existing saveLessonSelection() to also handle unit context
+    const _fmOrigSaveLessonSelection = window.saveLessonSelection;
+    window.saveLessonSelection = async function saveLessonSelection() {
+      // If this is a unit context save, handle it here
+      if (_fmUnitLessonContext && _fmUnitLessonContext.unitId) {
+        const unitId   = _fmUnitLessonContext.unitId;
+        const lessonIds = Array.from(lessonSelectionChosenIds);
+
+        // Update in-memory
+        const s = engineeringCourses.find(x => x.id === _fmCurrentSubjectId);
+        const u = s && Array.isArray(s.units) ? s.units.find(u => u.id === unitId) : null;
+        if (u) u.lesson_ids = lessonIds;
+
+        // Sync to cloud
+        if (typeof window.syncSaveUnitLessons === 'function') {
+          try { await window.syncSaveUnitLessons(unitId, lessonIds); }
+          catch (e) { console.warn('[FM] syncSaveUnitLessons error:', e.message); }
+        }
+
+        // Reset lesson selection state
+        lessonSelectionActive    = false;
+        lessonSelectionChosenIds = new Set();
+        _fmUnitLessonContext     = null;
+
+        notify('✅ ' + lessonIds.length + ' topic' + (lessonIds.length !== 1 ? 's' : '') + ' saved!');
+
+        // Return to unit detail view
+        switchMode('file');
+        fmShowView('unitDetail');
+        fmRenderUnitTopics(unitId);
+        return;
+      }
+
+      // Otherwise call the original handler
+      if (typeof _fmOrigSaveLessonSelection === 'function') {
+        return _fmOrigSaveLessonSelection.apply(this, arguments);
+      }
+    };
+
     // ═══════════════════════════════════════════════
-    // FILE MODE — SUBJECTS GRID
+    // FILE MODE — SUBJECTS GRID (legacy wrapper)
+    // Now delegates to fmRenderSubjectsGrid() above.
     // ═══════════════════════════════════════════════
     function renderSubjectsGrid() {
       const grid = document.getElementById('subjectsGrid');
+      // ★ Also update the new File Mode subjects grid on every render
+      if (typeof fmRenderSubjectsGrid === 'function') fmRenderSubjectsGrid();
       // Update tab count badge
       const tabCount = document.getElementById('subjectsTabCount');
       if (tabCount) tabCount.textContent = engineeringCourses ? engineeringCourses.length : 0;
