@@ -190,16 +190,23 @@
         }
 
         // ── 5. Save session to localStorage ─────────────────────────────
-        //   Same keys that cloud_sync_v3.js reads on init
-        localStorage.setItem('genzet_jwt', data.token);
-        localStorage.setItem('genzet_user', JSON.stringify({
+        //   IMPORTANT: use 'haezet_jwt' / 'haezet_user' — these are the
+        //   TOKEN_KEY / USER_KEY that index.html's authInit() reads.
+        //   Using 'genzet_jwt' here caused Google OAuth to always bounce
+        //   back to the landing page because authInit found nothing.
+        localStorage.setItem('haezet_jwt', data.token);
+        localStorage.setItem('haezet_user', JSON.stringify({
           user_id: data.user_id,
           email:   data.email,
           name:    data.name,
         }));
-        // Remove legacy flags so _authInit doesn't get confused
+        // Remove ALL legacy / duplicate key variants so authInit can't get confused
+        localStorage.removeItem('genzet_jwt');
+        localStorage.removeItem('genzet_user');
         localStorage.removeItem('genzet_authenticated');
         localStorage.removeItem('genzet_local_session');
+        localStorage.removeItem('haezet_authenticated');
+        localStorage.removeItem('haezet_local_session');
 
         // ── 6. Show success, then redirect to app ────────────────────────
         showSuccess(data.name || data.email);
