@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://animind-backend-y07f.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "animind-backend-production-2.up.railway.app";
 
 /**
  * Proxy POST to the backend /generate-question-animation endpoint.
