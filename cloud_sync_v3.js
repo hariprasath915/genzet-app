@@ -851,8 +851,10 @@
     _setSyncStatus('Syncing…');
     await _syncAll();
     _setSyncStatus('');
-    // Pre-fetch lessons in background so Library Mode is instant
+    // Pre-fetch lessons + topic caches so Library & Assessment modes are instant
     _loadLessons().catch(() => {});
+    _loadMathsTopics().catch(() => {});
+    _loadSocialTopics().catch(() => {});
   }
 
 
