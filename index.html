@@ -18821,15 +18821,14 @@ ${text.substring(0, 4500)}`
       }
 
       if (window.lessonsAPI) {
-        // Wait for auth token to be available first (handles race when Library Mode
-        // opens before _authInit finishes setting window.authToken on page refresh)
-        if (!window.authToken) {
-          for (let w = 0; w < 30 && !window.authToken; w++) {
-            await new Promise(r => setTimeout(r, 100));
-          }
+        // Wait for _authInit to complete before trying to load lessons.
+        // authReadyPromise resolves when cloud_sync_v3.js finishes its
+        // auth-verify round-trip (regardless of Railway cold-start delays).
+        if (window.authReadyPromise) {
+          await window.authReadyPromise;
         }
 
-        // Retry up to 3 times with increasing delays (handles transient errors / token race)
+        // Retry up to 3 times with increasing delays (handles transient network errors)
         let result = null;
         for (let attempt = 0; attempt < 3; attempt++) {
           if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 1000));
