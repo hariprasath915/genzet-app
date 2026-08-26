@@ -812,9 +812,10 @@
       _setSyncStatus('Loading your data…');
       await _syncAll();
       _setSyncStatus('');
-      // Pre-fetch lessons immediately so Library Mode loads instantly
-      // (it is the default panel — no sense waiting for user navigation).
+      // Pre-fetch all subject APIs so Library Mode loads instantly
       _loadLessons().catch(() => {});
+      _loadMathsTopics().catch(() => {});
+      _loadSocialTopics().catch(() => {});
 
     } catch (err) {
       console.warn('[AUTH] Backend unreachable:', err.message);
@@ -826,6 +827,10 @@
         window.authUser  = cached;
         _enterDashboard();
         _setSyncStatus('⚠ Offline — reconnect to load your data');
+        // Still attempt to load lessons (works if backend is reachable)
+        _loadLessons().catch(() => {});
+        _loadMathsTopics().catch(() => {});
+        _loadSocialTopics().catch(() => {});
       } else {
         _showLanding();
       }
@@ -964,33 +969,48 @@
   // LESSONS API  —  Admin Content Management + Kahoot-Style Library
   // ════════════════════════════════════════════════════════════════════════
   // Exposes window.lessonsAPI with all lesson CRUD + Realtime subscription.
+  // Syncs directly from Supabase public.lessons on every load.
+  // Each lesson row has: title, subject, thumbnail_url, theory_url,
+  // animation_url, realworld_images, content_type, class_name.
   // ════════════════════════════════════════════════════════════════════════
 
   let _lessonsCache = [];        // in-memory cache for quick re-renders
   let _realtimeWS   = null;      // Supabase Realtime WebSocket handle
 
   /**
-   * Load all lessons from the backend and (re-)render the grid.
-   * Called when the user navigates to the Lessons tab.
+   * Fetch ALL lessons from Supabase (via backend GET /sync/lessons) and
+   * populate the in-memory cache. Renders both the lessons grid and the
+   * subject category tiles (Science / Maths / Social Science).
+   *
+   * Fields synced from public.lessons:
+   *   id, title, subject, class_name, content_type,
+   *   thumbnail_url, theory_url, animation_url,
+   *   realworld_images (JSON array of URLs), created_at
    */
   async function _loadLessons() {
     const r = await _api('GET', '/sync/lessons');
     if (r.ok) {
-      // Normalize realworld_images: null → [] for rows inserted directly via Supabase
-      // Table Editor (which leave the jsonb column as NULL instead of []).
+      // Normalize realworld_images: null → [] for rows inserted directly via
+      // Supabase Table Editor (which leave the jsonb column as NULL instead of []).
       _lessonsCache = (r.data.lessons || []).map(l => ({
         ...l,
         realworld_images: Array.isArray(l.realworld_images) ? l.realworld_images : [],
       }));
-      console.log('[LESSONS] Loaded', _lessonsCache.length, 'lesson(s) from backend.');
+      console.log('[LESSONS] Synced', _lessonsCache.length, 'lesson(s) from Supabase.');
+      // Refresh subject tile counts (Science / Maths / Social Science)
+      if (typeof window.renderLibraryCategories === 'function') {
+        window.renderLibraryCategories();
+      }
+      // Also refresh the lessons grid if it is currently visible
       if (typeof window.renderLessonsGrid === 'function') {
         window.renderLessonsGrid(_lessonsCache);
       }
       return _lessonsCache;
     }
-    console.warn('[LESSONS] Failed to load lessons:', r.error, '| HTTP status:', r.status);
+    console.warn('[LESSONS] Sync failed:', r.error, '| HTTP status:', r.status);
     return null;
   }
+
 
   /**
    * Upload a single file (thumbnail / animation / theory) to Supabase Storage
@@ -1079,7 +1099,7 @@
           const { event, payload } = msg;
 
           if (event === 'INSERT' || event === 'postgres_changes') {
-            // New lesson inserted — add to cache and re-render
+            // New lesson added to Supabase — add to in-memory cache and re-render
             const newLesson = payload?.data?.record || payload?.record;
             if (newLesson) {
               const exists = _lessonsCache.some(l => l.id === newLesson.id);
@@ -1087,6 +1107,9 @@
                 _lessonsCache.push(newLesson);
                 if (typeof window.renderLessonsGrid === 'function') {
                   window.renderLessonsGrid(_lessonsCache);
+                }
+                if (typeof window.renderLibraryCategories === 'function') {
+                  window.renderLibraryCategories();
                 }
                 if (typeof notify === 'function') {
                   notify('📚 New lesson added to the library!', 'success');
@@ -1099,6 +1122,9 @@
               _lessonsCache = _lessonsCache.filter(l => l.id !== oldId);
               if (typeof window.renderLessonsGrid === 'function') {
                 window.renderLessonsGrid(_lessonsCache);
+              }
+              if (typeof window.renderLibraryCategories === 'function') {
+                window.renderLibraryCategories();
               }
             }
           }
@@ -1117,12 +1143,17 @@
 
   // Expose the public API on window
   window.lessonsAPI = {
-    load:            _loadLessons,
-    uploadFile:      _uploadLessonFile,
-    createLesson:    _createLesson,
-    deleteLesson:    _deleteLesson,
+    load:              _loadLessons,
+    uploadFile:        _uploadLessonFile,
+    createLesson:      _createLesson,
+    deleteLesson:      _deleteLesson,
     subscribeRealtime: _subscribeRealtime,
-    getCache:        () => _lessonsCache,
+    getCache:          () => _lessonsCache,
+    // Reset in-memory cache and force a fresh sync from Supabase
+    clearCache: function () {
+      _lessonsCache = [];
+      console.log('[LESSONS] In-memory cache cleared — next load will re-sync from Supabase.');
+    },
   };
 
   // ── FILE MODE — Subject Units & Unit Lessons sync helpers ────────────────
