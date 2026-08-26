@@ -10737,6 +10737,81 @@ function amShowSuccess() {
   .lib-category-card { padding: 20px 14px; }
   .lib-category-icon { width: 52px; height: 52px; font-size: 24px; }
 }
+/* ── ASSESSMENT MODE: 10 assessment tiles ── */
+.assess-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+}
+.assess-tile {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.assess-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(99,102,241,.14), transparent 65%);
+  opacity: 0;
+  transition: opacity .25s;
+  border-radius: inherit;
+}
+.assess-tile:hover::before { opacity: 1; }
+.assess-tile:hover {
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(99,102,241,.4);
+  box-shadow: 0 12px 28px rgba(99,102,241,.18);
+}
+.assess-tile-number {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(99,102,241,.3);
+}
+.assess-tile-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: .01em;
+}
+.assess-tile-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.assess-tile-status.has-content {
+  background: rgba(16,185,129,.12);
+  color: #059669;
+  border: 1px solid rgba(16,185,129,.3);
+}
+.assess-tile-status.no-content {
+  background: var(--border);
+  color: var(--text3);
+  border: 1px solid var(--border2);
+}
+@media (max-width: 640px) {
+  .assess-list-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
 /* ── CLASS NUMBER inside class card ── */
 .lib-class-number {
   font-size: 13px;
@@ -11963,6 +12038,11 @@ function amShowSuccess() {
           <div class="nav-icon">&#128193;</div>
           <span class="nav-item-text">File</span>
         </button>
+        <!-- ASSESSMENT tab — always shown to all users -->
+        <button class="sidebar-nav-item" id="sideAssessment" onclick="switchMode('assessment')">
+          <div class="nav-icon">📝</div>
+          <span class="nav-item-text">Assessment</span>
+        </button>
         <!-- LESSONS tab — always shown to all users -->
         <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('animind')">
           <div class="nav-icon">📚</div>
@@ -12694,6 +12774,83 @@ function amShowSuccess() {
               </div>
             </div><!-- end lessonsPanel -->
 
+            <!-- ══ ASSESSMENT PANEL ══ -->
+            <div class="panel" id="assessmentPanel">
+              <div class="lessons-page">
+
+                <!-- ═══ VIEW A: Subject selector (Science / Mathematics / Social Science) ═══ -->
+                <div id="assessSubjectView">
+                  <div class="lessons-topbar-sticky">
+                    <div class="lessons-topbar">
+                      <div class="lessons-topbar-left">
+                        <h2>📝 Assessment</h2>
+                        <p>Choose a subject</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="lib-category-grid-wrap">
+                    <div class="lib-category-grid" id="assessSubjectGrid">
+                      <!-- Filled by JS -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ═══ VIEW B: Topics grid for selected subject ═══ -->
+                <div id="assessTopicsView" style="display:none;">
+                  <div class="lessons-topbar-sticky">
+                    <div class="lessons-topbar">
+                      <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
+                        <button class="lib-back-btn" onclick="backToAssessSubjects()" title="Back to subjects">←</button>
+                        <div>
+                          <h2 id="assessTopicsTitle">📝 Assessment</h2>
+                          <p id="assessTopicsSubtitle">Choose a topic</p>
+                        </div>
+                      </div>
+                      <div class="lessons-topbar-right">
+                        <!-- Admin-only: Add Topic button -->
+                        <button class="lessons-upload-btn" id="assessAdminAddTopicBtn" style="display:none" onclick="openAssessAddTopicOverlay()">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          Add Topic
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="lessons-grid-wrap">
+                    <div class="lessons-grid" id="assessTopicsGrid">
+                      <!-- Filled by JS -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ═══ VIEW C: Assessments list for selected topic ═══ -->
+                <div id="assessListView" style="display:none;">
+                  <div class="lessons-topbar-sticky">
+                    <div class="lessons-topbar">
+                      <div class="lessons-topbar-left" style="display:flex;align-items:center;gap:12px;">
+                        <button class="lib-back-btn" onclick="backToAssessTopics()" title="Back to topics">←</button>
+                        <div>
+                          <h2 id="assessListTitle">📝 Assessment</h2>
+                          <p id="assessListTopicName" style="font-size:13px;color:var(--text3);"></p>
+                        </div>
+                      </div>
+                      <div class="lessons-topbar-right">
+                        <!-- Admin-only: Manage Assessments button -->
+                        <button class="lessons-upload-btn" id="assessAdminManageBtn" style="display:none" onclick="openAssessManageOverlay()">
+                          ✏️ Manage Assessments
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="lib-category-grid-wrap" style="padding:24px;">
+                    <div class="assess-list-grid" id="assessListGrid">
+                      <!-- Filled by JS: 10 assessment containers -->
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div><!-- end assessmentPanel -->
+
           </div>
         </div>
       </div>
@@ -13116,6 +13273,111 @@ function amShowSuccess() {
       </div>
     </div>
 
+  </div>
+
+  <!-- ══ ASSESSMENT CONTENT VIEWER OVERLAY ══ -->
+  <div class="lesson-viewer-overlay" id="assessViewerOverlay">
+    <div class="lv-content-screen active" id="assessViewerScreen">
+      <!-- Top bar -->
+      <div class="lv-content-topbar">
+        <button class="lv-content-back-btn" onclick="closeAssessViewer()">← Back</button>
+        <span class="lv-content-mode-label" id="assessViewerLabel">Assessment</span>
+        <span class="lv-content-lesson-name" id="assessViewerTopicName"></span>
+      </div>
+      <!-- Content: HTML iframe -->
+      <div class="lv-content-body">
+        <div class="lv-mode-pane active" id="assessViewerPane">
+          <div class="lv-mode-empty" id="assessViewerEmpty" style="display:none;">
+            <span class="lv-mode-empty-icon">📝</span>
+            <h4>No content uploaded</h4>
+            <p>The admin hasn't added content for this assessment yet.</p>
+          </div>
+          <iframe id="assessViewerIframe"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            title="Assessment Content"
+            style="display:none;width:100%;height:100%;border:none;flex:1;">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN: ADD TOPIC OVERLAY (for Library Mode – Maths & Social) ══ -->
+  <div class="admin-upload-overlay" id="assessAddTopicOverlay">
+    <div class="admin-upload-box">
+      <div class="aup-header">
+        <h3>➕ Add New Topic</h3>
+        <button class="aup-close-btn" onclick="closeAssessAddTopicOverlay()">&#x2715;</button>
+      </div>
+      <div class="aup-body">
+        <div class="aup-field">
+          <label class="aup-label">Topic Title *</label>
+          <input type="text" class="aup-input" id="atpTitleInput" placeholder="e.g. Quadratic Equations" maxlength="200" />
+        </div>
+        <div class="aup-field">
+          <label class="aup-label">Files</label>
+          <div class="aup-file-row">
+            <!-- Thumbnail -->
+            <div class="aup-file-box" id="atpThumbBox" onclick="document.getElementById('atpThumbInput').click()">
+              <span class="aup-file-icon">🖼️</span>
+              <span class="aup-file-label">Thumbnail Image</span>
+              <span class="aup-file-hint">JPG/PNG</span>
+              <span class="aup-file-name" id="atpThumbName"></span>
+              <input type="file" class="aup-file-input" id="atpThumbInput" accept="image/*" onchange="atpHandleFile(this,'thumbnail')" />
+            </div>
+            <!-- Animation MP4 -->
+            <div class="aup-file-box" id="atpAnimBox" onclick="document.getElementById('atpAnimInput').click()">
+              <span class="aup-file-icon">🎬</span>
+              <span class="aup-file-label">Animation Video</span>
+              <span class="aup-file-hint">MP4 · max 100 MB</span>
+              <span class="aup-file-name" id="atpAnimName"></span>
+              <input type="file" class="aup-file-input" id="atpAnimInput" accept="video/mp4,video/*" onchange="atpHandleFile(this,'animation')" />
+            </div>
+            <!-- Real-World Application GIF/Image -->
+            <div class="aup-file-box" id="atpRwBox" onclick="document.getElementById('atpRwInput').click()">
+              <span class="aup-file-icon">🌍</span>
+              <span class="aup-file-label">Real-World Application</span>
+              <span class="aup-file-hint">GIF/Image</span>
+              <span class="aup-file-name" id="atpRwName"></span>
+              <input type="file" class="aup-file-input" id="atpRwInput" accept="image/*,video/gif" onchange="atpHandleFile(this,'realworld')" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="aup-footer">
+        <span class="aup-progress" id="atpProgress"></span>
+        <button class="aup-cancel-btn" onclick="closeAssessAddTopicOverlay()">Cancel</button>
+        <button class="aup-save-btn" id="atpSaveBtn" onclick="atpSaveTopic()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Topic
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN: MANAGE ASSESSMENTS OVERLAY ══ -->
+  <div class="admin-upload-overlay" id="assessManageOverlay">
+    <div class="admin-upload-box" style="max-width:580px;">
+      <div class="aup-header">
+        <h3>✏️ Manage Assessments</h3>
+        <button class="aup-close-btn" onclick="closeAssessManageOverlay()">&#x2715;</button>
+      </div>
+      <div class="aup-body" id="assessManageBody">
+        <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">
+          Upload HTML content for each assessment slot. Leave blank to keep existing content.
+        </p>
+        <!-- 10 assessment HTML upload fields — rendered by JS -->
+        <div id="assessManageFields"></div>
+      </div>
+      <div class="aup-footer">
+        <span class="aup-progress" id="assessManageProgress"></span>
+        <button class="aup-cancel-btn" onclick="closeAssessManageOverlay()">Cancel</button>
+        <button class="aup-save-btn" id="assessManageSaveBtn" onclick="assessManageSave()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save All Assessments
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ══ ADMIN UPLOAD OVERLAY ══ -->
@@ -13676,10 +13938,10 @@ function amShowSuccess() {
       closeMobileSidebar();
       // REMOVED: 'teacher' from modeMap
       currentMode = mode;
-      const modeMap = ['animind', 'library', 'file', 'question', 'simulation', 'lessons'];
+      const modeMap = ['animind', 'library', 'file', 'question', 'simulation', 'lessons', 'assessment'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel, vaultPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel'].forEach(id => {
+      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel', 'assessmentPanel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
@@ -13687,7 +13949,7 @@ function amShowSuccess() {
       // NOTE: 'question' (QAnim) lives inside the same "Creator with AI"
       // sidebar entry as 'animind' (AI Creator) — both highlight sideLessons.
       // 'lessons' mode is now under "Library Mode" — highlights sideAicreator.
-      const sideMap = { animind: 'sideLessons', question: 'sideLessons', simulation: 'sideLessons', library: 'sideLibrary', file: 'sideFile', lessons: 'sideAicreator' };
+      const sideMap = { animind: 'sideLessons', question: 'sideLessons', simulation: 'sideLessons', library: 'sideLibrary', file: 'sideFile', lessons: 'sideAicreator', assessment: 'sideAssessment' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
 
@@ -13710,6 +13972,7 @@ function amShowSuccess() {
       }
       if (mode === 'simulation') simInit();
       if (mode === 'lessons') initLessonsMode();
+      if (mode === 'assessment') initAssessmentMode();
     }
 
     // ═══════════════════════════════════════════════
@@ -18237,7 +18500,16 @@ ${text.substring(0, 4500)}`
       { id: 'social', label: 'Social Science', icon: '🌍', color: '#f59e0b',
         keywords: ['histor','geograph','civics','economic','polity','constitution','democra','culture','societ',
           'government','trade','war','revolution','empire','map','climate','population','resource','rights',
-          'independence','freedom','nationalis'] },
+          'independence','freedom','nationalis'],
+        useSocialAPI: true },
+      { id: 'maths', label: 'Mathematics', icon: '📐', color: '#8b5cf6',
+        keywords: ['algebra','geometry','trigonometry','calculus','arithmetic','fraction','decimal','percentage',
+          'ratio','proportion','equation','polynomial','quadratic','linear','probability','statistics','matrix',
+          'vector','coordinate','function','graph','sequence','series','logarithm','exponential','integral',
+          'derivative','set theory','number','prime','factorial','permutation','combination','mensuration',
+          'theorem','proof','angle','circle','triangle','polygon','area','volume','perimeter','square root',
+          'cube root','mean','median','mode','variance','standard deviation','binomial'],
+        useMathsAPI: true },
 
     ];
 
@@ -18542,6 +18814,391 @@ ${text.substring(0, 4500)}`
       if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
 
+    // ────────────────────────────────────────────────────
+    // ══ ASSESSMENT MODE JS ══
+    // ────────────────────────────────────────────────────
+
+    // State
+    let _assessCurrentSubject    = null;  // 'science' | 'maths' | 'social'
+    let _assessCurrentTopicId    = null;  // topic UUID (for display / future FK)
+    let _assessCurrentTopicTitle = null;  // topic title — used as the DB key
+    let _assessTopicsCache       = [];    // topics for current subject
+    let _assessLoaded            = false; // whether assessmentAPI data was fetched
+
+    const ASSESS_SUBJECTS = [
+      { id: 'science', label: 'Science',       icon: '🔬', color: '#0ea5e9',
+        desc: 'Physics, Chemistry, Biology' },
+      { id: 'maths',   label: 'Mathematics',   icon: '📐', color: '#8b5cf6',
+        desc: 'Algebra, Geometry, Calculus' },
+      { id: 'social',  label: 'Social Science', icon: '🌍', color: '#f59e0b',
+        desc: 'History, Geography, Civics' },
+    ];
+
+    // Helper: which view is visible inside assessmentPanel
+    function _showAssessView(viewId) {
+      ['assessSubjectView','assessTopicsView','assessListView'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = id === viewId ? '' : 'none';
+      });
+    }
+
+    // ── Entry point called by switchMode('assessment') ──
+    window.initAssessmentMode = async function () {
+      _showAssessView('assessSubjectView');
+      renderAssessSubjectGrid();
+    };
+
+    // ── View A: Subject tiles ──
+    function renderAssessSubjectGrid() {
+      const grid = document.getElementById('assessSubjectGrid');
+      if (!grid) return;
+      grid.innerHTML = ASSESS_SUBJECTS.map(s => `
+        <div class="lib-category-card" style="--cat-color:${s.color}" onclick="openAssessSubject('${s.id}')">
+          <div class="lib-category-icon" style="background:color-mix(in srgb,${s.color} 14%,transparent);color:${s.color};font-size:28px;width:60px;height:60px;">${s.icon}</div>
+          <div class="lib-category-name">${s.label}</div>
+          <div class="lib-category-count" style="font-size:11px;color:var(--text3)">${s.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    // ── Navigate into a subject → load its topics ──
+    window.openAssessSubject = async function (subjectId) {
+      _assessCurrentSubject = subjectId;
+      const subj = ASSESS_SUBJECTS.find(s => s.id === subjectId);
+
+      // Show topics view
+      _showAssessView('assessTopicsView');
+      const titleEl    = document.getElementById('assessTopicsTitle');
+      const subtitleEl = document.getElementById('assessTopicsSubtitle');
+      if (titleEl)    titleEl.textContent    = `${subj?.icon || '📝'} ${subj?.label || 'Assessment'}`;
+      if (subtitleEl) subtitleEl.textContent = 'Choose a topic';
+
+      // Show admin add-topic button
+      const adminBtn = document.getElementById('assessAdminAddTopicBtn');
+      if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+
+      // Load topics based on subject
+      const topicsGrid = document.getElementById('assessTopicsGrid');
+      if (topicsGrid) topicsGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Loading topics…</div>';
+
+      let topics = [];
+      try {
+        if (subjectId === 'maths' && window.mathsTopicsAPI) {
+          topics = await window.mathsTopicsAPI.load() || [];
+        } else if (subjectId === 'social' && window.socialTopicsAPI) {
+          topics = await window.socialTopicsAPI.load() || [];
+        } else if (subjectId === 'science' && window.lessonsAPI) {
+          // Science: use lessons that have a 'topic' structure from the lessons table
+          // For now, load from assessmentAPI if it has topics defined
+          topics = window.lessonsAPI.getCache()
+            .filter(l => (l.subject || '').toLowerCase().includes('science'))
+            .map(l => ({ id: l.id, title: l.title, thumbnail_url: l.thumbnail_url }));
+          // dedupe by title
+          const seen = new Set();
+          topics = topics.filter(t => { if (seen.has(t.title)) return false; seen.add(t.title); return true; });
+        }
+      } catch (err) {
+        console.warn('[ASSESS] Failed to load topics for', subjectId, err);
+      }
+
+      _assessTopicsCache = topics;
+      renderAssessTopicsGrid(topics);
+    };
+
+    function renderAssessTopicsGrid(topics) {
+      const grid = document.getElementById('assessTopicsGrid');
+      if (!grid) return;
+      if (!topics || !topics.length) {
+        grid.innerHTML = `<div class="lessons-empty" style="grid-column:1/-1"><div class="lessons-empty-icon">📋</div><h3>No topics yet</h3><p>Admin hasn't added topics for this subject yet.</p></div>`;
+        return;
+      }
+      grid.innerHTML = topics.map(t => `
+        <div class="lesson-card" onclick="openAssessTopicList('${t.id}','${(t.title||'').replace(/'/g,"\\'")}')">
+          ${t.thumbnail_url
+            ? `<div class="lesson-card-thumb"><img src="${t.thumbnail_url}" alt="${t.title}" style="width:100%;height:100%;object-fit:cover;border-radius:12px 12px 0 0;"></div>`
+            : `<div class="lesson-card-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(99,102,241,.12),transparent);font-size:32px;">📋</div>`
+          }
+          <div class="lesson-card-body">
+            <div class="lesson-card-title">${t.title}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ── Navigate into a topic → show 10 assessment tiles ──
+    window.openAssessTopicList = async function (topicId, topicTitle) {
+      _assessCurrentTopicId    = topicId;
+      _assessCurrentTopicTitle = topicTitle;   // backend key: topic_title
+      _showAssessView('assessListView');
+
+      const titleEl = document.getElementById('assessListTitle');
+      const nameEl  = document.getElementById('assessListTopicName');
+      if (titleEl) titleEl.textContent = '📝 Assessments';
+      if (nameEl)  nameEl.textContent  = topicTitle;
+
+      // Show admin manage button
+      const adminBtn = document.getElementById('assessAdminManageBtn');
+      if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+
+      // Load assessment data for this topic.
+      // The backend returns flat rows keyed by topic_title:
+      //   { id, topic_title, assessment_1, …, assessment_10, created_at, updated_at }
+      let assessData = {};
+      try {
+        if (window.assessmentAPI) {
+          const rows = await window.assessmentAPI.load(_assessCurrentSubject) || [];
+          // Match by topic_title (the DB unique key)
+          const row  = rows.find(r => r.topic_title === topicTitle) || {};
+          // Flatten: assessData[assessment_N] = html string
+          for (let i = 1; i <= 10; i++) {
+            const key = `assessment_${i}`;
+            if (row[key]) assessData[key] = row[key];
+          }
+        }
+      } catch (err) {
+        console.warn('[ASSESS] failed to load assessments', err);
+      }
+
+      renderAssessListGrid(assessData);
+    };
+
+    function renderAssessListGrid(assessData) {
+      const grid = document.getElementById('assessListGrid');
+      if (!grid) return;
+      const tiles = [];
+      for (let i = 1; i <= 10; i++) {
+        const key     = `assessment_${i}`;
+        const hasData = !!(assessData[key]);
+        tiles.push(`
+          <div class="assess-tile" onclick="openAssessViewer(${i},'${key}')">
+            <div class="assess-tile-number">${i}</div>
+            <div class="assess-tile-label">Assessment ${i}</div>
+            <div class="assess-tile-status ${hasData ? 'has-content' : 'no-content'}">
+              ${hasData ? '✓ Available' : 'Coming Soon'}
+            </div>
+          </div>
+        `);
+      }
+      grid.innerHTML = tiles.join('');
+      // Stash assessData for viewer
+      grid._assessData = assessData;
+    }
+
+    // ── Open the assessment content viewer ──
+    window.openAssessViewer = function (num, key) {
+      const grid      = document.getElementById('assessListGrid');
+      const assessData = grid ? (grid._assessData || {}) : {};
+      const htmlContent = assessData[key];
+
+      const overlay   = document.getElementById('assessViewerOverlay');
+      const iframe    = document.getElementById('assessViewerIframe');
+      const emptyEl   = document.getElementById('assessViewerEmpty');
+      const nameEl    = document.getElementById('assessViewerTopicName');
+      const labelEl   = document.getElementById('assessViewerLabel');
+
+      if (nameEl)  nameEl.textContent  = `Assessment ${num}`;
+      if (labelEl) labelEl.textContent = `Assessment ${num}`;
+
+      if (htmlContent) {
+        if (iframe)  { iframe.style.display  = ''; iframe.srcdoc = htmlContent; }
+        if (emptyEl) emptyEl.style.display = 'none';
+      } else {
+        if (iframe)  { iframe.style.display  = 'none'; iframe.srcdoc = ''; }
+        if (emptyEl) emptyEl.style.display = '';
+      }
+
+      if (overlay) overlay.classList.add('active');
+    };
+
+    window.closeAssessViewer = function () {
+      const overlay = document.getElementById('assessViewerOverlay');
+      if (overlay) overlay.classList.remove('active');
+      const iframe  = document.getElementById('assessViewerIframe');
+      if (iframe) { iframe.srcdoc = ''; iframe.style.display = 'none'; }
+    };
+
+    // ── Navigation helpers ──
+    window.backToAssessSubjects = function () { _showAssessView('assessSubjectView'); };
+    window.backToAssessTopics   = function () { _showAssessView('assessTopicsView'); };
+
+    // ── Admin: Add Topic overlay ──
+    let _atpSubject = null;
+    let _atpFiles   = {};
+
+    window.openAssessAddTopicOverlay = function () {
+      _atpSubject = _assessCurrentSubject;
+      _atpFiles   = {};
+      const overlay = document.getElementById('assessAddTopicOverlay');
+      if (overlay) overlay.classList.add('active');
+      const titleInput = document.getElementById('atpTitleInput');
+      if (titleInput)  titleInput.value = '';
+      const prog = document.getElementById('atpProgress');
+      if (prog) prog.textContent = '';
+      ['atpThumbName','atpAnimName','atpRwName'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+      });
+    };
+
+    window.closeAssessAddTopicOverlay = function () {
+      const overlay = document.getElementById('assessAddTopicOverlay');
+      if (overlay) overlay.classList.remove('active');
+    };
+
+    window.atpHandleFile = function (input, type) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      _atpFiles[type] = file;
+      const nameMap = { thumbnail: 'atpThumbName', animation: 'atpAnimName', realworld: 'atpRwName' };
+      const nameEl = document.getElementById(nameMap[type]);
+      if (nameEl) nameEl.textContent = file.name;
+    };
+
+    window.atpSaveTopic = async function () {
+      const titleInput = document.getElementById('atpTitleInput');
+      const title      = (titleInput && titleInput.value.trim()) || '';
+      if (!title) { alert('Please enter a topic title.'); return; }
+
+      const prog   = document.getElementById('atpProgress');
+      const saveBtn = document.getElementById('atpSaveBtn');
+      if (prog)    prog.textContent  = '⏳ Uploading…';
+      if (saveBtn) saveBtn.disabled  = true;
+
+      try {
+        let payload = { title, subject: _atpSubject, file_urls: {} };
+        for (const [type, file] of Object.entries(_atpFiles)) {
+          let api = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
+          if (api) {
+            const r = await api.uploadFile(file, type);
+            if (r.ok) payload.file_urls[type] = r.url;
+          }
+        }
+
+        const api  = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
+        const res  = api ? await api.createTopic(payload) : { ok: false, error: 'No API' };
+        if (res && res.ok) {
+          if (prog) prog.textContent = '✅ Topic saved!';
+          setTimeout(() => {
+            window.closeAssessAddTopicOverlay();
+            window.openAssessSubject(_atpSubject);
+          }, 800);
+        } else {
+          if (prog) prog.textContent = `❌ ${res?.error || 'Save failed'}`;
+        }
+      } catch (err) {
+        if (prog) prog.textContent = `❌ ${err.message}`;
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    };
+
+    // ── Admin: Manage Assessments overlay ──
+    let _amcFiles = {};  // key → File
+
+    window.openAssessManageOverlay = async function () {
+      _amcFiles = {};
+      const overlay = document.getElementById('assessManageOverlay');
+      if (overlay) overlay.classList.add('active');
+      const prog = document.getElementById('assessManageProgress');
+      if (prog) prog.textContent = '';
+
+      // Build 10 file upload fields
+      const fieldsDiv = document.getElementById('assessManageFields');
+      if (!fieldsDiv) return;
+
+      // Load existing assessments to show status.
+      // Rows are flat: { topic_title, assessment_1, …, assessment_10 }
+      let existingData = {};
+      if (window.assessmentAPI) {
+        const rows = window.assessmentAPI.getCache(_assessCurrentSubject) || [];
+        // Match by topic_title (unique DB key)
+        const row  = rows.find(r => r.topic_title === _assessCurrentTopicTitle) || {};
+        for (let i = 1; i <= 10; i++) {
+          const key = `assessment_${i}`;
+          if (row[key]) existingData[key] = row[key];
+        }
+      }
+
+      let html = '';
+      for (let i = 1; i <= 10; i++) {
+        const key     = `assessment_${i}`;
+        const hasData = !!(existingData[key]);
+        html += `
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);">
+            <div style="font-weight:800;font-size:14px;color:var(--text);min-width:100px;">Assessment ${i}</div>
+            <div style="font-size:11px;font-weight:600;color:${hasData ? '#059669' : 'var(--text3)'};">
+              ${hasData ? '✓ Has content' : 'No content'}
+            </div>
+            <label style="margin-left:auto;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;padding:5px 12px;">
+              ${hasData ? 'Replace HTML' : 'Upload HTML'}
+              <input type="file" style="display:none;" accept=".html,text/html"
+                onchange="amcHandleFile(this,'${key}',${i})" />
+            </label>
+            <span id="amcName_${i}" style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          </div>
+        `;
+      }
+      fieldsDiv.innerHTML = html;
+    };
+
+    window.closeAssessManageOverlay = function () {
+      const overlay = document.getElementById('assessManageOverlay');
+      if (overlay) overlay.classList.remove('active');
+    };
+
+    window.amcHandleFile = function (input, key, num) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      _amcFiles[key] = file;
+      const nameEl = document.getElementById(`amcName_${num}`);
+      if (nameEl) nameEl.textContent = file.name;
+    };
+
+    window.assessManageSave = async function () {
+      if (!Object.keys(_amcFiles).length) {
+        alert('No files selected. Pick at least one HTML file to upload.');
+        return;
+      }
+      const prog    = document.getElementById('assessManageProgress');
+      const saveBtn = document.getElementById('assessManageSaveBtn');
+      if (prog)    prog.textContent  = '⏳ Saving…';
+      if (saveBtn) saveBtn.disabled  = true;
+
+      try {
+        // Read all HTML files as text
+        // Build flat payload matching the backend schema:
+        // { topic_title, assessment_1, …, assessment_10 }
+        const payload = { topic_title: _assessCurrentTopicTitle };
+        for (const [key, file] of Object.entries(_amcFiles)) {
+          payload[key] = await file.text();
+        }
+
+        if (window.assessmentAPI) {
+          const res = await window.assessmentAPI.save(_assessCurrentSubject, payload);
+          if (res && res.ok) {
+            if (prog) prog.textContent = '✅ Saved!';
+            // Invalidate cache and re-render the tile grid
+            setTimeout(async () => {
+              window.closeAssessManageOverlay();
+              await window.openAssessTopicList(
+                _assessCurrentTopicId,
+                _assessCurrentTopicTitle
+              );
+            }, 700);
+          } else {
+            if (prog) prog.textContent = `❌ ${res?.error || 'Save failed'}`;
+          }
+        }
+      } catch (err) {
+        if (prog) prog.textContent = `❌ ${err.message}`;
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    };
+
+    // ────────────────────────────────────────────────────
+    // ══ END ASSESSMENT MODE JS ══
+    // ────────────────────────────────────────────────────
 
     // ────────────────────────────────────────────────────
     function _renderLessonsGridInternal(lessons) {
