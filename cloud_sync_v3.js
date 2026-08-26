@@ -978,9 +978,13 @@
   let _realtimeWS   = null;      // Supabase Realtime WebSocket handle
 
   /**
-   * Fetch ALL lessons from Supabase (via backend GET /sync/lessons) and
-   * populate the in-memory cache. Renders both the lessons grid and the
-   * subject category tiles (Science / Maths / Social Science).
+   * Fetch ALL lessons from Supabase public.lessons directly using the
+   * user's own JWT.  This satisfies the RLS policy
+   * (auth.role() = 'authenticated') and does NOT depend on Railway.
+   *
+   * Strategy:
+   *   1. Direct Supabase REST call  (user JWT + anon key as apikey header)
+   *   2. Fallback: backend proxy   GET /api/sync/lessons  (uses service-role)
    *
    * Fields synced from public.lessons:
    *   id, title, subject, class_name, content_type,
@@ -988,28 +992,79 @@
    *   realworld_images (JSON array of URLs), created_at
    */
   async function _loadLessons() {
-    const r = await _api('GET', '/sync/lessons');
-    if (r.ok) {
-      // Normalize realworld_images: null → [] for rows inserted directly via
-      // Supabase Table Editor (which leave the jsonb column as NULL instead of []).
-      _lessonsCache = (r.data.lessons || []).map(l => ({
-        ...l,
-        realworld_images: Array.isArray(l.realworld_images) ? l.realworld_images : [],
-      }));
-      console.log('[LESSONS] Synced', _lessonsCache.length, 'lesson(s) from Supabase.');
-      // Refresh subject tile counts (Science / Maths / Social Science)
-      if (typeof window.renderLibraryCategories === 'function') {
-        window.renderLibraryCategories();
-      }
-      // Also refresh the lessons grid if it is currently visible
-      if (typeof window.renderLessonsGrid === 'function') {
-        window.renderLessonsGrid(_lessonsCache);
-      }
-      return _lessonsCache;
+    const token = window.authToken;
+    if (!token) {
+      console.warn('[LESSONS] No auth token — cannot sync lessons.');
+      return null;
     }
-    console.warn('[LESSONS] Sync failed:', r.error, '| HTTP status:', r.status);
-    return null;
+
+    let lessons = null;
+
+    // ── Ensure Supabase config is loaded (URL + anon key) ────────────────
+    // _fetchPublicConfig() is fire-and-forget in _syncAll — may not have
+    // resolved yet by the time _loadLessons is called, so fetch inline.
+    if (!window.__supabaseUrl || !window.__supabaseAnonKey) {
+      await _fetchPublicConfig();
+    }
+
+    // ── Strategy 1: Direct Supabase REST (user JWT) ───────────────────────
+    const sbUrl  = window.__supabaseUrl;
+    const sbAnon = window.__supabaseAnonKey;
+    if (sbUrl && sbAnon) {
+      try {
+        const res = await fetch(
+          `${sbUrl}/rest/v1/lessons?select=*&order=created_at.asc`,
+          {
+            headers: {
+              'apikey':        sbAnon,
+              'Authorization': `Bearer ${token}`,
+              'Accept':        'application/json',
+            },
+          }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          console.log('[LESSONS] Synced', rows.length, 'lesson(s) directly from Supabase.');
+          lessons = rows;
+        } else {
+          const errText = await res.text().catch(() => '');
+          console.warn('[LESSONS] Direct Supabase call failed:', res.status, errText);
+        }
+      } catch (err) {
+        console.warn('[LESSONS] Direct Supabase fetch error:', err.message);
+      }
+    }
+
+    // ── Strategy 2: Backend proxy fallback ───────────────────────────────
+    if (!lessons) {
+      console.log('[LESSONS] Falling back to backend proxy GET /sync/lessons …');
+      const r = await _api('GET', '/sync/lessons');
+      if (r.ok) {
+        lessons = r.data.lessons || [];
+        console.log('[LESSONS] Synced', lessons.length, 'lesson(s) via backend proxy.');
+      } else {
+        console.warn('[LESSONS] Backend proxy also failed:', r.error, '| HTTP status:', r.status);
+        return null;
+      }
+    }
+
+    // ── Normalize and cache ───────────────────────────────────────────────
+    _lessonsCache = lessons.map(l => ({
+      ...l,
+      realworld_images: Array.isArray(l.realworld_images) ? l.realworld_images : [],
+    }));
+
+    // Refresh subject tile counts (Science / Maths / Social Science)
+    if (typeof window.renderLibraryCategories === 'function') {
+      window.renderLibraryCategories();
+    }
+    // Refresh lessons grid if it is currently visible
+    if (typeof window.renderLessonsGrid === 'function') {
+      window.renderLessonsGrid(_lessonsCache);
+    }
+    return _lessonsCache;
   }
+
 
 
   /**
