@@ -12842,6 +12842,8 @@ function amShowSuccess() {
                     </div>
                   </div>
                   <div class="lib-category-grid-wrap" style="padding:24px;">
+                    <!-- Theory button injected here by JS when theory_url exists -->
+                    <div id="assessTheorySection"></div>
                     <div class="assess-list-grid" id="assessListGrid">
                       <!-- Filled by JS: 10 assessment containers -->
                     </div>
@@ -13313,6 +13315,11 @@ function amShowSuccess() {
         <div class="aup-field">
           <label class="aup-label">Topic Title *</label>
           <input type="text" class="aup-input" id="atpTitleInput" placeholder="e.g. Quadratic Equations" maxlength="200" />
+        </div>
+        <div class="aup-field">
+          <label class="aup-label">Theory Content URL <span style="font-weight:400;color:var(--text3);font-size:11px;">(paste a link to an HTML page, Google Slides, or hosted content)</span></label>
+          <input type="url" class="aup-input" id="atpTheoryUrlInput" placeholder="https://example.com/theory.html" />
+          <span style="font-size:11px;color:var(--text3);margin-top:4px;display:block;">Leave blank if no theory content. Supports any publicly accessible URL.</span>
         </div>
         <div class="aup-field">
           <label class="aup-label">Files</label>
@@ -18381,6 +18388,52 @@ ${text.substring(0, 4500)}`
         }
 
       } catch (err) {
+        // Only skip re-fetch if we already have data.
+        // If cache is empty (e.g. previous load failed silently via RLS bug),
+        // always attempt a fresh load so the user sees their content.
+        if (_lessonsLoaded && window.lessonsAPI && window.lessonsAPI.getCache().length > 0) {
+          window.renderLibraryCategories();
+          return;
+        }
+
+        if (window.lessonsAPI) {
+          const result = await window.lessonsAPI.load();
+          if (result !== undefined && result !== null) {
+            _lessonsLoaded = result.length > 0; // only mark loaded if we got data
+            // Refresh subject tiles with loaded data
+            window.renderLibraryCategories();
+            // After first load, subscribe Realtime so new lessons push instantly
+            if (result.length > 0) window.lessonsAPI.subscribeRealtime();
+            // Safety net: re-sync tile counts a moment later
+            setTimeout(function () {
+              if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
+            }, 400);
+            // If still empty after successful fetch, retry once after 600ms
+            // (handles race conditions on slow backends)
+            if (result.length === 0) {
+              setTimeout(async function () {
+                if (window.lessonsAPI.getCache().length === 0) {
+                  const r2 = await window.lessonsAPI.load();
+                  if (r2 && r2.length > 0) {
+                    _lessonsLoaded = true;
+                    window.renderLibraryCategories();
+                    window.lessonsAPI.subscribeRealtime();
+                  }
+                }
+              }, 600);
+            }
+          } else {
+            // Load failed — show error in subject grid
+            const catGrid = document.getElementById('libCategoryGrid');
+            if (catGrid) catGrid.innerHTML = `
+              <div class="lessons-empty" style="grid-column:1/-1">
+                <div class="lessons-empty-icon">⚠️</div>
+                <h3>Couldn't load content</h3>
+                <p>Check your connection and try again.</p>
+                <button onclick="window.refreshLessons()" style="margin-top:14px;padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">↻ Retry</button>
+              </div>`;
+          }
+        }
         console.error('[SHARE] Error loading share page:', err);
         if (hero) hero.innerHTML = `<div class="share-empty-state">
           <div style="font-size:48px;margin-bottom:12px;">😕</div>
@@ -18602,16 +18655,27 @@ ${text.substring(0, 4500)}`
       window.renderLibraryCategories();
     };
 
-    // ── VIEW B: Render subject tiles (Science / Social Science) ──
+    // ── VIEW B: Render subject tiles (Science / Social Science / Mathematics) ──
+    // Helper: get the correct cache for a given subject category
+    function _getCatItems(cat) {
+      if (cat.useMathsAPI && window.mathsTopicsAPI && typeof window.mathsTopicsAPI.getCache === 'function') {
+        return window.mathsTopicsAPI.getCache() || [];
+      }
+      if (cat.useSocialAPI && window.socialTopicsAPI && typeof window.socialTopicsAPI.getCache === 'function') {
+        return window.socialTopicsAPI.getCache() || [];
+      }
+      // Default: Science uses the shared lessons table, filtered by subject
+      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
+        ? (window.lessonsAPI.getCache() || []) : [];
+      return all.filter(l => classifyLesson(l) === cat.id);
+    }
+
     window.renderLibraryCategories = function () {
       const wrap = document.getElementById('libCategoryGrid');
       if (!wrap) return;
-      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
-        ? (window.lessonsAPI.getCache() || []) : [];
-      // No class filter — all lessons count regardless of class
-      const scoped = all;
       wrap.innerHTML = LIB_CATEGORIES.map(cat => {
-        const count = scoped.filter(l => classifyLesson(l) === cat.id).length;
+        const items = _getCatItems(cat);
+        const count = items.length;
         return `
           <div class="lib-category-card" style="--cat-color:${cat.color};" onclick="selectLibraryCategory('${cat.id}')">
             <div class="lib-category-icon">${cat.icon}</div>
@@ -18619,42 +18683,33 @@ ${text.substring(0, 4500)}`
             <div class="lib-category-count">${count} lesson${count !== 1 ? 's' : ''}</div>
           </div>`;
       }).join('');
-      // (class view removed — no renderLibraryClasses call needed)
     };
 
-    // ── VIEW B → VIEW C: User picked a subject tile → skip content-type picker,
-    //    go straight to the lessons grid showing all content types for that subject ──
+    // ── VIEW B → VIEW C: User picked a subject tile → go straight to the lessons grid ──
     window.selectLibraryCategory = function (catId) {
       _libActiveCategory    = catId;
       _libActiveContentType = null;
       const cat = LIB_CATEGORIES.find(c => c.id === catId);
       // Show VIEW C directly, hide all others
       _showOnlyView('lessonsGridView');
-      // Update breadcrumb title — just the subject name
+      // Update breadcrumb title
       const titleEl = document.getElementById('lessonsGridTitle');
       if (titleEl) {
         titleEl.textContent = cat ? `${cat.icon} ${cat.label}` : '📚 Library';
       }
       const searchInput = document.getElementById('lessonsSearchInput');
       if (searchInput) searchInput.value = '';
-      // Filter by subject only — all content types included
-      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
-        ? (window.lessonsAPI.getCache() || []) : [];
-      const filtered = all.filter(l => !_libActiveCategory || classifyLesson(l) === _libActiveCategory);
-      if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
+      // Get items from the right API for this subject
+      const items = cat ? _getCatItems(cat) : [];
+      if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(items);
     };
 
     // ── VIEW D [NEW]: Render content-type tiles ──
     window.renderLibraryContentTypes = function () {
       const wrap = document.getElementById('libContentTypeGrid');
       if (!wrap) return;
-      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
-        ? (window.lessonsAPI.getCache() || []) : [];
-      // Scope to active subject only (no class filter)
-      const scoped = all.filter(l => {
-        const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
-        return subjectOk;
-      });
+      const cat = LIB_CATEGORIES.find(c => c.id === _libActiveCategory);
+      const scoped = cat ? _getCatItems(cat) : [];
 
       // Admin "Add Contents" tile
       const adminTile = (typeof isAdmin === 'function' && isAdmin())
@@ -18696,15 +18751,11 @@ ${text.substring(0, 4500)}`
       }
       const searchInput = document.getElementById('lessonsSearchInput');
       if (searchInput) searchInput.value = '';
-      // Filter by class + subject + content type
-      const all = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
-        ? (window.lessonsAPI.getCache() || []) : [];
+      // Filter by subject (via correct API) + content type
+      const catDef = LIB_CATEGORIES.find(c => c.id === _libActiveCategory);
+      const allForSubject = catDef ? _getCatItems(catDef) : [];
       const ctDef = LIB_CONTENT_TYPES.find(c => c.id === ctId);
-      const filtered = all.filter(l => {
-        const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
-        const ctOk      = !ctDef || ctDef.matchFn(getLessonContentType(l));
-        return subjectOk && ctOk;
-      });
+      const filtered = allForSubject.filter(l => !ctDef || ctDef.matchFn(getLessonContentType(l)));
       if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
     };
 
@@ -18762,17 +18813,22 @@ ${text.substring(0, 4500)}`
       _showOnlyView('lessonsCategoryView');
       window.renderLibraryCategories();
 
-      if (_lessonsLoaded) { window.renderLibraryCategories(); return; }
+      // Only skip re-fetch when we already have data in the cache.
+      // If cache is empty (e.g. first load was blocked by RLS), always retry.
+      if (_lessonsLoaded && window.lessonsAPI && window.lessonsAPI.getCache().length > 0) {
+        window.renderLibraryCategories();
+        return;
+      }
 
       if (window.lessonsAPI) {
         const result = await window.lessonsAPI.load();
-        if (result !== undefined) {
-          _lessonsLoaded = true;
+        if (result !== undefined && result !== null) {
+          _lessonsLoaded = result.length > 0;
           // Refresh subject tiles with loaded data
           window.renderLibraryCategories();
-          // After first load, subscribe Realtime so new lessons push instantly
-          window.lessonsAPI.subscribeRealtime();
-          // Safety net: re-sync tile counts a moment later
+          // Subscribe Realtime on first successful load
+          if (result.length > 0) window.lessonsAPI.subscribeRealtime();
+          // Safety net: re-render 400 ms later
           setTimeout(function () {
             if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
           }, 400);
@@ -18801,15 +18857,11 @@ ${text.substring(0, 4500)}`
 
     // ── Search: filter within the current class + subject + content type context ──
     window.filterLessonsSearch = function (val) {
-      if (!window.lessonsAPI || typeof window.lessonsAPI.getCache !== 'function') return;
-      const all = window.lessonsAPI.getCache() || [];
+      const cat   = LIB_CATEGORIES.find(c => c.id === _libActiveCategory);
+      const all   = cat ? _getCatItems(cat) : ((window.lessonsAPI && window.lessonsAPI.getCache()) || []);
       const ctDef = LIB_CONTENT_TYPES.find(c => c.id === _libActiveContentType);
-      // Scope to subject + content type (no class filter)
-      const scoped = all.filter(l => {
-        const subjectOk = !_libActiveCategory    || classifyLesson(l)       === _libActiveCategory;
-        const ctOk      = !ctDef || ctDef.matchFn(getLessonContentType(l));
-        return subjectOk && ctOk;
-      });
+      // Scope to content type (subject already scoped by _getCatItems)
+      const scoped = ctDef ? all.filter(l => ctDef.matchFn(getLessonContentType(l))) : all;
       const q = (val || '').trim().toLowerCase();
       const filtered = q ? scoped.filter(l => (l.title || '').toLowerCase().includes(q)) : scoped;
       if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(filtered);
@@ -18926,7 +18978,7 @@ ${text.substring(0, 4500)}`
       `).join('');
     }
 
-    // ── Navigate into a topic → show 10 assessment tiles ──
+    // ── Navigate into a topic → show Theory + 10 assessment tiles ──
     window.openAssessTopicList = async function (topicId, topicTitle) {
       _assessCurrentTopicId    = topicId;
       _assessCurrentTopicTitle = topicTitle;   // backend key: topic_title
@@ -18941,16 +18993,43 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('assessAdminManageBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
 
+      // ── Resolve theory_url from the maths/social cache ──
+      let theory_url = null;
+      try {
+        const cache = _assessCurrentSubject === 'maths'
+          ? (window.mathsTopicsAPI ? window.mathsTopicsAPI.getCache() : [])
+          : (window.socialTopicsAPI ? window.socialTopicsAPI.getCache() : []);
+        const topicRow = cache.find(t => String(t.id) === String(topicId) || t.title === topicTitle);
+        theory_url = topicRow?.theory_url || null;
+      } catch (_) {}
+
+      // Render Theory card if URL exists
+      const theorySection = document.getElementById('assessTheorySection');
+      if (theorySection) {
+        if (theory_url) {
+          theorySection.innerHTML = `
+            <div style="margin-bottom:18px;">
+              <button onclick="openAssessTheoryViewer('${(theory_url||'').replace(/'/g,"\\'")}')"
+                style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;
+                       background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;
+                       border-radius:14px;font-weight:700;font-size:14px;cursor:pointer;
+                       box-shadow:0 4px 18px rgba(99,102,241,.35);transition:transform .15s,box-shadow .15s;"
+                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(99,102,241,.5)'"
+                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(99,102,241,.35)'">
+                📖 View Theory Content
+              </button>
+            </div>`;
+        } else {
+          theorySection.innerHTML = '';
+        }
+      }
+
       // Load assessment data for this topic.
-      // The backend returns flat rows keyed by topic_title:
-      //   { id, topic_title, assessment_1, …, assessment_10, created_at, updated_at }
       let assessData = {};
       try {
         if (window.assessmentAPI) {
           const rows = await window.assessmentAPI.load(_assessCurrentSubject) || [];
-          // Match by topic_title (the DB unique key)
           const row  = rows.find(r => r.topic_title === topicTitle) || {};
-          // Flatten: assessData[assessment_N] = html string
           for (let i = 1; i <= 10; i++) {
             const key = `assessment_${i}`;
             if (row[key]) assessData[key] = row[key];
@@ -18961,6 +19040,27 @@ ${text.substring(0, 4500)}`
       }
 
       renderAssessListGrid(assessData);
+    };
+
+    // ── Open theory URL in the viewer overlay ──
+    window.openAssessTheoryViewer = function (url) {
+      const overlay   = document.getElementById('assessViewerOverlay');
+      const iframe    = document.getElementById('assessViewerIframe');
+      const emptyEl   = document.getElementById('assessViewerEmpty');
+      const nameEl    = document.getElementById('assessViewerTopicName');
+      const labelEl   = document.getElementById('assessViewerLabel');
+
+      if (nameEl)  nameEl.textContent  = '📖 Theory';
+      if (labelEl) labelEl.textContent = 'Theory Content';
+
+      if (url) {
+        if (iframe)  { iframe.style.display = ''; iframe.src = url; iframe.removeAttribute('srcdoc'); }
+        if (emptyEl) emptyEl.style.display = 'none';
+      } else {
+        if (iframe)  { iframe.style.display = 'none'; }
+        if (emptyEl) emptyEl.style.display = '';
+      }
+      if (overlay) overlay.classList.add('active');
     };
 
     function renderAssessListGrid(assessData) {
@@ -19015,7 +19115,7 @@ ${text.substring(0, 4500)}`
       const overlay = document.getElementById('assessViewerOverlay');
       if (overlay) overlay.classList.remove('active');
       const iframe  = document.getElementById('assessViewerIframe');
-      if (iframe) { iframe.srcdoc = ''; iframe.style.display = 'none'; }
+      if (iframe) { iframe.srcdoc = ''; iframe.src = 'about:blank'; iframe.style.display = 'none'; }
     };
 
     // ── Navigation helpers ──
@@ -19033,6 +19133,8 @@ ${text.substring(0, 4500)}`
       if (overlay) overlay.classList.add('active');
       const titleInput = document.getElementById('atpTitleInput');
       if (titleInput)  titleInput.value = '';
+      const theoryInput = document.getElementById('atpTheoryUrlInput');
+      if (theoryInput) theoryInput.value = '';
       const prog = document.getElementById('atpProgress');
       if (prog) prog.textContent = '';
       ['atpThumbName','atpAnimName','atpRwName'].forEach(id => {
@@ -19060,20 +19162,34 @@ ${text.substring(0, 4500)}`
       const title      = (titleInput && titleInput.value.trim()) || '';
       if (!title) { alert('Please enter a topic title.'); return; }
 
+      // Theory URL — pasted directly by admin (no upload needed)
+      const theoryUrlInput = document.getElementById('atpTheoryUrlInput');
+      const theory_url     = (theoryUrlInput && theoryUrlInput.value.trim()) || null;
+
       const prog   = document.getElementById('atpProgress');
       const saveBtn = document.getElementById('atpSaveBtn');
       if (prog)    prog.textContent  = '⏳ Uploading…';
       if (saveBtn) saveBtn.disabled  = true;
 
       try {
-        let payload = { title, subject: _atpSubject, file_urls: {} };
+        // Upload files first, collect public URLs keyed by type
+        const uploadedUrls = {};
         for (const [type, file] of Object.entries(_atpFiles)) {
-          let api = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
+          const api = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
           if (api) {
             const r = await api.uploadFile(file, type);
-            if (r.ok) payload.file_urls[type] = r.url;
+            if (r.ok) uploadedUrls[type] = r.public_url;  // backend returns public_url
           }
         }
+
+        // Build payload with flat fields the backend expects
+        const payload = {
+          title,
+          theory_url:                 theory_url || null,
+          thumbnail_url:              uploadedUrls.thumbnail  || null,
+          animation_url:              uploadedUrls.animation  || null,
+          real_world_application_url: uploadedUrls.realworld  || null,
+        };
 
         const api  = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
         const res  = api ? await api.createTopic(payload) : { ok: false, error: 'No API' };
@@ -19223,7 +19339,12 @@ ${text.substring(0, 4500)}`
       grid.innerHTML = lessons.map(lesson => {
         const hasAnim  = !!lesson.animation_url;
         const hasTheory= !!lesson.theory_url;
-        const hasRW    = lesson.realworld_images && lesson.realworld_images.length > 0;
+        // Support both: realworld_images (array, Science lessons table)
+        //               real_world_application_url (string, maths/social topics tables)
+        const rwImages = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
+        const rwUrl    = lesson.real_world_application_url || null;
+        const hasRW    = rwImages.length > 0 || !!rwUrl;
+        const rwLabel  = rwImages.length > 0 ? `🌍 Real World (${rwImages.length})` : '🌍 Real World';
         const chips = [
           hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
           hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
@@ -19285,25 +19406,15 @@ ${text.substring(0, 4500)}`
       }).join('');
     }
 
-    // Public entry point — always re-syncs all Library Mode tile counts
-    // whenever the grid is (re)rendered.
-    // When called from a Realtime push (full cache), we re-apply the current
-    // class+subject filter so the user's view is not disrupted.
+    // Public entry point — always re-syncs all Library Mode tile counts.
+    // When called with a pre-filtered array (e.g. from selectLibraryCategory),
+    // renders exactly those items. When called from a Realtime push with the
+    // full cache, renders only if the grid view is visible.
     window.renderLessonsGrid = function (lessons) {
-      // Re-apply active filter if the user is in a filtered view
-      if (_libActiveCategory) {
-        const filtered = (lessons || []).filter(function (l) {
-          const classOk   = true;
-          const subjectOk = !_libActiveCategory || classifyLesson(l)  === _libActiveCategory;
-          return classOk && subjectOk;
-        });
-        _renderLessonsGridInternal(filtered);
-      } else {
-        // No filter active — only render in grid if grid view is actually visible
-        const gridView = document.getElementById('lessonsGridView');
-        if (gridView && gridView.style.display !== 'none') {
-          _renderLessonsGridInternal(lessons);
-        }
+      const gridView = document.getElementById('lessonsGridView');
+      const isGridVisible = gridView && gridView.style.display !== 'none';
+      if (isGridVisible) {
+        _renderLessonsGridInternal(lessons || []);
       }
       // Always refresh tile counts
       if (typeof window.renderLibraryClasses       === 'function') window.renderLibraryClasses();
@@ -19320,8 +19431,11 @@ ${text.substring(0, 4500)}`
       // Accept either a lesson ID string or a full lesson object
       let lesson;
       if (typeof lessonIdOrObj === 'string') {
-        const cache = window.lessonsAPI ? window.lessonsAPI.getCache() : [];
-        lesson = cache.find(l => l.id === lessonIdOrObj);
+        // Search across all subject caches (science lessons, maths topics, social topics)
+        const sciCache    = (window.lessonsAPI      && window.lessonsAPI.getCache())      || [];
+        const mathsCache  = (window.mathsTopicsAPI  && window.mathsTopicsAPI.getCache())  || [];
+        const socialCache = (window.socialTopicsAPI && window.socialTopicsAPI.getCache()) || [];
+        lesson = [...sciCache, ...mathsCache, ...socialCache].find(l => l.id === lessonIdOrObj);
         if (!lesson) { console.warn('[LESSONS] openLesson: ID not found:', lessonIdOrObj); return; }
       } else {
         lesson = lessonIdOrObj;
@@ -19360,18 +19474,26 @@ ${text.substring(0, 4500)}`
         const chips = [
           lesson.animation_url   ? '<span class="lesson-mode-chip lmc-anim">&#127916; Animation</span>'     : '',
           lesson.theory_url      ? '<span class="lesson-mode-chip lmc-theory">&#128196; Theory</span>'       : '',
-          (lesson.realworld_images && lesson.realworld_images.length)
-            ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${lesson.realworld_images.length})</span>` : '',
+          // Support both realworld_images (array) and real_world_application_url (string)
+          (()=>{
+            const rwImgs = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
+            const rwUrl2 = lesson.real_world_application_url || null;
+            if (rwImgs.length) return `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${rwImgs.length})</span>`;
+            if (rwUrl2)        return `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World</span>`;
+            return '';
+          })()
         ].join('');
         metaEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">${clsChip}${subjChip}${ctChipD}</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div>`;
       }
       // Enable/disable launch buttons
-      const ldAnim = document.getElementById('ldBtnAnimation');
+      const ldAnim   = document.getElementById('ldBtnAnimation');
       const ldTheory = document.getElementById('ldBtnTheory');
-      const ldRW   = document.getElementById('ldBtnRealWorld');
-      if (ldAnim)   ldAnim.disabled   = !lesson.animation_url;
-      if (ldTheory) ldTheory.disabled = !lesson.theory_url;
-      if (ldRW)     ldRW.disabled     = !(lesson.realworld_images && lesson.realworld_images.length);
+      const ldRW     = document.getElementById('ldBtnRealWorld');
+      const _rwImgs2 = Array.isArray(_currentLesson.realworld_images) ? _currentLesson.realworld_images : [];
+      const _rwUrl2  = _currentLesson.real_world_application_url || null;
+      if (ldAnim)   ldAnim.disabled   = !_currentLesson.animation_url;
+      if (ldTheory) ldTheory.disabled = !_currentLesson.theory_url;
+      if (ldRW)     ldRW.disabled     = !(_rwImgs2.length > 0 || !!_rwUrl2);
 
       // Show the Detail screen, hide Content screen
       _showDetailScreen();
