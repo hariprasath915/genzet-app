@@ -774,6 +774,11 @@
   // AUTH BOOTSTRAP
   // ════════════════════════════════════════════════════════════════════════
 
+  // Promise that resolves when _authInit completes (token set or not).
+  // Anything that needs the auth token awaits this instead of polling.
+  let _authReadyResolve;
+  window.authReadyPromise = new Promise(resolve => { _authReadyResolve = resolve; });
+
   async function _authInit() {
     _removeOldGate();
 
@@ -785,7 +790,7 @@
     }
 
     const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (!storedToken) { _showLanding(); return; }
+    if (!storedToken) { _showLanding(); _authReadyResolve(null); return; }
 
     _setSyncStatus('Verifying session…');
     try {
@@ -796,6 +801,7 @@
       if (!res.ok) {
         _clearSession();
         _showLanding();
+        _authReadyResolve(null);   // signal: token rejected
         return;
       }
 
@@ -812,6 +818,7 @@
       _setSyncStatus('Loading your data…');
       await _syncAll();
       _setSyncStatus('');
+      _authReadyResolve(storedToken);  // signal: auth complete, token is ready
       // Pre-fetch all subject APIs so Library Mode loads instantly
       _loadLessons().catch(() => {});
       _loadMathsTopics().catch(() => {});
@@ -827,12 +834,14 @@
         window.authUser  = cached;
         _enterDashboard();
         _setSyncStatus('⚠ Offline — reconnect to load your data');
+        _authReadyResolve(storedToken);  // signal auth done (offline path)
         // Still attempt to load lessons (works if backend is reachable)
         _loadLessons().catch(() => {});
         _loadMathsTopics().catch(() => {});
         _loadSocialTopics().catch(() => {});
       } else {
         _showLanding();
+        _authReadyResolve(null);         // signal auth done (no session)
       }
     }
   }
@@ -992,9 +1001,15 @@
    *   realworld_images (JSON array of URLs), created_at
    */
   async function _loadLessons() {
+    // Wait for auth to complete before checking the token.
+    // authReadyPromise resolves when _authInit finishes (regardless of how
+    // long the Railway backend takes to respond).
+    if (window.authReadyPromise) {
+      await window.authReadyPromise;
+    }
     const token = window.authToken;
     if (!token) {
-      console.warn('[LESSONS] No auth token — cannot sync lessons.');
+      console.warn('[LESSONS] No auth token — user is not logged in.');
       return null;
     }
 
