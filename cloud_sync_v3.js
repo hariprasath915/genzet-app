@@ -17,8 +17,8 @@
         (except replacing the script filename)
 
    LOCALSTORAGE POLICY:
-     ONLY  haezet_jwt      — auth token (needed for pre-paint gate)
-     ONLY  haezet_user     — cached name/email for offline display
+     ONLY  genzet_jwt      — auth token (needed for pre-paint gate)
+     ONLY  genzet_user     — cached name/email for offline display
      ONLY  genzet_theme    — dark/light preference  (UI state, fine)
      ONLY  genzet_searches — search autocomplete history  (UI state, fine)
      ALL   app data (animations, courses, vault) comes from cloud only.
@@ -30,12 +30,8 @@
   const BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000'
     : '/api';
-  // KEY FIX: must match the keys index.html's authInit reads (haezet_jwt / haezet_user).
-  // oauth_callback.html also writes these same keys.  Using 'genzet_*' here caused
-  // Google OAuth to always bounce back to the landing page because authInit() read
-  // haezet_jwt, found nothing, and called authShowGate().
-  const TOKEN_KEY = 'haezet_jwt';
-  const USER_KEY  = 'haezet_user';
+  const TOKEN_KEY = 'genzet_jwt';
+  const USER_KEY  = 'genzet_user';
 
   // Expose on window immediately so inline handlers can call them
   window.authToken = window.authToken || null;
@@ -89,27 +85,6 @@
       return { ok: false, error: err.message };
     }
   }
-
-  // ── ONE-TIME MIGRATION: move genzet_* keys → haezet_* ──────────────────
-  // Users who logged in with the old key names (genzet_jwt/genzet_user) would
-  // be stuck on the landing page after the key rename.  This shim runs once
-  // at startup: if genzet_jwt exists but haezet_jwt does not, copy it over
-  // and delete the old key.  Safe to run repeatedly — it is a no-op when
-  // haezet_jwt is already present.
-  (function _migrateKeys() {
-    try {
-      var oldToken = localStorage.getItem('genzet_jwt');
-      var oldUser  = localStorage.getItem('genzet_user');
-      if (oldToken && !localStorage.getItem('haezet_jwt')) {
-        localStorage.setItem('haezet_jwt', oldToken);
-        if (oldUser) localStorage.setItem('haezet_user', oldUser);
-        console.log('[CLOUD] Migrated genzet_jwt → haezet_jwt for existing session');
-      }
-      // Always clean up old keys
-      localStorage.removeItem('genzet_jwt');
-      localStorage.removeItem('genzet_user');
-    } catch (_) {}
-  })();
 
   // ── Remove old auth gate markup (idempotent) ────────────────────────────
   function _removeOldGate() {
@@ -201,14 +176,8 @@
     };
     localStorage.setItem(TOKEN_KEY, window.authToken);
     localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
-    // Remove ALL legacy/duplicate key variants so nothing stale is left
     localStorage.removeItem('genzet_local_session');
     localStorage.removeItem('genzet_authenticated');
-    localStorage.removeItem('haezet_local_session');
-    localStorage.removeItem('haezet_authenticated');
-    // Also remove old genzet_* token keys if they exist (migration cleanup)
-    localStorage.removeItem('genzet_jwt');
-    localStorage.removeItem('genzet_user');
   }
 
   function _clearSession() {
@@ -216,13 +185,8 @@
     window.authUser  = null;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    // Remove all key variants to ensure a fully clean logout
-    localStorage.removeItem('genzet_jwt');
-    localStorage.removeItem('genzet_user');
     localStorage.removeItem('genzet_authenticated');
     localStorage.removeItem('genzet_local_session');
-    localStorage.removeItem('haezet_authenticated');
-    localStorage.removeItem('haezet_local_session');
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -813,12 +777,9 @@
   async function _authInit() {
     _removeOldGate();
 
-    // Clean up ALL legacy flags (both key namespaces)
-    const legacyFlag = localStorage.getItem('haezet_authenticated') || localStorage.getItem('genzet_authenticated');
-    localStorage.removeItem('haezet_authenticated');
-    localStorage.removeItem('genzet_authenticated');
-    localStorage.removeItem('haezet_local_session');
-    localStorage.removeItem('genzet_local_session');
+    // Clean up legacy flags
+    const legacyFlag = localStorage.getItem('genzet_authenticated');
+    if (legacyFlag === 'true') localStorage.removeItem('genzet_authenticated');
     if (legacyFlag === 'true' && !localStorage.getItem(TOKEN_KEY)) {
       _showLanding(); return;
     }
@@ -1233,5 +1194,148 @@
   };
 
   console.log('[CLOUD] cloud_sync_v3.js loaded — window.authInit is ready; index.html triggers it on DOMContentLoaded');
+
+  // ════════════════════════════════════════════════════════════════════════
+  // MATHS TOPICS API  —  Library Mode: Mathematics subject
+  // Exposes window.mathsTopicsAPI  (same interface as lessonsAPI)
+  // ════════════════════════════════════════════════════════════════════════
+
+  let _mathsTopicsCache = [];
+
+  async function _loadMathsTopics() {
+    const r = await _api('GET', '/sync/maths-topics');
+    if (r.ok) {
+      _mathsTopicsCache = r.data.topics || [];
+      console.log('[MATHS_TOPICS] Loaded', _mathsTopicsCache.length, 'topic(s).');
+      if (typeof window.renderMathsTopicsGrid === 'function') {
+        window.renderMathsTopicsGrid(_mathsTopicsCache);
+      }
+      return _mathsTopicsCache;
+    }
+    console.warn('[MATHS_TOPICS] Failed to load:', r.error);
+    return null;
+  }
+
+  async function _uploadMathsTopicFile(file, fileType) {
+    const token = window.authToken;
+    if (!token) return { ok: false, error: 'Not authenticated' };
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('file_type', fileType);
+    try {
+      const res  = await fetch(`${BACKEND}/sync/maths-topics/upload-file`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body:    formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: data.detail || `HTTP ${res.status}` };
+      return { ok: true, ...data };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  async function _createMathsTopic(topic) {
+    return _api('POST', '/sync/maths-topics', topic);
+  }
+
+  async function _deleteMathsTopic(topicId) {
+    return _api('DELETE', `/sync/maths-topics/${encodeURIComponent(topicId)}`);
+  }
+
+  window.mathsTopicsAPI = {
+    load:        _loadMathsTopics,
+    uploadFile:  _uploadMathsTopicFile,
+    createTopic: _createMathsTopic,
+    deleteTopic: _deleteMathsTopic,
+    getCache:    () => _mathsTopicsCache,
+  };
+
+  // ════════════════════════════════════════════════════════════════════════
+  // SOCIAL TOPICS API  —  Library Mode: Social Science subject
+  // Exposes window.socialTopicsAPI  (same interface as lessonsAPI)
+  // ════════════════════════════════════════════════════════════════════════
+
+  let _socialTopicsCache = [];
+
+  async function _loadSocialTopics() {
+    const r = await _api('GET', '/sync/social-topics');
+    if (r.ok) {
+      _socialTopicsCache = r.data.topics || [];
+      console.log('[SOCIAL_TOPICS] Loaded', _socialTopicsCache.length, 'topic(s).');
+      if (typeof window.renderSocialTopicsGrid === 'function') {
+        window.renderSocialTopicsGrid(_socialTopicsCache);
+      }
+      return _socialTopicsCache;
+    }
+    console.warn('[SOCIAL_TOPICS] Failed to load:', r.error);
+    return null;
+  }
+
+  async function _uploadSocialTopicFile(file, fileType) {
+    const token = window.authToken;
+    if (!token) return { ok: false, error: 'Not authenticated' };
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('file_type', fileType);
+    try {
+      const res  = await fetch(`${BACKEND}/sync/social-topics/upload-file`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body:    formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: data.detail || `HTTP ${res.status}` };
+      return { ok: true, ...data };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  async function _createSocialTopic(topic) {
+    return _api('POST', '/sync/social-topics', topic);
+  }
+
+  async function _deleteSocialTopic(topicId) {
+    return _api('DELETE', `/sync/social-topics/${encodeURIComponent(topicId)}`);
+  }
+
+  window.socialTopicsAPI = {
+    load:        _loadSocialTopics,
+    uploadFile:  _uploadSocialTopicFile,
+    createTopic: _createSocialTopic,
+    deleteTopic: _deleteSocialTopic,
+    getCache:    () => _socialTopicsCache,
+  };
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ASSESSMENT API  —  Assessment Mode: Science / Maths / Social Science
+  // Exposes window.assessmentAPI
+  // ════════════════════════════════════════════════════════════════════════
+
+  // In-memory cache: { science: [], maths: [], social: [] }
+  const _assessmentCache = { science: [], maths: [], social: [] };
+
+  async function _loadAssessments(subject) {
+    const r = await _api('GET', `/sync/assessment/${encodeURIComponent(subject)}`);
+    if (r.ok) {
+      _assessmentCache[subject] = r.data.assessments || [];
+      console.log(`[ASSESSMENT] Loaded ${_assessmentCache[subject].length} row(s) for ${subject}.`);
+      return _assessmentCache[subject];
+    }
+    console.warn(`[ASSESSMENT] Failed to load ${subject}:`, r.error);
+    return null;
+  }
+
+  async function _saveAssessment(subject, payload) {
+    return _api('POST', `/sync/assessment/${encodeURIComponent(subject)}`, payload);
+  }
+
+  window.assessmentAPI = {
+    load:        _loadAssessments,
+    save:        _saveAssessment,
+    getCache:    (subject) => _assessmentCache[subject] || [],
+  };
 
 })();
