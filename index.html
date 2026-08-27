@@ -18587,7 +18587,7 @@ ${text.substring(0, 4500)}`
         matchFn: function(ct) { return !ct || ct === 'mixed' || ct === 'theory'; }
       },
       {
-        id: 'animation', label: 'Animation', icon: '🎬', color: '#8b5cf6',
+        id: 'animation', label: 'Animation', icon: '🎥', color: '#8b5cf6',
         desc: 'Video animations and visual explanations',
         matchFn: function(ct) { return !ct || ct === 'mixed' || ct === 'animation'; }
       },
@@ -18943,29 +18943,27 @@ ${text.substring(0, 4500)}`
       if (titleEl)    titleEl.textContent    = `${subj?.icon || '📝'} ${subj?.label || 'Assessment'}`;
       if (subtitleEl) subtitleEl.textContent = 'Choose a topic';
 
-      // Show admin add-topic button
+      // Assessment Mode: Add Topic button is hidden — topics are auto-derived from assessment rows
       const adminBtn = document.getElementById('assessAdminAddTopicBtn');
-      if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+      if (adminBtn) adminBtn.style.display = 'none';
 
-      // Load topics based on subject
+      // Load topics from the assessment tables (maths_assessment / social_assessment / science_assessment)
+      // — NOT from the Library Mode tables (maths_topics / social_topics / lessons)
       const topicsGrid = document.getElementById('assessTopicsGrid');
       if (topicsGrid) topicsGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Loading topics…</div>';
 
       let topics = [];
       try {
-        if (subjectId === 'maths' && window.mathsTopicsAPI) {
-          topics = await window.mathsTopicsAPI.load() || [];
-        } else if (subjectId === 'social' && window.socialTopicsAPI) {
-          topics = await window.socialTopicsAPI.load() || [];
-        } else if (subjectId === 'science' && window.lessonsAPI) {
-          // Science: use lessons that have a 'topic' structure from the lessons table
-          // For now, load from assessmentAPI if it has topics defined
-          topics = window.lessonsAPI.getCache()
-            .filter(l => (l.subject || '').toLowerCase().includes('science'))
-            .map(l => ({ id: l.id, title: l.title, thumbnail_url: l.thumbnail_url }));
-          // dedupe by title
-          const seen = new Set();
-          topics = topics.filter(t => { if (seen.has(t.title)) return false; seen.add(t.title); return true; });
+        if (window.assessmentAPI) {
+          // Each row: { topic_title, assessment_1 … assessment_10 }
+          // Derive a normalised topic list — only topics that exist in the assessment table appear here.
+          const rows = await window.assessmentAPI.load(subjectId) || [];
+          topics = rows.map(r => ({
+            id:            r.topic_title,   // use topic_title as stable identifier
+            title:         r.topic_title,
+            thumbnail_url: null,
+            _hasContent:   [1,2,3,4,5,6,7,8,9,10].some(i => r[`assessment_${i}`]),
+          }));
         }
       } catch (err) {
         console.warn('[ASSESS] Failed to load topics for', subjectId, err);
@@ -19010,36 +19008,10 @@ ${text.substring(0, 4500)}`
       const adminBtn = document.getElementById('assessAdminManageBtn');
       if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
 
-      // ── Resolve theory_url from the maths/social cache ──
-      let theory_url = null;
-      try {
-        const cache = _assessCurrentSubject === 'maths'
-          ? (window.mathsTopicsAPI ? window.mathsTopicsAPI.getCache() : [])
-          : (window.socialTopicsAPI ? window.socialTopicsAPI.getCache() : []);
-        const topicRow = cache.find(t => String(t.id) === String(topicId) || t.title === topicTitle);
-        theory_url = topicRow?.theory_url || null;
-      } catch (_) {}
-
-      // Render Theory card if URL exists
+      // Assessment Mode is decoupled from Library Mode — theory_url belongs to Library Mode only.
+      // Clear the theory section so no Library content leaks into Assessment Mode.
       const theorySection = document.getElementById('assessTheorySection');
-      if (theorySection) {
-        if (theory_url) {
-          theorySection.innerHTML = `
-            <div style="margin-bottom:18px;">
-              <button onclick="openAssessTheoryViewer('${(theory_url||'').replace(/'/g,"\\'")}')"
-                style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;
-                       background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;
-                       border-radius:14px;font-weight:700;font-size:14px;cursor:pointer;
-                       box-shadow:0 4px 18px rgba(99,102,241,.35);transition:transform .15s,box-shadow .15s;"
-                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(99,102,241,.5)'"
-                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 18px rgba(99,102,241,.35)'">
-                📖 View Theory Content
-              </button>
-            </div>`;
-        } else {
-          theorySection.innerHTML = '';
-        }
-      }
+      if (theorySection) theorySection.innerHTML = '';
 
       // Load assessment data for this topic.
       let assessData = {};
