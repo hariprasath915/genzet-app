@@ -13317,9 +13317,17 @@ function amShowSuccess() {
           <input type="text" class="aup-input" id="atpTitleInput" placeholder="e.g. Quadratic Equations" maxlength="200" />
         </div>
         <div class="aup-field">
-          <label class="aup-label">Theory Content URL <span style="font-weight:400;color:var(--text3);font-size:11px;">(paste a link to an HTML page, Google Slides, or hosted content)</span></label>
-          <input type="url" class="aup-input" id="atpTheoryUrlInput" placeholder="https://example.com/theory.html" />
-          <span style="font-size:11px;color:var(--text3);margin-top:4px;display:block;">Leave blank if no theory content. Supports any publicly accessible URL.</span>
+          <label class="aup-label">Theory HTML File <span style="font-weight:400;color:var(--text3);font-size:11px;">(upload .html file — stored in maths-html / social-html bucket)</span></label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="aup-file-box" style="flex:1;min-width:0;" id="atpHtmlBox" onclick="document.getElementById('atpHtmlInput').click()">
+              <span class="aup-file-icon">📄</span>
+              <span class="aup-file-label">Theory HTML</span>
+              <span class="aup-file-hint">.html file</span>
+              <span class="aup-file-name" id="atpHtmlName"></span>
+              <input type="file" class="aup-file-input" id="atpHtmlInput" accept=".html,text/html" onchange="atpHandleFile(this,'html')" />
+            </div>
+          </div>
+          <span style="font-size:11px;color:var(--text3);margin-top:4px;display:block;">Leave blank if no theory content. The file URL is saved automatically after upload.</span>
         </div>
         <div class="aup-field">
           <label class="aup-label">Files</label>
@@ -19122,11 +19130,9 @@ ${text.substring(0, 4500)}`
       if (overlay) overlay.classList.add('active');
       const titleInput = document.getElementById('atpTitleInput');
       if (titleInput)  titleInput.value = '';
-      const theoryInput = document.getElementById('atpTheoryUrlInput');
-      if (theoryInput) theoryInput.value = '';
       const prog = document.getElementById('atpProgress');
       if (prog) prog.textContent = '';
-      ['atpThumbName','atpAnimName','atpRwName'].forEach(id => {
+      ['atpThumbName','atpAnimName','atpRwName','atpHtmlName'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = '';
       });
@@ -19141,7 +19147,7 @@ ${text.substring(0, 4500)}`
       const file = input.files && input.files[0];
       if (!file) return;
       _atpFiles[type] = file;
-      const nameMap = { thumbnail: 'atpThumbName', animation: 'atpAnimName', realworld: 'atpRwName' };
+      const nameMap = { thumbnail: 'atpThumbName', animation: 'atpAnimName', realworld: 'atpRwName', html: 'atpHtmlName' };
       const nameEl = document.getElementById(nameMap[type]);
       if (nameEl) nameEl.textContent = file.name;
     };
@@ -19151,33 +19157,29 @@ ${text.substring(0, 4500)}`
       const title      = (titleInput && titleInput.value.trim()) || '';
       if (!title) { alert('Please enter a topic title.'); return; }
 
-      // Theory URL — pasted directly by admin (no upload needed)
-      const theoryUrlInput = document.getElementById('atpTheoryUrlInput');
-      const theory_url     = (theoryUrlInput && theoryUrlInput.value.trim()) || null;
-
       const prog   = document.getElementById('atpProgress');
       const saveBtn = document.getElementById('atpSaveBtn');
       if (prog)    prog.textContent  = '⏳ Uploading…';
       if (saveBtn) saveBtn.disabled  = true;
 
       try {
-        // Upload files first, collect public URLs keyed by type
+        // Upload all files (thumbnail, animation, realworld, html) via the API
         const uploadedUrls = {};
         for (const [type, file] of Object.entries(_atpFiles)) {
           const api = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
           if (api) {
             const r = await api.uploadFile(file, type);
-            if (r.ok) uploadedUrls[type] = r.public_url;  // backend returns public_url
+            if (r.ok) uploadedUrls[type] = r.public_url;
           }
         }
 
-        // Build payload with flat fields the backend expects
+        // Build payload — theory_url comes from the uploaded HTML file's public URL
         const payload = {
           title,
-          theory_url:                 theory_url || null,
-          thumbnail_url:              uploadedUrls.thumbnail  || null,
-          animation_url:              uploadedUrls.animation  || null,
-          real_world_application_url: uploadedUrls.realworld  || null,
+          theory_url:                 uploadedUrls.html      || null,
+          thumbnail_url:              uploadedUrls.thumbnail || null,
+          animation_url:              uploadedUrls.animation || null,
+          real_world_application_url: uploadedUrls.realworld || null,
         };
 
         const api  = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
