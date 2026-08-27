@@ -17,8 +17,8 @@
         (except replacing the script filename)
 
    LOCALSTORAGE POLICY:
-     ONLY  genzet_jwt      — auth token (needed for pre-paint gate)
-     ONLY  genzet_user     — cached name/email for offline display
+     ONLY  haezet_jwt      — auth token (needed for pre-paint gate)
+     ONLY  haezet_user     — cached name/email for offline display
      ONLY  genzet_theme    — dark/light preference  (UI state, fine)
      ONLY  genzet_searches — search autocomplete history  (UI state, fine)
      ALL   app data (animations, courses, vault) comes from cloud only.
@@ -30,8 +30,8 @@
   const BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000'
     : '/api';
-  const TOKEN_KEY = 'genzet_jwt';
-  const USER_KEY  = 'genzet_user';
+  const TOKEN_KEY = 'haezet_jwt';
+  const USER_KEY  = 'haezet_user';
 
   // Expose on window immediately so inline handlers can call them
   window.authToken = window.authToken || null;
@@ -176,6 +176,9 @@
     };
     localStorage.setItem(TOKEN_KEY, window.authToken);
     localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
+    // Clean up all legacy bridge flags (both naming variants)
+    localStorage.removeItem('haezet_local_session');
+    localStorage.removeItem('haezet_authenticated');
     localStorage.removeItem('genzet_local_session');
     localStorage.removeItem('genzet_authenticated');
   }
@@ -185,6 +188,9 @@
     window.authUser  = null;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    // Clean up all legacy bridge flags (both naming variants)
+    localStorage.removeItem('haezet_authenticated');
+    localStorage.removeItem('haezet_local_session');
     localStorage.removeItem('genzet_authenticated');
     localStorage.removeItem('genzet_local_session');
   }
@@ -782,9 +788,10 @@
   async function _authInit() {
     _removeOldGate();
 
-    // Clean up legacy flags
-    const legacyFlag = localStorage.getItem('genzet_authenticated');
-    if (legacyFlag === 'true') localStorage.removeItem('genzet_authenticated');
+    // Clean up legacy bridge flags (both naming variants)
+    const legacyFlag = localStorage.getItem('haezet_authenticated') || localStorage.getItem('genzet_authenticated');
+    localStorage.removeItem('haezet_authenticated');
+    localStorage.removeItem('genzet_authenticated');
     if (legacyFlag === 'true' && !localStorage.getItem(TOKEN_KEY)) {
       _showLanding(); return;
     }
