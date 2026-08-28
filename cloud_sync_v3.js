@@ -1442,10 +1442,36 @@
     return _api('POST', `/sync/assessment/${encodeURIComponent(subject)}`, payload);
   }
 
+  /**
+   * Upload an assessment HTML file to the subject-specific Supabase bucket.
+   * Returns { ok, public_url, storage_path, bucket } on success.
+   * @param {string} subject  — 'science' | 'maths' | 'social'
+   * @param {File}   file     — HTML File object
+   */
+  async function _uploadAssessmentFile(subject, file) {
+    const token = window.authToken;
+    if (!token) return { ok: false, error: 'Not authenticated' };
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res  = await fetch(`${BACKEND}/sync/assessment/${encodeURIComponent(subject)}/upload-file`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body:    formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: data.detail || `HTTP ${res.status}` };
+      return { ok: true, ...data };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
   window.assessmentAPI = {
-    load:        _loadAssessments,
-    save:        _saveAssessment,
-    getCache:    (subject) => _assessmentCache[subject] || [],
+    load:       _loadAssessments,
+    save:       _saveAssessment,
+    uploadFile: _uploadAssessmentFile,
+    getCache:   (subject) => _assessmentCache[subject] || [],
   };
 
 })();
