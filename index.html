@@ -11361,20 +11361,90 @@ function amShowSuccess() {
 .aup-rw-img-item { position:relative; width:72px; height:72px; border-radius:10px; overflow:hidden; border:2px solid var(--border); flex-shrink:0; }
 .aup-rw-img-item img { width:100%; height:100%; object-fit:cover; display:block; }
 .aup-rw-img-del { position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; background:rgba(239,68,68,.92); color:#fff; border:none; font-size:10px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
-/* Flashcard viewer */
-.rw-flashcard-wrap { display:flex; flex-direction:column; align-items:center; height:100%; padding:24px; gap:16px; box-sizing:border-box; }
-.rw-slide-counter { font-size:13px; font-weight:700; color:var(--text3); letter-spacing:.04em; user-select:none; }
-.rw-img-stage { flex:1; width:100%; display:flex; align-items:center; justify-content:center; border-radius:16px; overflow:hidden; background:var(--surface); border:1.5px solid var(--border); min-height:0; }
-.rw-img-stage img { max-width:100%; max-height:100%; object-fit:contain; transition:opacity .3s ease; display:block; }
-.rw-img-stage img.rw-fade { opacity:0; }
-.rw-nav-row { display:flex; gap:16px; flex-shrink:0; }
-.rw-nav-btn { padding:11px 30px; border-radius:13px; border:2px solid var(--border2); background:var(--surface); color:var(--text); font-weight:700; font-size:14px; font-family:var(--font-body); cursor:pointer; transition:all .2s; user-select:none; }
-.rw-nav-btn:hover:not(:disabled) { background:var(--blue); color:#fff; border-color:var(--blue); transform:translateY(-1px); }
-.rw-nav-btn:active:not(:disabled) { transform:translateY(0); }
-.rw-nav-btn:disabled { opacity:.35; cursor:not-allowed; }
-.rw-nav-next { background:linear-gradient(135deg,#6c47ff 0%,#3b82f6 100%); color:#fff; border-color:#6c47ff; }
-.rw-nav-next:hover:not(:disabled) { opacity:.88; background:linear-gradient(135deg,#6c47ff 0%,#3b82f6 100%); border-color:#6c47ff; }
-#lvRealworld { background:var(--bg); overflow:hidden; }
+/* ── Real-World Flashcard Viewer ── */
+.rw-flashcard-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  height: 100%; padding: 20px 16px 16px; gap: 12px;
+  box-sizing: border-box; position: relative;
+}
+/* Slide counter pill */
+.rw-slide-counter {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1.5px solid var(--border2);
+  border-radius: 999px; padding: 4px 14px;
+  font-size: 12px; font-weight: 800; color: var(--text2);
+  letter-spacing: .06em; user-select: none; flex-shrink: 0;
+}
+/* Image stage */
+.rw-img-stage {
+  flex: 1; width: 100%; display: flex; align-items: center;
+  justify-content: center; border-radius: 18px; overflow: hidden;
+  background: var(--surface); border: 1.5px solid var(--border);
+  min-height: 0; position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+}
+.rw-img-stage img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  display: block; border-radius: 14px;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.rw-img-stage img.rw-fade { opacity: 0; transform: scale(.97); }
+/* Navigation row */
+.rw-nav-row {
+  display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  width: 100%; justify-content: center;
+}
+/* Prev / Next buttons */
+.rw-nav-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 26px; border-radius: 14px;
+  border: 2px solid var(--border2);
+  background: var(--surface); color: var(--text);
+  font-weight: 800; font-size: 14px;
+  font-family: var(--font-body); cursor: pointer;
+  transition: all .18s cubic-bezier(.4,0,.2,1);
+  user-select: none; letter-spacing: .01em;
+  flex-shrink: 0;
+}
+.rw-nav-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.rw-nav-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue) 12%, var(--surface));
+  border-color: var(--blue); color: var(--blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(99,102,241,.18);
+}
+.rw-nav-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.rw-nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+/* Next button — accent fill */
+.rw-nav-next {
+  background: linear-gradient(135deg, #6c47ff 0%, #3b82f6 100%);
+  color: #fff; border-color: #6c47ff;
+  box-shadow: 0 2px 12px rgba(108,71,255,.28);
+}
+.rw-nav-next:hover:not(:disabled) {
+  opacity: .9;
+  background: linear-gradient(135deg, #6c47ff 0%, #3b82f6 100%);
+  border-color: #6c47ff; color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108,71,255,.36);
+}
+/* Dot indicator strip */
+.rw-dots {
+  display: flex; gap: 6px; align-items: center;
+  flex-wrap: wrap; justify-content: center;
+  max-width: 240px; flex-shrink: 0;
+}
+.rw-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border2);
+  transition: background .2s, transform .2s, width .2s;
+  flex-shrink: 0; cursor: pointer;
+}
+.rw-dot.active {
+  background: var(--blue); transform: scale(1.4);
+  width: 18px; border-radius: 4px;
+}
+#lvRealworld { background: var(--bg); overflow: hidden; }
 .aup-q-item {
   background: var(--bg);
   border: 1.5px solid var(--border);
@@ -13254,10 +13324,11 @@ function amShowSuccess() {
           </div>
           <iframe id="lvTheoryIframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Theory Content" style="display:none;width:100%;height:100%;border:none;flex:1;"></iframe>
         </div>
-        <!-- Real-World Application mode: flashcard image viewer -->
         <div class="lv-mode-pane" id="lvRealworld">
           <div class="rw-flashcard-wrap">
+            <!-- Counter pill -->
             <div class="rw-slide-counter" id="rwCounter">1 / 1</div>
+            <!-- Image stage -->
             <div class="rw-img-stage" id="rwImgStage">
               <img id="rwImg" src="" alt="Real-world example" style="display:none" />
               <div class="lv-mode-empty" id="rwEmpty" style="display:none">
@@ -13266,9 +13337,18 @@ function amShowSuccess() {
                 <p>The admin hasn't added any real-world application images yet.</p>
               </div>
             </div>
+            <!-- Dot indicator strip -->
+            <div class="rw-dots" id="rwDots"></div>
+            <!-- Prev / Next navigation row -->
             <div class="rw-nav-row" id="rwNavRow">
-              <button class="rw-nav-btn" id="rwPrevBtn" onclick="rwPrev()">&#8592; Previous</button>
-              <button class="rw-nav-btn rw-nav-next" id="rwNextBtn" onclick="rwNext()">Next &#8594;</button>
+              <button class="rw-nav-btn" id="rwPrevBtn" onclick="rwPrev()" title="Previous image (← arrow key)">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Previous
+              </button>
+              <button class="rw-nav-btn rw-nav-next" id="rwNextBtn" onclick="rwNext()" title="Next image (→ arrow key)">
+                Next
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -19191,13 +19271,15 @@ ${text.substring(0, 4500)}`
           }
         }
 
-        // Build payload — theory_url comes from the uploaded HTML file's public URL
+        // Build payload — realworld images sent as a JSON array (matches jsonb column),
+        // mirroring the lessons table pattern exactly.
         const payload = {
           title,
-          theory_url:                 uploadedUrls.html      || null,
-          thumbnail_url:              uploadedUrls.thumbnail || null,
-          animation_url:              uploadedUrls.animation || null,
-          real_world_application_url: uploadedUrls.realworld || null,
+          theory_url:        uploadedUrls.html      || null,
+          thumbnail_url:     uploadedUrls.thumbnail || null,
+          animation_url:     uploadedUrls.animation || null,
+          // Wrap the single uploaded realworld image URL in an array (jsonb)
+          realworld_images:  uploadedUrls.realworld ? [uploadedUrls.realworld] : [],
         };
 
         const api  = _atpSubject === 'maths' ? window.mathsTopicsAPI : window.socialTopicsAPI;
@@ -19398,16 +19480,13 @@ ${text.substring(0, 4500)}`
         const hasAnim  = !!lesson.animation_url;
         // Support both `theory_url` (original column) and `theory` (new column)
         const hasTheory= !!(lesson.theory_url || lesson.theory);
-        // Support both: realworld_images (array, Science lessons table)
-        //               real_world_application_url (string, maths/social topics tables)
+        // All three tables (lessons, maths_topics, social_topics) now use realworld_images jsonb
         const rwImages = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
-        const rwUrl    = lesson.real_world_application_url || null;
-        const hasRW    = rwImages.length > 0 || !!rwUrl;
-        const rwLabel  = rwImages.length > 0 ? `🌍 Real World (${rwImages.length})` : '🌍 Real World';
+        const hasRW    = rwImages.length > 0;
         const chips = [
           hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
           hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
-          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${rwImages.length || 1})</span>` : '',
+          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${rwImages.length})</span>` : '',
         ].join('');
         const thumbHTML = lesson.thumbnail_url
           ? `<img class="lesson-card-thumb" src="${lesson.thumbnail_url}" alt="${lesson.title.replace(/"/g,'&quot;')}" loading="lazy" />`
@@ -19534,12 +19613,10 @@ ${text.substring(0, 4500)}`
           lesson.animation_url              ? '<span class="lesson-mode-chip lmc-anim">&#127916; Animation</span>'     : '',
           // Support both `theory_url` (original) and `theory` (new column)
           (lesson.theory_url || lesson.theory) ? '<span class="lesson-mode-chip lmc-theory">&#128196; Theory</span>'  : '',
-          // Support both realworld_images (array) and real_world_application_url (string)
+          // All three tables now use realworld_images jsonb
           (()=>{
             const rwImgs = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
-            const rwUrl2 = lesson.real_world_application_url || null;
             if (rwImgs.length) return `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${rwImgs.length})</span>`;
-            if (rwUrl2)        return `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World</span>`;
             return '';
           })()
         ].join('');
@@ -19550,11 +19627,11 @@ ${text.substring(0, 4500)}`
       const ldTheory = document.getElementById('ldBtnTheory');
       const ldRW     = document.getElementById('ldBtnRealWorld');
       const _rwImgs2 = Array.isArray(_currentLesson.realworld_images) ? _currentLesson.realworld_images : [];
-      const _rwUrl2  = _currentLesson.real_world_application_url || null;
       if (ldAnim)   ldAnim.disabled   = !_currentLesson.animation_url;
       // Enable Theory button if either theory_url (original) or theory (new column) has content
       if (ldTheory) ldTheory.disabled = !(_currentLesson.theory_url || _currentLesson.theory);
-      if (ldRW)     ldRW.disabled     = !(_rwImgs2.length > 0 || !!_rwUrl2);
+      // All three tables now use realworld_images jsonb
+      if (ldRW)     ldRW.disabled     = !(_rwImgs2.length > 0);
 
       // Show the Detail screen, hide Content screen
       _showDetailScreen();
@@ -19666,18 +19743,22 @@ ${text.substring(0, 4500)}`
           if (empt) empt.style.display = 'flex';
         }
       } else if (mode === 'realworld') {
+        // All three tables (lessons, maths_topics, social_topics) use realworld_images jsonb
         renderRealWorld(_currentLesson.realworld_images || []);
       }
     };
 
     // ────────────────────────────────────────────────────
     // REAL-WORLD FLASHCARD ENGINE
+    // Prev / Next navigation with dot indicators,
+    // keyboard arrow keys, and smooth fade+scale transition.
     // ────────────────────────────────────────────────────
     function renderRealWorld(images) {
       const counter = document.getElementById('rwCounter');
       const img     = document.getElementById('rwImg');
       const empty   = document.getElementById('rwEmpty');
       const navRow  = document.getElementById('rwNavRow');
+      const dots    = document.getElementById('rwDots');
       if (!img) return;
 
       if (!images || !images.length) {
@@ -19685,13 +19766,35 @@ ${text.substring(0, 4500)}`
         if (empty)   empty.style.display   = 'flex';
         if (navRow)  navRow.style.display  = 'none';
         if (counter) counter.textContent   = '';
+        if (dots)    dots.innerHTML        = '';
         return;
       }
+
       _rwState = { images, idx: 0 };
       if (empty)   empty.style.display  = 'none';
-      if (navRow)  navRow.style.display = 'flex';
+      if (navRow)  navRow.style.display = images.length > 1 ? 'flex' : 'none';
+
+      // Build dot indicators (max 10 shown)
+      _rwBuildDots();
       _renderRwSlide();
     }
+
+    function _rwBuildDots() {
+      const dots = document.getElementById('rwDots');
+      if (!dots) return;
+      const { images } = _rwState;
+      // Hide dots for single image or too many (> 20)
+      if (images.length <= 1 || images.length > 20) { dots.innerHTML = ''; return; }
+      dots.innerHTML = images.map((_, i) =>
+        `<div class="rw-dot${i === 0 ? ' active' : ''}" onclick="_rwGoTo(${i})" title="Image ${i+1}"></div>`
+      ).join('');
+    }
+
+    window._rwGoTo = function (index) {
+      if (index < 0 || index >= _rwState.images.length) return;
+      _rwState.idx = index;
+      _renderRwSlide();
+    };
 
     function _renderRwSlide() {
       const { images, idx } = _rwState;
@@ -19699,17 +19802,29 @@ ${text.substring(0, 4500)}`
       const img     = document.getElementById('rwImg');
       const prevBtn = document.getElementById('rwPrevBtn');
       const nextBtn = document.getElementById('rwNextBtn');
+      const dots    = document.getElementById('rwDots');
       if (!img) return;
-      // Fade transition
+
+      // Smooth fade + scale transition
       img.classList.add('rw-fade');
       setTimeout(function () {
         img.src = images[idx];
         img.style.display = 'block';
         img.classList.remove('rw-fade');
       }, 150);
+
       if (counter) counter.textContent = (idx + 1) + ' / ' + images.length;
+
+      // Button states
       if (prevBtn) prevBtn.disabled = (idx === 0);
       if (nextBtn) nextBtn.disabled = (idx === images.length - 1);
+
+      // Update active dot
+      if (dots) {
+        dots.querySelectorAll('.rw-dot').forEach(function (d, i) {
+          d.classList.toggle('active', i === idx);
+        });
+      }
     }
 
     window.rwPrev = function () {
@@ -19718,6 +19833,32 @@ ${text.substring(0, 4500)}`
     window.rwNext = function () {
       if (_rwState.idx < _rwState.images.length - 1) { _rwState.idx++; _renderRwSlide(); }
     };
+
+    // ── Keyboard navigation (← →) when real-world pane is active ──
+    document.addEventListener('keydown', function (e) {
+      const pane = document.getElementById('lvRealworld');
+      if (!pane || !pane.classList.contains('active')) return;
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); window.rwPrev(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); window.rwNext(); }
+    });
+
+    // ── Touch swipe support ──
+    (function () {
+      let _touchStartX = null;
+      const stage = document.getElementById('rwImgStage');
+      if (!stage) return;
+      stage.addEventListener('touchstart', function (e) {
+        _touchStartX = e.changedTouches[0].clientX;
+      }, { passive: true });
+      stage.addEventListener('touchend', function (e) {
+        if (_touchStartX === null) return;
+        const dx = e.changedTouches[0].clientX - _touchStartX;
+        _touchStartX = null;
+        if (dx < -40)  window.rwNext();
+        if (dx >  40)  window.rwPrev();
+      }, { passive: true });
+    })();
+
 
     // ────────────────────────────────────────────────────
     // ADMIN DELETE LESSON CARD
