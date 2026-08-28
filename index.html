@@ -19065,10 +19065,16 @@ ${text.substring(0, 4500)}`
       if (!grid) return;
       const tiles = [];
       for (let i = 1; i <= 10; i++) {
-        const key     = `assessment_${i}`;
-        const hasData = !!(assessData[key]);
+        const key      = `assessment_${i}`;
+        const thumbKey = `thumbnail_url_${i}`;
+        const hasData  = !!(assessData[key]);
+        const thumbUrl = assessData[thumbKey] || '';
+        const thumbHTML = thumbUrl
+          ? `<img src="${thumbUrl}" alt="Assessment ${i}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" loading="lazy" />`
+          : `<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--surface2,#1e293b);border-radius:8px 8px 0 0;">📝</div>`;
         tiles.push(`
           <div class="assess-tile" onclick="openAssessViewer(${i},'${key}')">
+            ${thumbHTML}
             <div class="assess-tile-number">${i}</div>
             <div class="assess-tile-label">Assessment ${i}</div>
             <div class="assess-tile-status ${hasData ? 'has-content' : 'no-content'}">
@@ -19084,9 +19090,9 @@ ${text.substring(0, 4500)}`
 
     // ── Open the assessment content viewer ──
     window.openAssessViewer = function (num, key) {
-      const grid      = document.getElementById('assessListGrid');
+      const grid       = document.getElementById('assessListGrid');
       const assessData = grid ? (grid._assessData || {}) : {};
-      const htmlContent = assessData[key];
+      const htmlUrl    = assessData[key]; // public URL from assessment bucket
 
       const overlay   = document.getElementById('assessViewerOverlay');
       const iframe    = document.getElementById('assessViewerIframe');
@@ -19097,11 +19103,11 @@ ${text.substring(0, 4500)}`
       if (nameEl)  nameEl.textContent  = `Assessment ${num}`;
       if (labelEl) labelEl.textContent = `Assessment ${num}`;
 
-      if (htmlContent) {
-        if (iframe)  { iframe.style.display  = ''; iframe.srcdoc = htmlContent; }
+      if (htmlUrl) {
+        if (iframe)  { iframe.style.display = ''; iframe.src = htmlUrl; iframe.removeAttribute('srcdoc'); }
         if (emptyEl) emptyEl.style.display = 'none';
       } else {
-        if (iframe)  { iframe.style.display  = 'none'; iframe.srcdoc = ''; }
+        if (iframe)  { iframe.style.display = 'none'; iframe.src = 'about:blank'; }
         if (emptyEl) emptyEl.style.display = '';
       }
 
@@ -19112,7 +19118,7 @@ ${text.substring(0, 4500)}`
       const overlay = document.getElementById('assessViewerOverlay');
       if (overlay) overlay.classList.remove('active');
       const iframe  = document.getElementById('assessViewerIframe');
-      if (iframe) { iframe.srcdoc = ''; iframe.src = 'about:blank'; iframe.style.display = 'none'; }
+      if (iframe) { iframe.src = 'about:blank'; iframe.style.display = 'none'; }
     };
 
     // ── Navigation helpers ──
@@ -19222,27 +19228,41 @@ ${text.substring(0, 4500)}`
         // Match by topic_title (unique DB key)
         const row  = rows.find(r => r.topic_title === _assessCurrentTopicTitle) || {};
         for (let i = 1; i <= 10; i++) {
-          const key = `assessment_${i}`;
-          if (row[key]) existingData[key] = row[key];
+          const key      = `assessment_${i}`;
+          const thumbKey = `thumbnail_url_${i}`;
+          if (row[key])      existingData[key]      = row[key];
+          if (row[thumbKey]) existingData[thumbKey] = row[thumbKey];
         }
       }
 
       let html = '';
       for (let i = 1; i <= 10; i++) {
-        const key     = `assessment_${i}`;
-        const hasData = !!(existingData[key]);
+        const key      = `assessment_${i}`;
+        const thumbKey = `thumbnail_url_${i}`;
+        const hasData  = !!(existingData[key]);
+        const existingThumb = existingData[thumbKey] || '';
         html += `
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);">
-            <div style="font-weight:800;font-size:14px;color:var(--text);min-width:100px;">Assessment ${i}</div>
-            <div style="font-size:11px;font-weight:600;color:${hasData ? '#059669' : 'var(--text3)'};">
-              ${hasData ? '✓ Has content' : 'No content'}
+          <div style="margin-bottom:16px;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+              <div style="font-weight:800;font-size:14px;color:var(--text);min-width:100px;">Assessment ${i}</div>
+              <div style="font-size:11px;font-weight:600;color:${hasData ? '#059669' : 'var(--text3)'};"
+                id="amcStatus_${i}">
+                ${hasData ? '✓ Has HTML' : 'No HTML'}
+              </div>
+              <label style="margin-left:auto;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;padding:5px 12px;">
+                ${hasData ? 'Replace HTML' : 'Upload HTML'}
+                <input type="file" style="display:none;" accept=".html,text/html"
+                  onchange="amcHandleFile(this,'${key}',${i})" />
+              </label>
+              <span id="amcName_${i}" style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
             </div>
-            <label style="margin-left:auto;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;padding:5px 12px;">
-              ${hasData ? 'Replace HTML' : 'Upload HTML'}
-              <input type="file" style="display:none;" accept=".html,text/html"
-                onchange="amcHandleFile(this,'${key}',${i})" />
-            </label>
-            <span id="amcName_${i}" style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <label style="font-size:12px;font-weight:600;color:var(--text2);white-space:nowrap;">🖼 Thumbnail URL</label>
+              <input type="url" id="amcThumb_${i}"
+                style="flex:1;background:var(--surface2,#1e293b);border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);outline:none;"
+                placeholder="https://… (image URL for this assessment tile)"
+                value="${existingThumb}" />
+            </div>
           </div>
         `;
       }
@@ -19263,29 +19283,64 @@ ${text.substring(0, 4500)}`
     };
 
     window.assessManageSave = async function () {
-      if (!Object.keys(_amcFiles).length) {
-        alert('No files selected. Pick at least one HTML file to upload.');
+      // Allow saving with only thumbnail URL changes (no HTML files required)
+      const hasFiles  = Object.keys(_amcFiles).length > 0;
+      const anyThumb  = Array.from({length: 10}, (_, i) => {
+        const el = document.getElementById(`amcThumb_${i + 1}`);
+        return el && el.value.trim();
+      }).some(Boolean);
+
+      if (!hasFiles && !anyThumb) {
+        alert('Nothing to save. Please upload an HTML file or enter a thumbnail URL for at least one assessment.');
         return;
       }
+
       const prog    = document.getElementById('assessManageProgress');
       const saveBtn = document.getElementById('assessManageSaveBtn');
-      if (prog)    prog.textContent  = '⏳ Saving…';
-      if (saveBtn) saveBtn.disabled  = true;
+      if (prog)    prog.textContent = '⏳ Uploading…';
+      if (saveBtn) saveBtn.disabled = true;
 
       try {
-        // Read all HTML files as text
-        // Build flat payload matching the backend schema:
-        // { topic_title, assessment_1, …, assessment_10 }
+        // Build payload: start with existing URLs from cache
         const payload = { topic_title: _assessCurrentTopicTitle };
-        for (const [key, file] of Object.entries(_amcFiles)) {
-          payload[key] = await file.text();
-        }
 
         if (window.assessmentAPI) {
+          const rows = window.assessmentAPI.getCache(_assessCurrentSubject) || [];
+          const row  = rows.find(r => r.topic_title === _assessCurrentTopicTitle) || {};
+          for (let i = 1; i <= 10; i++) {
+            const k = `assessment_${i}`;
+            if (row[k]) payload[k] = row[k]; // preserve existing URL
+          }
+        }
+
+        // Upload each selected HTML file → store public URL in assessment_N
+        for (const [key, file] of Object.entries(_amcFiles)) {
+          const num = key.replace('assessment_', '');
+          if (prog) prog.textContent = `⏳ Uploading Assessment ${num}…`;
+          const r = await window.assessmentAPI.uploadFile(_assessCurrentSubject, file);
+          if (r.ok) {
+            payload[key] = r.public_url;
+            const statusEl = document.getElementById(`amcStatus_${num}`);
+            if (statusEl) { statusEl.textContent = '✓ Has HTML'; statusEl.style.color = '#059669'; }
+          } else {
+            if (prog) prog.textContent = `❌ Upload failed for Assessment ${num}: ${r.error}`;
+            if (saveBtn) saveBtn.disabled = false;
+            return;
+          }
+        }
+
+        // Collect thumbnail URL values from input fields
+        for (let i = 1; i <= 10; i++) {
+          const thumbEl = document.getElementById(`amcThumb_${i}`);
+          payload[`thumbnail_url_${i}`] = (thumbEl && thumbEl.value.trim()) || null;
+        }
+
+        // Persist to database
+        if (window.assessmentAPI) {
+          if (prog) prog.textContent = '⏳ Saving to database…';
           const res = await window.assessmentAPI.save(_assessCurrentSubject, payload);
           if (res && res.ok) {
             if (prog) prog.textContent = '✅ Saved!';
-            // Invalidate cache and re-render the tile grid
             setTimeout(async () => {
               window.closeAssessManageOverlay();
               await window.openAssessTopicList(
