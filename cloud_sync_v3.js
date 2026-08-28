@@ -1317,6 +1317,10 @@
     if (r.ok) {
       _mathsTopicsCache = r.data.topics || [];
       console.log('[MATHS_TOPICS] Loaded', _mathsTopicsCache.length, 'topic(s).');
+      // Refresh the library category tiles so the Maths count updates
+      if (typeof window.renderLibraryCategories === 'function') {
+        window.renderLibraryCategories();
+      }
       if (typeof window.renderMathsTopicsGrid === 'function') {
         window.renderMathsTopicsGrid(_mathsTopicsCache);
       }
@@ -1374,6 +1378,10 @@
     if (r.ok) {
       _socialTopicsCache = r.data.topics || [];
       console.log('[SOCIAL_TOPICS] Loaded', _socialTopicsCache.length, 'topic(s).');
+      // Refresh the library category tiles so the Social Science count updates
+      if (typeof window.renderLibraryCategories === 'function') {
+        window.renderLibraryCategories();
+      }
       if (typeof window.renderSocialTopicsGrid === 'function') {
         window.renderSocialTopicsGrid(_socialTopicsCache);
       }
