@@ -18846,17 +18846,29 @@ ${text.substring(0, 4500)}`
 
         if (result !== undefined && result !== null) {
           _lessonsLoaded = result.length > 0;
-          // Also load maths and social topic caches (non-blocking)
-          if (window.mathsTopicsAPI)  window.mathsTopicsAPI.load().catch(() => {});
-          if (window.socialTopicsAPI) window.socialTopicsAPI.load().catch(() => {});
-          // Refresh subject tiles with loaded data
+          // Refresh subject tiles with science lessons data immediately
           window.renderLibraryCategories();
           // Subscribe Realtime on first successful load
           if (result.length > 0) window.lessonsAPI.subscribeRealtime();
-          // Safety net: re-render 400 ms later
+          // Load maths and social topic caches — await both so the
+          // category tile counts and grid are updated once data arrives.
+          const _reloadCats = function () {
+            if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
+            // If the user already has Maths or Social open, refresh the grid too
+            if (_libActiveCategory === 'maths' || _libActiveCategory === 'social') {
+              const _openCat = LIB_CATEGORIES.find(function(c) { return c.id === _libActiveCategory; });
+              if (_openCat) {
+                const _items = _getCatItems(_openCat);
+                if (typeof window.renderLessonsGrid === 'function') window.renderLessonsGrid(_items);
+              }
+            }
+          };
+          if (window.mathsTopicsAPI)  window.mathsTopicsAPI.load().then(_reloadCats).catch(_reloadCats);
+          if (window.socialTopicsAPI) window.socialTopicsAPI.load().then(_reloadCats).catch(_reloadCats);
+          // Safety net: re-render 600 ms later (handles slow connections)
           setTimeout(function () {
             if (typeof window.renderLibraryCategories === 'function') window.renderLibraryCategories();
-          }, 400);
+          }, 600);
         } else {
           // All retries failed — show error in subject grid
           const catGrid = document.getElementById('libCategoryGrid');
@@ -19384,7 +19396,8 @@ ${text.substring(0, 4500)}`
 
       grid.innerHTML = lessons.map(lesson => {
         const hasAnim  = !!lesson.animation_url;
-        const hasTheory= !!lesson.theory_url;
+        // Support both `theory_url` (original column) and `theory` (new column)
+        const hasTheory= !!(lesson.theory_url || lesson.theory);
         // Support both: realworld_images (array, Science lessons table)
         //               real_world_application_url (string, maths/social topics tables)
         const rwImages = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
@@ -19394,7 +19407,7 @@ ${text.substring(0, 4500)}`
         const chips = [
           hasAnim   ? '<span class="lesson-mode-chip lmc-anim">🎬 Animation</span>'      : '',
           hasTheory ? '<span class="lesson-mode-chip lmc-theory">📄 Theory</span>'        : '',
-          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${lesson.realworld_images.length})</span>` : '',
+          hasRW     ? `<span class="lesson-mode-chip lmc-realworld">&#127757; Real World (${rwImages.length || 1})</span>` : '',
         ].join('');
         const thumbHTML = lesson.thumbnail_url
           ? `<img class="lesson-card-thumb" src="${lesson.thumbnail_url}" alt="${lesson.title.replace(/"/g,'&quot;')}" loading="lazy" />`
@@ -19518,8 +19531,9 @@ ${text.substring(0, 4500)}`
         const ctChipD = ctDefD
           ? `<span class="lesson-ct-chip" style="background:color-mix(in srgb,${ctDefD.color} 14%,transparent);color:${ctDefD.color};border:1px solid color-mix(in srgb,${ctDefD.color} 28%,transparent);">${ctDefD.icon} ${ctDefD.label}</span>` : '';
         const chips = [
-          lesson.animation_url   ? '<span class="lesson-mode-chip lmc-anim">&#127916; Animation</span>'     : '',
-          lesson.theory_url      ? '<span class="lesson-mode-chip lmc-theory">&#128196; Theory</span>'       : '',
+          lesson.animation_url              ? '<span class="lesson-mode-chip lmc-anim">&#127916; Animation</span>'     : '',
+          // Support both `theory_url` (original) and `theory` (new column)
+          (lesson.theory_url || lesson.theory) ? '<span class="lesson-mode-chip lmc-theory">&#128196; Theory</span>'  : '',
           // Support both realworld_images (array) and real_world_application_url (string)
           (()=>{
             const rwImgs = Array.isArray(lesson.realworld_images) ? lesson.realworld_images : [];
@@ -19538,7 +19552,8 @@ ${text.substring(0, 4500)}`
       const _rwImgs2 = Array.isArray(_currentLesson.realworld_images) ? _currentLesson.realworld_images : [];
       const _rwUrl2  = _currentLesson.real_world_application_url || null;
       if (ldAnim)   ldAnim.disabled   = !_currentLesson.animation_url;
-      if (ldTheory) ldTheory.disabled = !_currentLesson.theory_url;
+      // Enable Theory button if either theory_url (original) or theory (new column) has content
+      if (ldTheory) ldTheory.disabled = !(_currentLesson.theory_url || _currentLesson.theory);
       if (ldRW)     ldRW.disabled     = !(_rwImgs2.length > 0 || !!_rwUrl2);
 
       // Show the Detail screen, hide Content screen
@@ -19627,13 +19642,15 @@ ${text.substring(0, 4500)}`
       } else if (mode === 'theory') {
         const fr   = document.getElementById('lvTheoryIframe');
         const empt = document.getElementById('lvTheoryEmpty');
-        if (_currentLesson.theory_url) {
+        // Support both `theory_url` (original column) and `theory` (new column added by migration)
+        const _theoryUrl = _currentLesson.theory_url || _currentLesson.theory || null;
+        if (_theoryUrl) {
           // Fetch HTML content and inject via srcdoc to bypass
           // Supabase storage cross-origin / Content-Disposition restrictions
           fr.style.display = 'block';
           fr.srcdoc = '<p style="font-family:sans-serif;padding:2rem;color:#888">Loading theory…</p>';
           if (empt) empt.style.display = 'none';
-          fetch(_currentLesson.theory_url)
+          fetch(_theoryUrl)
             .then(function(res) {
               if (!res.ok) throw new Error('HTTP ' + res.status);
               return res.text();
