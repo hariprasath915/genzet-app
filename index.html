@@ -6361,9 +6361,10 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
          so navigation stays reachable on small screens */
       .nav-sidebar {
         position: fixed;
-        top: var(--topbar-h);
+        top: var(--topbar-h, 64px);
         left: 0;
         bottom: 0;
+        height: calc(100vh - var(--topbar-h, 64px));
         width: 250px;
         max-width: 78vw;
         transform: translateX(-100%);
@@ -14024,6 +14025,13 @@ function amShowSuccess() {
     window.addEventListener('resize', () => {
       if (window.innerWidth > 680) closeMobileSidebar();
     });
+
+    // Safety net: force sidebar into a clean, correct state as soon as the
+    // page loads (not just on resize). Prevents the drawer from rendering
+    // as a stuck/cropped floating box if the page ever loads already in a
+    // narrow/zoomed viewport or with a stale mobile-open class.
+    closeMobileSidebar();
+    window.addEventListener('load', closeMobileSidebar);
 
     // ═══════════════════════════════════════════════
     // MODE SWITCH — UPDATED: Teacher mode removed
