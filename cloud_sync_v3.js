@@ -170,9 +170,13 @@
   function _storeSession(data) {
     window.authToken = data.token;
     window.authUser  = {
-      user_id: data.user_id || null,
-      email:   data.email   || '',
-      name:    data.name    || (data.email || '').split('@')[0] || 'Student',
+      user_id:     data.user_id     || null,
+      email:       data.email       || '',
+      name:        data.name        || (data.email || '').split('@')[0] || 'User',
+      role:        data.role        || 'student',
+      institution: data.institution || '',
+      roll_number: data.roll_number || '',
+      avatar_url:  data.avatar_url  || ''
     };
     localStorage.setItem(TOKEN_KEY, window.authToken);
     localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
@@ -1482,4 +1486,71 @@
     getCache:   (subject) => _assessmentCache[subject] || [],
   };
 
+  // ── Assignment System & Performance API ──────────────────────────────────────
+  async function _createAssignment(payload) {
+    return _api('POST', '/sync/assignments', payload);
+  }
+  async function _joinAssignment(code) {
+    return _api('GET', `/sync/assignments/join/${encodeURIComponent(code)}`);
+  }
+  async function _submitAssignment(payload) {
+    return _api('POST', '/sync/assignments/submit', payload);
+  }
+  async function _fetchTeacherAssignments() {
+    return _api('GET', '/sync/assignments/teacher');
+  }
+  async function _fetchStudentAssignments() {
+    return _api('GET', '/sync/assignments/student');
+  }
+  async function _fetchTeacherPerformance(subject, assignment_id) {
+    let path = '/sync/performance/teacher';
+    const params = [];
+    if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+    if (assignment_id) params.push(`assignment_id=${encodeURIComponent(assignment_id)}`);
+    if (params.length) path += '?' + params.join('&');
+    return _api('GET', path);
+  }
+  async function _fetchStudentPerformance() {
+    return _api('GET', '/sync/performance/student');
+  }
+
+  window.assignmentAPI = {
+    create:                _createAssignment,
+    join:                  _joinAssignment,
+    submit:                _submitAssignment,
+    getTeacherAssignments: _fetchTeacherAssignments,
+    getStudentAssignments: _fetchStudentAssignments,
+    getTeacherPerformance: _fetchTeacherPerformance,
+    getStudentPerformance: _fetchStudentPerformance,
+  };
+
+  // ── Auth helpers ─────────────────────────────────────────────────────────────
+  window.hzTeacherLogin = async function(institution, teacher_name, subject, passcode) {
+    try {
+      const res = await fetch(`${BACKEND}/auth/teacher-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institution, teacher_name, subject, passcode })
+      });
+      const data = await res.json();
+      return { ok: res.ok, status: res.status, data, error: !res.ok ? (data.detail || 'Login failed') : null };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  };
+
+  window.hzStudentLogin = async function(institution, student_name, roll_number, passcode) {
+    try {
+      const res = await fetch(`${BACKEND}/auth/student-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institution, student_name, roll_number, passcode: passcode || 'student123' })
+      });
+      const data = await res.json();
+      return { ok: res.ok, status: res.status, data, error: !res.ok ? (data.detail || 'Login failed') : null };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  };
 })();
+
