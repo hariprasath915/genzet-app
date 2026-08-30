@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Haezet — Setup</title>
+  <meta name="description" content="Complete your Haezet account setup — tell us your school and role to get started."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #050B18;
+      --violet:       #6B4FFF;
+      --violet-dim:   rgba(107,79,255,.18);
+      --violet-glow:  rgba(107,79,255,.35);
+      --cyan:         #00D4FF;
+      --cyan-dim:     rgba(0,212,255,.14);
+      --teal:         #0DD9B2;
+      --teal-dim:     rgba(13,217,178,.18);
+      --teal-glow:    rgba(13,217,178,.35);
+      --surface:      rgba(13,27,53,.94);
+      --border:       rgba(255,255,255,.09);
+      --text:         #F0F4FF;
+      --text-muted:   rgba(240,244,255,.45);
+      --red:          #FF5A5A;
+      --red-dim:      rgba(255,90,90,.12);
+      --green:        #22C55E;
+      --green-dim:    rgba(34,197,94,.12);
+      --radius-card:  24px;
+      --transition:   .38s cubic-bezier(.4,0,.2,1);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* Ambient background blobs */
+    body::before {
+      content: '';
+      position: fixed; top: -15%; left: -10%;
+      width: 55%; height: 55%;
+      background: radial-gradient(circle, rgba(107,79,255,.2) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -10%; right: -5%;
+      width: 50%; height: 50%;
+      background: radial-gradient(circle, rgba(0,212,255,.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ── Wrapper ──────────────────────────────────────────────────────────── */
+    .ob-wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 480px;
+      /* Hidden initially to prevent a flash of the school screen while
+         the /onboarding/status check runs. Shown by JS after the check. */
+      visibility: hidden;
+    }
+    .ob-wrap.ready { visibility: visible; }
+
+    /* Brand header */
+    .ob-brand {
+      font-weight: 800; font-size: 1.65rem; letter-spacing: -.03em;
+      text-align: center; margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Step indicator */
+    .ob-steps {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-bottom: 2.2rem;
+    }
+    .ob-step-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border); transition: all .3s ease;
+    }
+    .ob-step-dot.active  { background: var(--violet); transform: scale(1.35); }
+    .ob-step-dot.done    { background: var(--cyan); }
+    .ob-step-line {
+      width: 32px; height: 2px; border-radius: 1px;
+      background: var(--border); transition: background .3s ease;
+    }
+    .ob-step-line.done { background: var(--cyan); }
+
+    /* Card */
+    .ob-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 44px 40px;
+      backdrop-filter: blur(28px);
+      box-shadow: 0 32px 80px rgba(0,0,0,.55);
+    }
+    @media (max-width: 520px) {
+      .ob-card { padding: 32px 24px; }
+    }
+
+    /* Screen management */
+    .ob-screen {
+      display: none;
+      animation: screenIn .4s ease both;
+    }
+    .ob-screen.active { display: block; }
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(14px) scale(.98); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Typography */
+    .ob-title {
+      font-size: 1.35rem; font-weight: 700; line-height: 1.3;
+      margin-bottom: .5rem;
+    }
+    .ob-subtitle {
+      font-size: .83rem; color: var(--text-muted); line-height: 1.65;
+      margin-bottom: 1.8rem;
+    }
+
+    /* Input */
+    .ob-label {
+      display: block; font-size: .78rem; font-weight: 600;
+      color: var(--text-muted); letter-spacing: .04em;
+      text-transform: uppercase; margin-bottom: .55rem;
+    }
+    .ob-input {
+      width: 100%; padding: 14px 18px;
+      background: rgba(255,255,255,.05);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text); font-family: inherit; font-size: .95rem;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    .ob-input::placeholder { color: var(--text-muted); }
+    .ob-input:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(107,79,255,.18);
+    }
+
+    /* Primary button */
+    .ob-btn {
+      width: 100%; margin-top: 1.3rem;
+      padding: 15px;
+      border: none; border-radius: 12px;
+      font-family: inherit; font-size: .95rem; font-weight: 700;
+      cursor: pointer; transition: all .25s ease;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    /* Enter button — muted when empty, lit when filled */
+    #schoolBtn {
+      background: rgba(255,255,255,.07);
+      color: var(--text-muted);
+      border: 1.5px solid var(--border);
+      cursor: not-allowed;
+    }
+    #schoolBtn.lit {
+      background: linear-gradient(135deg, var(--violet) 0%, #8B6BFF 100%);
+      color: #fff;
+      border-color: transparent;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(107,79,255,.4);
+    }
+    #schoolBtn.lit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(107,79,255,.55);
+    }
+    #schoolBtn.lit:active { transform: translateY(0); }
+
+    /* ── Role Cards ──────────────────────────────────────────────────────── */
+    .ob-role-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-top: .4rem;
+    }
+    @media (max-width: 380px) {
+      .ob-role-grid { grid-template-columns: 1fr; }
+    }
+
+    .ob-role-card {
+      border-radius: 18px; padding: 28px 20px 24px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all .25s ease;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .ob-role-card::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: inherit; opacity: .07;
+      transition: opacity .25s ease;
+    }
+    .ob-role-card:hover { transform: translateY(-4px); }
+    .ob-role-card:hover::before { opacity: .13; }
+
+    /* Teacher card — violet theme */
+    .ob-role-card.teacher {
+      background: rgba(107,79,255,.1);
+      border-color: rgba(107,79,255,.3);
+    }
+    .ob-role-card.teacher::before { background: var(--violet); }
+    .ob-role-card.teacher:hover {
+      border-color: rgba(107,79,255,.7);
+      box-shadow: 0 12px 40px rgba(107,79,255,.3);
+    }
+
+    /* Student card — teal theme */
+    .ob-role-card.student {
+      background: rgba(13,217,178,.1);
+      border-color: rgba(13,217,178,.3);
+    }
+    .ob-role-card.student::before { background: var(--teal); }
+    .ob-role-card.student:hover {
+      border-color: rgba(13,217,178,.7);
+      box-shadow: 0 12px 40px rgba(13,217,178,.3);
+    }
+
+    .ob-role-icon {
+      font-size: 2.4rem; line-height: 1;
+      margin-bottom: 12px; display: block;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
+    }
+    .ob-role-name {
+      font-size: 1.05rem; font-weight: 700; display: block;
+      margin-bottom: 6px;
+    }
+    .ob-role-card.teacher .ob-role-name { color: #b49aff; }
+    .ob-role-card.student .ob-role-name { color: #6efadf; }
+
+    .ob-role-desc {
+      font-size: .75rem; color: var(--text-muted); line-height: 1.55;
+    }
+
+    /* Loading state on role cards */
+    .ob-role-card.loading {
+      pointer-events: none; opacity: .6;
+    }
+
+    /* ── PIN inputs ──────────────────────────────────────────────────────── */
+    .ob-pin-row {
+      display: flex; gap: 10px; justify-content: center;
+      margin: 1.4rem 0 .4rem;
+    }
+    .ob-pin-digit {
+      width: 52px; height: 60px;
+      background: rgba(255,255,255,.05);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text); font-family: inherit; font-size: 1.5rem;
+      font-weight: 700; text-align: center;
+      outline: none; caret-color: var(--violet);
+      transition: border-color .2s, box-shadow .2s;
+      -moz-appearance: textfield;
+    }
+    .ob-pin-digit::-webkit-outer-spin-button,
+    .ob-pin-digit::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .ob-pin-digit:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(107,79,255,.2);
+    }
+    @media (max-width: 400px) {
+      .ob-pin-digit { width: 44px; height: 54px; font-size: 1.3rem; }
+      .ob-pin-row   { gap: 7px; }
+    }
+
+    #pinBtn {
+      background: linear-gradient(135deg, var(--violet) 0%, #8B6BFF 100%);
+      color: #fff;
+      box-shadow: 0 6px 24px rgba(107,79,255,.4);
+    }
+    #pinBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(107,79,255,.55);
+    }
+    #pinBtn:disabled {
+      opacity: .5; cursor: not-allowed; transform: none;
+      box-shadow: none;
+    }
+
+    /* ── Messages ────────────────────────────────────────────────────────── */
+    .ob-msg {
+      font-size: .82rem; font-weight: 500;
+      border-radius: 10px; padding: 11px 14px;
+      margin-top: 1rem; display: none; line-height: 1.5;
+    }
+    .ob-msg.error   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,90,90,.3);   display: block; }
+    .ob-msg.success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,.3); display: block; }
+
+    /* Back link */
+    .ob-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 1.4rem;
+      font-size: .8rem; color: var(--text-muted);
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; padding: 0;
+      transition: color .2s;
+    }
+    .ob-back:hover { color: var(--text); }
+
+    /* Spinner */
+    .ob-spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success overlay */
+    .ob-success-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,11,24,.96);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999; opacity: 0; pointer-events: none;
+      transition: opacity .4s ease;
+    }
+    .ob-success-overlay.show { opacity: 1; pointer-events: all; }
+    .ob-success-check {
+      font-size: 3.5rem; margin-bottom: 1rem;
+      animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .ob-success-text {
+      font-size: 1.2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Success overlay (shown before redirect) -->
+  <div class="ob-success-overlay" id="successOverlay" role="status" aria-live="polite">
+    <div class="ob-success-check">✓</div>
+    <div class="ob-success-text" id="successText">All set!</div>
+  </div>
+
+  <div class="ob-wrap">
+    <!-- Brand -->
+    <div class="ob-brand" role="banner">Haezet</div>
+
+    <!-- Step indicator -->
+    <div class="ob-steps" role="progressbar" aria-label="Setup progress">
+      <div class="ob-step-dot active" id="dot1"></div>
+      <div class="ob-step-line"       id="line1"></div>
+      <div class="ob-step-dot"        id="dot2"></div>
+      <div class="ob-step-line"       id="line2"></div>
+      <div class="ob-step-dot"        id="dot3"></div>
+    </div>
+
+    <div class="ob-card">
+
+      <!-- ─────────────────────────────────────────────────────── -->
+      <!-- SCREEN 1: School Name                                    -->
+      <!-- ─────────────────────────────────────────────────────── -->
+      <div class="ob-screen active" id="screen-school">
+        <div class="ob-title">What's your school or institute?</div>
+        <div class="ob-subtitle">
+          This helps us personalise your experience. You can update it later from your profile.
+        </div>
+
+        <label class="ob-label" for="schoolInput">School / Institute name</label>
+        <input
+          id="schoolInput"
+          class="ob-input"
+          type="text"
+          placeholder="e.g. Delhi Public School, IIT Bombay…"
+          maxlength="200"
+          autocomplete="organization"
+          aria-required="true"
+        />
+
+        <div class="ob-msg" id="schoolMsg" role="alert"></div>
+
+        <button
+          id="schoolBtn"
+          class="ob-btn"
+          aria-label="Continue to role selection"
+          disabled
+        >
+          Enter
+        </button>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────── -->
+      <!-- SCREEN 2: Role Selection                                 -->
+      <!-- ─────────────────────────────────────────────────────── -->
+      <div class="ob-screen" id="screen-role">
+        <div class="ob-title">Who are you?</div>
+        <div class="ob-subtitle">
+          Choose your role — you'll get a personalised experience designed just for you.
+        </div>
+
+        <div class="ob-role-grid">
+          <div
+            class="ob-role-card teacher"
+            id="roleTeacher"
+            role="button"
+            tabindex="0"
+            aria-label="I am a Teacher"
+          >
+            <span class="ob-role-icon">🏫</span>
+            <span class="ob-role-name">Teacher</span>
+            <span class="ob-role-desc">Create lessons, manage students &amp; upload content</span>
+          </div>
+
+          <div
+            class="ob-role-card student"
+            id="roleStudent"
+            role="button"
+            tabindex="0"
+            aria-label="I am a Student"
+          >
+            <span class="ob-role-icon">🎓</span>
+            <span class="ob-role-name">Student</span>
+            <span class="ob-role-desc">Explore animations, quizzes &amp; flashcards</span>
+          </div>
+        </div>
+
+        <div class="ob-msg" id="roleMsg" role="alert"></div>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────── -->
+      <!-- SCREEN 3: Teacher PIN                                    -->
+      <!-- ─────────────────────────────────────────────────────── -->
+      <div class="ob-screen" id="screen-pin">
+        <button class="ob-back" id="pinBack" aria-label="Back to role selection">
+          ← Back
+        </button>
+
+        <div class="ob-title">Enter your access code</div>
+        <div class="ob-subtitle">
+          Type the 6-digit PIN provided by your administrator. Each PIN can only be used once.
+        </div>
+
+        <!-- Six individual digit boxes -->
+        <div class="ob-pin-row" id="pinRow" role="group" aria-label="6-digit PIN entry">
+          <input class="ob-pin-digit" id="pin0" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 1"/>
+          <input class="ob-pin-digit" id="pin1" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 2"/>
+          <input class="ob-pin-digit" id="pin2" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 3"/>
+          <input class="ob-pin-digit" id="pin3" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 4"/>
+          <input class="ob-pin-digit" id="pin4" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 5"/>
+          <input class="ob-pin-digit" id="pin5" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" aria-label="PIN digit 6"/>
+        </div>
+
+        <div class="ob-msg" id="pinMsg" role="alert"></div>
+
+        <button id="pinBtn" class="ob-btn" aria-label="Submit PIN" disabled>
+          Verify &amp; Enter
+        </button>
+      </div>
+
+    </div><!-- /.ob-card -->
+  </div><!-- /.ob-wrap -->
+
+  <script>
+    /* ════════════════════════════════════════════════════════════════════════
+       Haezet Onboarding  —  onboarding.html
+       ════════════════════════════════════════════════════════════════════════
+
+       Flow:
+         1. On load  → GET /onboarding/status
+            • completed → redirect to index.html (dashboard)
+            • not completed → show School screen
+         2. School   → POST /onboarding/school  → show Role screen
+         3. Student  → POST /onboarding/role/student → redirect student.html
+         4. Teacher  → show PIN screen
+         5. PIN      → POST /onboarding/role/teacher/verify-pin
+            • valid   → redirect to index.html (dashboard)
+            • invalid → error message, user stays
+    ════════════════════════════════════════════════════════════════════════ */
+
+    'use strict';
+
+    var BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://127.0.0.1:8000'
+      : '/api';
+
+    var TOKEN_KEY = 'haezet_jwt';
+    var token = localStorage.getItem(TOKEN_KEY) || '';
+
+    // ── Step indicator helpers ───────────────────────────────────────────────
+    function setStep(n) {
+      // n = 1 (school), 2 (role), 3 (pin)
+      var dots  = [document.getElementById('dot1'), document.getElementById('dot2'), document.getElementById('dot3')];
+      var lines = [document.getElementById('line1'), document.getElementById('line2')];
+      dots.forEach(function(d, i) {
+        d.classList.remove('active', 'done');
+        if (i + 1 < n)       d.classList.add('done');
+        else if (i + 1 === n) d.classList.add('active');
+      });
+      lines.forEach(function(l, i) {
+        l.classList.toggle('done', i + 1 < n);
+      });
+    }
+
+    // ── Screen navigation ────────────────────────────────────────────────────
+    var screens = ['school', 'role', 'pin'];
+    function showScreen(name) {
+      // Reveal the wrapper (hidden initially to avoid flash for returning users)
+      document.querySelector('.ob-wrap').classList.add('ready');
+
+      screens.forEach(function(s) {
+        var el = document.getElementById('screen-' + s);
+        if (el) {
+          el.classList.remove('active');
+          // Re-trigger animation
+          void el.offsetWidth;
+        }
+      });
+      var target = document.getElementById('screen-' + name);
+      if (target) target.classList.add('active');
+      var stepMap = { school: 1, role: 2, pin: 3 };
+      setStep(stepMap[name] || 1);
+    }
+
+    // ── Message helpers ──────────────────────────────────────────────────────
+    function showMsg(id, text, type) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      el.className = 'ob-msg ' + (type || 'error');
+    }
+    function clearMsg(id) {
+      var el = document.getElementById(id);
+      if (el) { el.className = 'ob-msg'; el.textContent = ''; }
+    }
+
+    // ── Button loading state ─────────────────────────────────────────────────
+    function setBtnLoading(id, loading) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = loading;
+      if (loading) {
+        btn.dataset.orig = btn.innerHTML;
+        btn.innerHTML = '<span class="ob-spinner"></span>';
+      } else {
+        btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+      }
+    }
+
+    // ── Success overlay ──────────────────────────────────────────────────────
+    function showSuccess(msg, dest) {
+      var overlay = document.getElementById('successOverlay');
+      var text    = document.getElementById('successText');
+      if (text) text.textContent = msg || 'All set!';
+      if (overlay) overlay.classList.add('show');
+      setTimeout(function() { window.location.href = dest || '/'; }, 1200);
+    }
+
+    // ── Authenticated fetch helper ───────────────────────────────────────────
+    async function apiFetch(method, path, body) {
+      var opts = {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+        },
+      };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      var res  = await fetch(BACKEND + path, opts);
+      var data = await res.json().catch(function() { return {}; });
+      return { ok: res.ok, status: res.status, data: data };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // INIT — check onboarding status on page load
+    // ════════════════════════════════════════════════════════════════════════
+    (async function init() {
+      if (!token) {
+        // No session at all — go back to landing/login
+        window.location.href = '/';
+        return;
+      }
+
+      // Fast-path: if we already know onboarding is done (localStorage flag)
+      // skip the network check for returning users.
+      if (localStorage.getItem('haezet_onboarding_done') === 'true') {
+        window.location.href = '/';
+        return;
+      }
+
+      try {
+        var r = await apiFetch('GET', '/onboarding/status');
+        if (r.ok && r.data.completed) {
+          localStorage.setItem('haezet_onboarding_done', 'true');
+          window.location.href = '/';
+          return;
+        }
+        if (!r.ok && r.status === 401) {
+          // Token rejected — clear and go to login
+          localStorage.removeItem(TOKEN_KEY);
+          window.location.href = '/';
+          return;
+        }
+      } catch (err) {
+        console.warn('[ONBOARDING] Status check failed (network):', err.message);
+        // Network error — let the user proceed; worst case they fill it again
+      }
+
+      // Show the first screen
+      showScreen('school');
+    })();
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SCREEN 1 — School Name
+    // ════════════════════════════════════════════════════════════════════════
+    var schoolInput = document.getElementById('schoolInput');
+    var schoolBtn   = document.getElementById('schoolBtn');
+
+    schoolInput.addEventListener('input', function() {
+      var filled = schoolInput.value.trim().length > 0;
+      schoolBtn.disabled = !filled;
+      schoolBtn.classList.toggle('lit', filled);
+    });
+
+    schoolInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !schoolBtn.disabled) schoolBtn.click();
+    });
+
+    schoolBtn.addEventListener('click', async function() {
+      var school = schoolInput.value.trim();
+      if (!school) return;
+      clearMsg('schoolMsg');
+      setBtnLoading('schoolBtn', true);
+
+      try {
+        var r = await apiFetch('POST', '/onboarding/school', { school: school });
+        if (r.ok) {
+          showScreen('role');
+        } else {
+          showMsg('schoolMsg', r.data.detail || 'Could not save school name. Please try again.', 'error');
+          setBtnLoading('schoolBtn', false);
+          // Re-apply lit state based on current input value
+          if (schoolInput.value.trim().length > 0) schoolBtn.classList.add('lit');
+        }
+      } catch (err) {
+        showMsg('schoolMsg', 'Network error — please check your connection.', 'error');
+        setBtnLoading('schoolBtn', false);
+        if (schoolInput.value.trim().length > 0) schoolBtn.classList.add('lit');
+      }
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SCREEN 2 — Role Selection
+    // ════════════════════════════════════════════════════════════════════════
+    var roleTeacherCard = document.getElementById('roleTeacher');
+    var roleStudentCard = document.getElementById('roleStudent');
+
+    function handleRoleClick(card, fn) {
+      card.addEventListener('click', fn);
+      card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); }
+      });
+    }
+
+    handleRoleClick(roleTeacherCard, function() {
+      showScreen('pin');
+      // Focus first PIN digit
+      setTimeout(function() {
+        var first = document.getElementById('pin0');
+        if (first) first.focus();
+      }, 100);
+    });
+
+    handleRoleClick(roleStudentCard, async function() {
+      clearMsg('roleMsg');
+      roleStudentCard.classList.add('loading');
+      roleTeacherCard.classList.add('loading');
+
+      try {
+        var r = await apiFetch('POST', '/onboarding/role/student');
+        if (r.ok) {
+          localStorage.setItem('haezet_onboarding_done', 'true');
+          showSuccess('Welcome, Student! 🎓', r.data.redirect || '/student.html');
+        } else {
+          showMsg('roleMsg', r.data.detail || 'Something went wrong. Please try again.', 'error');
+          roleStudentCard.classList.remove('loading');
+          roleTeacherCard.classList.remove('loading');
+        }
+      } catch (err) {
+        showMsg('roleMsg', 'Network error — please check your connection.', 'error');
+        roleStudentCard.classList.remove('loading');
+        roleTeacherCard.classList.remove('loading');
+      }
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SCREEN 3 — Teacher PIN
+    // ════════════════════════════════════════════════════════════════════════
+    document.getElementById('pinBack').addEventListener('click', function() {
+      clearPin();
+      clearMsg('pinMsg');
+      showScreen('role');
+    });
+
+    var pinDigits = Array.from({ length: 6 }, function(_, i) {
+      return document.getElementById('pin' + i);
+    });
+    var pinBtn = document.getElementById('pinBtn');
+
+    // Auto-advance logic for PIN digits
+    pinDigits.forEach(function(inp, idx) {
+      inp.addEventListener('input', function(e) {
+        // Only allow a single digit
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        if (inp.value && idx < 5) {
+          pinDigits[idx + 1].focus();
+        }
+        updatePinBtn();
+      });
+
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !inp.value && idx > 0) {
+          pinDigits[idx - 1].value = '';
+          pinDigits[idx - 1].focus();
+          updatePinBtn();
+        }
+        if (e.key === 'Enter') pinBtn.click();
+      });
+
+      // Handle paste (e.g. paste "223534" into first box)
+      inp.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var pasted = (e.clipboardData || window.clipboardData).getData('text')
+                      .replace(/\D/g, '').slice(0, 6);
+        pasted.split('').forEach(function(ch, i) {
+          if (pinDigits[i]) pinDigits[i].value = ch;
+        });
+        // Focus the last filled digit (capped at index 5)
+        var focusIdx = Math.min(pasted.length - 1, 5);
+        if (focusIdx >= 0) pinDigits[focusIdx].focus();
+        updatePinBtn();
+      });
+    });
+
+    function getPinValue() {
+      return pinDigits.map(function(d) { return d.value; }).join('');
+    }
+
+    function clearPin() {
+      pinDigits.forEach(function(d) { d.value = ''; });
+      pinBtn.disabled = true;
+    }
+
+    function updatePinBtn() {
+      var full = getPinValue().length === 6;
+      pinBtn.disabled = !full;
+    }
+
+    pinBtn.addEventListener('click', async function() {
+      var pin = getPinValue();
+      if (pin.length !== 6) return;
+      clearMsg('pinMsg');
+      setBtnLoading('pinBtn', true);
+
+      try {
+        var r = await apiFetch('POST', '/onboarding/role/teacher/verify-pin', { pin: pin });
+        if (r.ok && r.data.valid) {
+          localStorage.setItem('haezet_onboarding_done', 'true');
+          showSuccess('Welcome, Teacher! 🏫', '/');
+        } else if (r.ok && !r.data.valid) {
+          showMsg('pinMsg', '❌ Invalid or already-used PIN. Please check with your admin.', 'error');
+          clearPin();
+          pinDigits[0].focus();
+          setBtnLoading('pinBtn', false);
+        } else {
+          showMsg('pinMsg', r.data.detail || 'PIN verification failed. Please try again.', 'error');
+          setBtnLoading('pinBtn', false);
+        }
+      } catch (err) {
+        showMsg('pinMsg', 'Network error — please check your connection.', 'error');
+        setBtnLoading('pinBtn', false);
+      }
+    });
+  </script>
+</body>
+</html>
