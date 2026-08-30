@@ -913,6 +913,79 @@
   window.authHideGate        = _enterDashboard;  // back-compat alias
   window.authGoogleLogin     = _googleLogin;     // Google OAuth redirect flow
 
+  // ── Role Logins (Teacher & Student) ──────────────────────────────────────
+  async function _teacherLogin(institution, teacherName, subject, passcode) {
+    try {
+      const res = await fetch(`${BACKEND}/auth/teacher-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          institution: institution.trim(),
+          teacher_name: teacherName.trim(),
+          subject: (subject || '').trim(),
+          passcode: passcode.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.detail || 'Teacher login failed' };
+      }
+      _storeSession(data);
+      return { ok: true, data };
+    } catch (err) {
+      console.warn('[AUTH] Teacher login error:', err.message);
+      return { ok: false, error: err.message };
+    }
+  }
+
+  async function _studentLogin(institution, studentName, rollNumber, passcode) {
+    try {
+      const res = await fetch(`${BACKEND}/auth/student-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          institution: institution.trim(),
+          student_name: studentName.trim(),
+          roll_number: rollNumber.trim(),
+          passcode: (passcode || '').trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.detail || 'Student login failed' };
+      }
+      _storeSession(data);
+      return { ok: true, data };
+    } catch (err) {
+      console.warn('[AUTH] Student login error:', err.message);
+      return { ok: false, error: err.message };
+    }
+  }
+
+  window.authTeacherLogin = _teacherLogin;
+  window.authStudentLogin = _studentLogin;
+
+  // ── Assignments, Performance & Notes API ─────────────────────────────────
+  window.apiFetchTeacherAssignments = () => _api('GET', '/sync/assignments/teacher');
+  window.apiFetchStudentAssignments = () => _api('GET', '/sync/assignments/student');
+  window.apiCreateAssignment = (data) => _api('POST', '/sync/assignments', data);
+  window.apiJoinAssignment = (code) => _api('GET', `/sync/assignments/join/${encodeURIComponent(code)}`);
+  window.apiSubmitAssignment = (data) => _api('POST', '/sync/assignments/submit', data);
+  window.apiFetchTeacherPerformance = (subject, aid) => {
+    let q = [];
+    if (subject) q.push(`subject=${encodeURIComponent(subject)}`);
+    if (aid) q.push(`assignment_id=${encodeURIComponent(aid)}`);
+    return _api('GET', '/sync/performance/teacher' + (q.length ? '?' + q.join('&') : ''));
+  };
+  window.apiFetchStudentPerformance = () => _api('GET', '/sync/performance/student');
+
+  window.apiCreateTeacherNote = (data) => _api('POST', '/sync/notes', data);
+  window.apiFetchTeacherNotes = () => _api('GET', '/sync/notes/teacher');
+  window.apiFetchStudentNotes = () => _api('GET', '/sync/notes/student');
+  window.apiUpdateTeacherNote = (noteId, data) => _api('PUT', `/sync/notes/${encodeURIComponent(noteId)}`, data);
+  window.apiDeleteTeacherNote = (noteId) => _api('DELETE', `/sync/notes/${encodeURIComponent(noteId)}`);
+
+
 
 
   // ── Item sync (new + legacy fallback) ────────────────────────────────────
