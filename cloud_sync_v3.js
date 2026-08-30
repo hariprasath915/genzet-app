@@ -838,16 +838,18 @@
           if (obRes.ok) {
             const obData = await obRes.json();
             if (!obData.completed) {
-              // First-time user (or onboarding flag was cleared) — send to onboarding
               window.location.href = '/onboarding.html';
               return;
             }
             // Mark done so future page loads skip this check
             localStorage.setItem('haezet_onboarding_done', 'true');
+          } else {
+            // If the server returns a 500 error (like missing tables), don't skip onboarding!
+            window.location.href = '/onboarding.html';
+            return;
           }
-          // If obRes is not ok (e.g. 500) we fall through and enter dashboard
         } catch (_obErr) {
-          // Network error — allow entry into dashboard; user can re-onboard later
+          // Network error (offline) — allow entry into dashboard; user can re-onboard later
           console.warn('[AUTH] Onboarding status check failed (network) — entering dashboard.');
         }
       }
