@@ -27,9 +27,14 @@
 (function () {
   'use strict';
 
-  const BACKEND = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:8000'
-    : '/api';
+  const BACKEND = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.protocol === 'file:' ||
+    !window.location.hostname
+  ) ? 'http://127.0.0.1:8000' : (window.location.origin && (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) ? 'http://127.0.0.1:8000' : '/api');
+
+  window.BACKEND = BACKEND;
   const TOKEN_KEY = 'haezet_jwt';
   const USER_KEY  = 'haezet_user';
 
