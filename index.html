@@ -77,6 +77,267 @@
     rel="stylesheet" />
 <style>
 
+/* ─── ANIMATED EDUCATIONAL BACKGROUND ─── */
+#hz-animated-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.hz-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  animation: hzFloatBlob 18s ease-in-out infinite alternate;
+}
+.hz-bg-blob-1 { top: -12%; left: -10%; width: 50vw; height: 50vw; background: #1E40AF; }
+.hz-bg-blob-2 { bottom: -12%; right: -10%; width: 55vw; height: 55vw; background: #6D28D9; }
+.hz-bg-blob-3 { top: 45%; left: 35%; width: 35vw; height: 35vw; background: #0891B2; opacity: 0.16; }
+
+@keyframes hzFloatBlob {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(45px, -30px) scale(1.08); }
+  100% { transform: translate(-30px, 45px) scale(0.95); }
+}
+
+.hz-floating-shape {
+  position: absolute;
+  color: rgba(37, 99, 235, 0.12);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  user-select: none;
+  pointer-events: none;
+  animation: hzFloatShape 14s ease-in-out infinite alternate;
+}
+@keyframes hzFloatShape {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-35px) rotate(15deg); }
+}
+
+/* ─── MULTI-STEP LOGIN STYLES ─── */
+.hz-step-page {
+  display: none;
+  animation: hzStepFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hz-step-page.active { display: block; }
+
+@keyframes hzStepFade {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.hz-step-back {
+  background: none;
+  border: none;
+  color: #64748B;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.hz-step-back:hover { color: #2563EB; background: rgba(37, 99, 235, 0.06); }
+
+.hz-role-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+@media (max-width: 480px) {
+  .hz-role-card-grid { grid-template-columns: 1fr; }
+}
+
+.hz-role-card {
+  background: #FFFFFF;
+  border: 2px solid rgba(37, 99, 235, 0.15);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  outline: none;
+}
+.hz-role-card:hover, .hz-role-card:focus {
+  border-color: #2563EB;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.16);
+  background: #F8FAFC;
+}
+.hz-role-card-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+.hz-role-card:hover .hz-role-card-icon {
+  transform: scale(1.15) rotate(-6deg);
+}
+.hz-role-card-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0F172A;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.hz-role-card-sub {
+  font-size: 0.82rem;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+/* ─── EMPTY STATES ─── */
+.hz-empty-state {
+  text-align: center;
+  padding: 44px 24px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1.5px dashed rgba(203, 213, 225, 0.85);
+  border-radius: 16px;
+  margin: 16px 0;
+}
+.hz-empty-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.85; }
+.hz-empty-title { font-weight: 700; font-size: 1.05rem; color: #1E293B; margin-bottom: 6px; }
+.hz-empty-desc { font-size: 0.88rem; color: #64748B; max-width: 420px; margin: 0 auto 16px; line-height: 1.5; }
+
+
+/* ─── ANIMATED EDUCATIONAL BACKGROUND ─── */
+#hz-animated-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.hz-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  animation: hzFloatBlob 18s ease-in-out infinite alternate;
+}
+.hz-bg-blob-1 { top: -12%; left: -10%; width: 50vw; height: 50vw; background: #1E40AF; }
+.hz-bg-blob-2 { bottom: -12%; right: -10%; width: 55vw; height: 55vw; background: #6D28D9; }
+.hz-bg-blob-3 { top: 45%; left: 35%; width: 35vw; height: 35vw; background: #0891B2; opacity: 0.16; }
+
+@keyframes hzFloatBlob {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(45px, -30px) scale(1.08); }
+  100% { transform: translate(-30px, 45px) scale(0.95); }
+}
+
+.hz-floating-shape {
+  position: absolute;
+  color: rgba(37, 99, 235, 0.12);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  user-select: none;
+  pointer-events: none;
+  animation: hzFloatShape 14s ease-in-out infinite alternate;
+}
+@keyframes hzFloatShape {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-35px) rotate(15deg); }
+}
+
+/* ─── MULTI-STEP LOGIN STYLES ─── */
+.hz-step-page {
+  display: none;
+  animation: hzStepFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hz-step-page.active { display: block; }
+
+@keyframes hzStepFade {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.hz-step-back {
+  background: none;
+  border: none;
+  color: #64748B;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.hz-step-back:hover { color: #2563EB; background: rgba(37, 99, 235, 0.06); }
+
+.hz-role-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+@media (max-width: 480px) {
+  .hz-role-card-grid { grid-template-columns: 1fr; }
+}
+
+.hz-role-card {
+  background: #FFFFFF;
+  border: 2px solid rgba(37, 99, 235, 0.15);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  outline: none;
+}
+.hz-role-card:hover, .hz-role-card:focus {
+  border-color: #2563EB;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.16);
+  background: #F8FAFC;
+}
+.hz-role-card-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+.hz-role-card:hover .hz-role-card-icon {
+  transform: scale(1.15) rotate(-6deg);
+}
+.hz-role-card-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0F172A;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.hz-role-card-sub {
+  font-size: 0.82rem;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+/* ─── EMPTY STATES ─── */
+.hz-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1.5px dashed rgba(203, 213, 225, 0.85);
+  border-radius: 16px;
+  margin: 16px 0;
+}
+.hz-empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.85; }
+.hz-empty-title { font-weight: 700; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; }
+.hz-empty-desc { font-size: 0.9rem; color: #64748B; max-width: 420px; margin: 0 auto 16px; line-height: 1.5; }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 #gz-landing {
   --navy:#F7F9FC;
@@ -9551,6 +9812,18 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
 
 </head>
 <body>
+<!-- ANIMATED EDUCATIONAL BACKGROUND -->
+<div id="hz-animated-bg">
+  <div class="hz-bg-blob hz-bg-blob-1"></div>
+  <div class="hz-bg-blob hz-bg-blob-2"></div>
+  <div class="hz-bg-blob hz-bg-blob-3"></div>
+  <div class="hz-floating-shape" style="top:14%;left:6%;font-size:24px;">∫ f(x)dx</div>
+  <div class="hz-floating-shape" style="top:62%;left:4%;font-size:26px;">∑ n=1</div>
+  <div class="hz-floating-shape" style="top:22%;right:7%;font-size:28px;">E = mc²</div>
+  <div class="hz-floating-shape" style="top:74%;right:10%;font-size:24px;">π ≈ 3.14</div>
+  <div class="hz-floating-shape" style="top:44%;right:3%;font-size:22px;">⚡</div>
+</div>
+
 <!-- ══════════════════════════════════════════════════════════════════
      REFRESH / FIRST-LOAD SPLASH SCREEN
      Shows for ~2-3s on every load, sitting above the pre-paint auth
@@ -10407,61 +10680,129 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
 
 <!-- Modal HTML -->
 <div id="authModal" role="dialog" aria-modal="true" aria-label="Sign in to Haezet" onclick="amBackdropClose(event)">
-  <div class="lpam-card" style="max-width:440px;">
+  <div class="lpam-card" style="max-width:460px;">
     <button class="lpam-close" onclick="closeAuthModal()" aria-label="Close"></button>
 
-    <div class="lpam-brand" style="margin-bottom:12px;">Haezet Portal</div>
+    <div class="lpam-brand" style="margin-bottom:14px;">Haezet Educational Portal</div>
 
-    <!-- STEP 1: INSTITUTION SELECTION -->
-    <div class="hz-institution-box">
-      <div class="hz-institution-label">🏫 Enter / Select Institution</div>
-      <select class="hz-institution-select" id="lpam-institution" onchange="hzOnInstitutionChange(this)">
-        <option value="Amrita Vishwa Vidyapeetham">Amrita Vishwa Vidyapeetham</option>
-        <option value="Stanford University">Stanford University</option>
-        <option value="Massachusetts Institute of Technology (MIT)">Massachusetts Institute of Technology (MIT)</option>
-        <option value="Harvard University">Harvard University</option>
-        <option value="Indian Institute of Science (IISc)">Indian Institute of Science (IISc)</option>
-        <option value="Indian Institute of Technology (IIT Bombay)">Indian Institute of Technology (IIT Bombay)</option>
-        <option value="University of Oxford">University of Oxford</option>
-        <option value="Custom">Custom / Other Institution...</option>
-      </select>
-      <input class="lpam-input" id="lpam-custom-institution" type="text" placeholder="Type institution name..." style="display:none;margin-top:8px;"/>
-    </div>
-
-    <!-- STEP 2: ROLE SELECTOR -->
-    <div class="hz-role-selector">
-      <button class="hz-role-btn active" id="hzRoleBtnStudent" type="button" onclick="hzSelectRole('student')">🎓 Student</button>
-      <button class="hz-role-btn" id="hzRoleBtnTeacher" type="button" onclick="hzSelectRole('teacher')">👨‍🏫 Teacher</button>
-      <button class="hz-role-btn" id="hzRoleBtnAdmin" type="button" onclick="hzSelectRole('admin')">🛡️ Admin</button>
-    </div>
-
-    <!-- Tabs (Sign In / Create Account) -->
-    <div class="lpam-tabs" role="tablist">
-      <button class="lpam-tab active" id="amTab-login" onclick="amSwitchTab('login')" role="tab">Sign In</button>
-      <button class="lpam-tab" id="amTab-signup" onclick="amSwitchTab('signup')" role="tab">Create Account</button>
-    </div>
-
-    <!-- Error banner -->
+    <!-- Error / Success banner -->
     <div class="lpam-err-banner" id="amErrBanner"></div>
 
-    <!-- LOGIN SECTION -->
-    <div class="lpam-section active" id="amSec-login">
-      <!-- Student Login Fields -->
-      <div id="hzFieldGroupStudent" class="hz-role-fields">
-        <div class="lpam-field">
-          <label class="lpam-label" for="lpam-login-email">Student Email / Username</label>
-          <div class="lpam-input-wrap">
-            <input class="lpam-input" id="lpam-login-email" type="email" placeholder="student@institution.edu" autocomplete="email"/>
-          </div>
-          <span class="lpam-field-err" id="lpam-login-email-err"></span>
-        </div>
-        <div class="lpam-field">
-          <label class="lpam-label" for="lpam-student-roll">Roll Number / Student ID</label>
-          <div class="lpam-input-wrap">
-            <input class="lpam-input" id="lpam-student-roll" type="text" placeholder="e.g. CS2026-042"/>
-          </div>
+    <!-- PAGE 1 — WELCOME & SIGN IN -->
+    <div class="hz-step-page active" id="hzStep1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <h3 style="font-size:1.4rem;font-weight:700;color:#0F172A;margin-bottom:6px;">Welcome</h3>
+        <p style="font-size:0.9rem;color:#64748B;line-height:1.4;">Sign in to access your interactive learning or teaching workspace.</p>
+      </div>
+
+      <button class="lpam-btn" style="margin-bottom:16px;" onclick="hzGoToStep(2)">
+        <span class="lpam-btn-txt">Sign In</span>
+      </button>
+
+      <div class="lpam-divider"><span>or sign in with</span></div>
+      <div class="lpam-social" style="margin-bottom:16px;">
+        <button class="lpam-social-btn google-btn" onclick="amGoogleLogin(this)">
+          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          <span class="lpam-social-btn-txt">Continue with Google</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 2 — ENTER INSTITUTION -->
+    <div class="hz-step-page" id="hzStep2">
+      <button class="hz-step-back" onclick="hzGoToStep(1)">← Back</button>
+      <div style="margin-bottom:18px;">
+        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Enter Your Institution</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Enter your school, college, or university name to continue.</p>
+      </div>
+      <div class="lpam-field">
+        <label class="lpam-label" for="hzInputInstitution">Institution / School</label>
+        <div class="lpam-input-wrap">
+          <input class="lpam-input" id="hzInputInstitution" type="text" placeholder="Enter your institution" onkeydown="if(event.key==='Enter')hzSubmitInstitution()" />
         </div>
       </div>
+      <button class="lpam-btn" onclick="hzSubmitInstitution()">
+        <span class="lpam-btn-txt">Continue</span>
+      </button>
+    </div>
+
+    <!-- PAGE 3 — SELECT ROLE -->
+    <div class="hz-step-page" id="hzStep3">
+      <button class="hz-step-back" onclick="hzGoToStep(2)">← Back to Institution</button>
+      <div style="margin-bottom:14px;">
+        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Select Your Role</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Choose your role to access your dedicated workspace.</p>
+      </div>
+
+      <div class="hz-role-card-grid">
+        <button class="hz-role-card" onclick="hzChooseRole('teacher')" type="button">
+          <div class="hz-role-card-icon">👨‍🏫</div>
+          <div class="hz-role-card-title">TEACHER</div>
+          <div class="hz-role-card-sub">Access your teaching workspace</div>
+        </button>
+        <button class="hz-role-card" onclick="hzChooseRole('student')" type="button">
+          <div class="hz-role-card-icon">🎓</div>
+          <div class="hz-role-card-title">STUDENT</div>
+          <div class="hz-role-card-sub">Access your learning workspace</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 4a — TEACHER SIGN IN -->
+    <div class="hz-step-page" id="hzStep4Teacher">
+      <button class="hz-step-back" onclick="hzGoToStep(3)">← Back to Role</button>
+      <div style="margin-bottom:16px;">
+        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Teacher Sign In</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Enter your name and institute-provided passcode.</p>
+      </div>
+
+      <div class="lpam-field">
+        <label class="lpam-label" for="hzInputTeacherName">Teacher Name</label>
+        <div class="lpam-input-wrap">
+          <input class="lpam-input" id="hzInputTeacherName" type="text" placeholder="Enter your name" />
+        </div>
+      </div>
+      <div class="lpam-field">
+        <label class="lpam-label" for="hzInputTeacherPasscode">Passcode</label>
+        <div class="lpam-input-wrap">
+          <input class="lpam-input" id="hzInputTeacherPasscode" type="password" placeholder="Enter your institute-provided passcode" onkeydown="if(event.key==='Enter')hzSubmitTeacherLogin()" />
+          <button class="lpam-pw-eye" type="button" onclick="amTogglePw('hzInputTeacherPasscode',this)"></button>
+        </div>
+      </div>
+      <button class="lpam-btn" id="hzBtnTeacherLogin" onclick="hzSubmitTeacherLogin()">
+        <span class="lpam-btn-txt" id="hzBtnTeacherLoginTxt">Sign In</span>
+        <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
+      </button>
+    </div>
+
+    <!-- PAGE 4b — STUDENT SIGN IN -->
+    <div class="hz-step-page" id="hzStep4Student">
+      <button class="hz-step-back" onclick="hzGoToStep(3)">← Back to Role</button>
+      <div style="margin-bottom:16px;">
+        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Student Sign In</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Enter your name and roll number to enter your workspace.</p>
+      </div>
+
+      <div class="lpam-field">
+        <label class="lpam-label" for="hzInputStudentName">Student Name</label>
+        <div class="lpam-input-wrap">
+          <input class="lpam-input" id="hzInputStudentName" type="text" placeholder="Enter your name" />
+        </div>
+      </div>
+      <div class="lpam-field">
+        <label class="lpam-label" for="hzInputStudentRoll">Roll Number</label>
+        <div class="lpam-input-wrap">
+          <input class="lpam-input" id="hzInputStudentRoll" type="text" placeholder="Enter your roll number" onkeydown="if(event.key==='Enter')hzSubmitStudentLogin()" />
+        </div>
+      </div>
+      <button class="lpam-btn" id="hzBtnStudentLogin" onclick="hzSubmitStudentLogin()">
+        <span class="lpam-btn-txt" id="hzBtnStudentLoginTxt">Sign In</span>
+        <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
+      </button>
+    </div>
+
+  </div>
+</div>
 
       <!-- Teacher Login Fields -->
       <div id="hzFieldGroupTeacher" class="hz-role-fields" style="display:none;">
@@ -12787,6 +13128,634 @@ function amShowSuccess() {
   });
 
 })();
+</script>
+
+
+<script>
+// ── Multi-Step Login Controller ──────────────────────────────────
+let hzCurrentStep = 1;
+let hzSelectedInstitution = '';
+let hzSelectedRole = 'student';
+
+function hzGoToStep(step) {
+  hzCurrentStep = step;
+  ['hzStep1', 'hzStep2', 'hzStep3', 'hzStep4Teacher', 'hzStep4Student'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+      el.classList.remove('active');
+    }
+  });
+
+  if (typeof amHideErr === 'function') amHideErr();
+  if (typeof amClearErrors === 'function') amClearErrors();
+
+  if (step === 1) {
+    const s1 = document.getElementById('hzStep1');
+    if (s1) { s1.style.display = 'block'; s1.classList.add('active'); }
+  } else if (step === 2) {
+    const s2 = document.getElementById('hzStep2');
+    if (s2) { s2.style.display = 'block'; s2.classList.add('active'); }
+    setTimeout(() => document.getElementById('hzInputInstitution')?.focus(), 150);
+  } else if (step === 3) {
+    if (!hzSelectedInstitution) { hzGoToStep(2); return; }
+    const s3 = document.getElementById('hzStep3');
+    if (s3) { s3.style.display = 'block'; s3.classList.add('active'); }
+  } else if (step === 4) {
+    if (hzSelectedRole === 'teacher') {
+      const s4t = document.getElementById('hzStep4Teacher');
+      if (s4t) { s4t.style.display = 'block'; s4t.classList.add('active'); }
+      setTimeout(() => document.getElementById('hzInputTeacherName')?.focus(), 150);
+    } else {
+      const s4s = document.getElementById('hzStep4Student');
+      if (s4s) { s4s.style.display = 'block'; s4s.classList.add('active'); }
+      setTimeout(() => document.getElementById('hzInputStudentName')?.focus(), 150);
+    }
+  }
+}
+
+function hzSubmitInstitution() {
+  const input = document.getElementById('hzInputInstitution');
+  const val = (input ? input.value : '').trim();
+  if (!val) {
+    amShowErr('Please enter your institution or school name');
+    if (input) input.classList.add('err');
+    return;
+  }
+  if (input) input.classList.remove('err');
+  hzSelectedInstitution = val;
+  hzGoToStep(3);
+}
+
+function hzChooseRole(role) {
+  hzSelectedRole = role;
+  hzGoToStep(4);
+}
+
+async function hzSubmitTeacherLogin() {
+  amClearErrors(); amHideErr();
+  const tName = (document.getElementById('hzInputTeacherName')?.value || '').trim();
+  const passcode = (document.getElementById('hzInputTeacherPasscode')?.value || '').trim();
+
+  if (!tName) { amShowErr('Please enter your name'); return; }
+  if (!passcode) { amShowErr('Please enter your passcode'); return; }
+
+  amSetLoading('hzBtnTeacherLogin', true);
+  try {
+    const res = await window.authTeacherLogin(hzSelectedInstitution, tName, '', passcode);
+    if (!res.ok) {
+      amShowErr(res.error || 'Unable to sign in. Please check your details.');
+      return;
+    }
+    amShowErr(`Welcome, Teacher ${res.data.name}! Signing you in...`, 'success');
+    setTimeout(() => {
+      closeAuthModal();
+      window.authHideGate();
+      window.authUpdateStatusBar();
+      if (typeof window.hzApplyRoleUI === 'function') window.hzApplyRoleUI('teacher');
+    }, 800);
+  } catch (err) {
+    amShowErr('Unable to sign in. Please check your details.');
+  } finally {
+    amSetLoading('hzBtnTeacherLogin', false);
+  }
+}
+
+async function hzSubmitStudentLogin() {
+  amClearErrors(); amHideErr();
+  const sName = (document.getElementById('hzInputStudentName')?.value || '').trim();
+  const rollNum = (document.getElementById('hzInputStudentRoll')?.value || '').trim();
+
+  if (!sName) { amShowErr('Please enter your name'); return; }
+  if (!rollNum) { amShowErr('Please enter your roll number'); return; }
+
+  amSetLoading('hzBtnStudentLogin', true);
+  try {
+    const res = await window.authStudentLogin(hzSelectedInstitution, sName, rollNum, 'student123');
+    if (!res.ok) {
+      amShowErr(res.error || 'Unable to sign in. Please check your details.');
+      return;
+    }
+    amShowErr(`Welcome, ${res.data.name}! Signing you in...`, 'success');
+    setTimeout(() => {
+      closeAuthModal();
+      window.authHideGate();
+      window.authUpdateStatusBar();
+      if (typeof window.hzApplyRoleUI === 'function') window.hzApplyRoleUI('student');
+    }, 800);
+  } catch (err) {
+    amShowErr('Unable to sign in. Please check your details.');
+  } finally {
+    amSetLoading('hzBtnStudentLogin', false);
+  }
+}
+
+// ── Role UI Controller ───────────────────────────────────────────
+window.hzApplyRoleUI = function(roleOverride) {
+  const user = window.authUser || {};
+  const role = roleOverride || user.role || 'student';
+
+  console.log('[UI] Applying Role Workspace:', role, user);
+
+  // Update Topbar Badge
+  const userPill = document.getElementById('authUserName');
+  if (userPill) {
+    const roleIcon = role === 'teacher' ? '👨‍🏫 Teacher' : '🎓 Student';
+    userPill.innerHTML = `<strong>${user.name || 'User'}</strong> <span style="font-size:11px;opacity:0.75;margin-left:4px;">(${roleIcon})</span>`;
+  }
+
+  // Auto load role data
+  if (role === 'teacher') {
+    if (typeof window.hzLoadTeacherDashboard === 'function') window.hzLoadTeacherDashboard();
+  } else {
+    if (typeof window.hzLoadStudentDashboard === 'function') window.hzLoadStudentDashboard();
+  }
+};
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// ROLE-BASED DASHBOARD CONTROLLER & REAL BACKEND DATA INTEGRATION
+// ══════════════════════════════════════════════════════════════════
+
+window.hzTeacherState = { assignments: [], performance: [], notes: [] };
+window.hzStudentState = { assignments: [], performance: null, notes: [] };
+
+// ── Teacher Dashboard Loader ─────────────────────────────────────
+window.hzLoadTeacherDashboard = async function() {
+  const user = window.authUser || {};
+  console.log('[DASHBOARD] Loading Teacher Workspace for:', user.name);
+
+  try {
+    const [assRes, perfRes, notesRes] = await Promise.all([
+      window.apiFetchTeacherAssignments(),
+      window.apiFetchTeacherPerformance(),
+      window.apiFetchTeacherNotes()
+    ]);
+
+    if (assRes && assRes.ok) window.hzTeacherState.assignments = assRes.data.assignments || [];
+    if (perfRes && perfRes.ok) window.hzTeacherState.performance = perfRes.data || [];
+    if (notesRes && notesRes.ok) window.hzTeacherState.notes = notesRes.data.notes || [];
+  } catch (err) {
+    console.warn('[DASHBOARD] Error fetching teacher data:', err);
+  }
+
+  window.hzRenderTeacherUI();
+};
+
+// ── Student Dashboard Loader ─────────────────────────────────────
+window.hzLoadStudentDashboard = async function() {
+  const user = window.authUser || {};
+  console.log('[DASHBOARD] Loading Student Workspace for:', user.name);
+
+  try {
+    const [assRes, perfRes, notesRes] = await Promise.all([
+      window.apiFetchStudentAssignments(),
+      window.apiFetchStudentPerformance(),
+      window.apiFetchStudentNotes()
+    ]);
+
+    if (assRes && assRes.ok) window.hzStudentState.assignments = assRes.data.assignments || [];
+    if (perfRes && perfRes.ok) window.hzStudentState.performance = perfRes.data || null;
+    if (notesRes && notesRes.ok) window.hzStudentState.notes = notesRes.data.notes || [];
+  } catch (err) {
+    console.warn('[DASHBOARD] Error fetching student data:', err);
+  }
+
+  window.hzRenderStudentUI();
+};
+
+// ── Render Teacher UI Workspace ─────────────────────────────────
+window.hzRenderTeacherUI = function() {
+  const user = window.authUser || {};
+  const ass = window.hzTeacherState.assignments;
+  const perf = window.hzTeacherState.performance;
+  const notes = window.hzTeacherState.notes;
+
+  let container = document.getElementById('hzRoleWorkspaceContainer');
+  if (!container) {
+    const mainContent = document.querySelector('#gz-dashboard .main-content') || document.getElementById('gz-dashboard');
+    if (!mainContent) return;
+    container = document.createElement('div');
+    container.id = 'hzRoleWorkspaceContainer';
+    mainContent.insertBefore(container, mainContent.firstChild);
+  }
+
+  container.innerHTML = `
+    <div style="padding:24px;max-width:1200px;margin:0 auto;">
+      <!-- Teacher Header Banner -->
+      <div style="background:linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #3B82F6 100%);color:#fff;padding:28px 32px;border-radius:20px;margin-bottom:28px;box-shadow:0 10px 30px rgba(15,23,42,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:100px;font-size:0.8rem;font-weight:700;letter-spacing:0.04em;margin-bottom:10px;">
+            👨‍🏫 TEACHER WORKSPACE
+          </div>
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:4px;">${user.name || 'Teacher'}</h2>
+          <p style="opacity:0.85;font-size:0.95rem;">${user.institution || 'School / College'} ${user.subject ? '• ' + user.subject : ''}</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button onclick="hzOpenCreateAssignmentModal()" style="background:#06B6D4;color:#fff;border:none;padding:12px 20px;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(6,182,212,0.3);">
+            + Create Assessment
+          </button>
+          <button onclick="hzOpenCreateNoteModal()" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:12px 20px;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(8px);">
+            + Write Note
+          </button>
+        </div>
+      </div>
+
+      <!-- Overview Stats Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:18px;margin-bottom:32px;">
+        <div style="background:#fff;border:1px solid #E2E8F0;padding:20px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+          <div style="font-size:0.85rem;color:#64748B;font-weight:600;margin-bottom:6px;">ASSESSMENTS</div>
+          <div style="font-size:2rem;font-weight:800;color:#0F172A;">${ass.length}</div>
+          <div style="font-size:0.8rem;color:#10B981;margin-top:4px;">Active 7-hr quizzes</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;padding:20px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+          <div style="font-size:0.85rem;color:#64748B;font-weight:600;margin-bottom:6px;">TEACHER NOTES</div>
+          <div style="font-size:2rem;font-weight:800;color:#0F172A;">${notes.length}</div>
+          <div style="font-size:0.8rem;color:#3B82F6;margin-top:4px;">Published materials</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;padding:20px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+          <div style="font-size:0.85rem;color:#64748B;font-weight:600;margin-bottom:6px;">STUDENT SUBMISSIONS</div>
+          <div style="font-size:2rem;font-weight:800;color:#0F172A;">${perf.length}</div>
+          <div style="font-size:0.8rem;color:#8B5CF6;margin-top:4px;">Completed results</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div style="display:flex;gap:12px;border-bottom:2px solid #E2E8F0;margin-bottom:24px;overflow-x:auto;padding-bottom:8px;">
+        <button onclick="hzSwitchTeacherTab('assessments')" id="hzTabBtn-assessments" style="padding:10px 18px;border:none;background:none;font-weight:700;font-size:0.95rem;color:#2563EB;border-bottom:3px solid #2563EB;cursor:pointer;">
+          📋 Assessments (${ass.length})
+        </button>
+        <button onclick="hzSwitchTeacherTab('performance')" id="hzTabBtn-performance" style="padding:10px 18px;border:none;background:none;font-weight:600;font-size:0.95rem;color:#64748B;cursor:pointer;">
+          📊 Student Performance (${perf.length})
+        </button>
+        <button onclick="hzSwitchTeacherTab('notes')" id="hzTabBtn-notes" style="padding:10px 18px;border:none;background:none;font-weight:600;font-size:0.95rem;color:#64748B;cursor:pointer;">
+          📝 Teacher Notes (${notes.length})
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div id="hzTeacherTabArea"></div>
+    </div>
+  `;
+
+  window.hzSwitchTeacherTab('assessments');
+};
+
+// ── Render Student UI Workspace ─────────────────────────────────
+window.hzRenderStudentUI = function() {
+  const user = window.authUser || {};
+  const ass = window.hzStudentState.assignments;
+  const perf = window.hzStudentState.performance;
+  const notes = window.hzStudentState.notes;
+
+  let container = document.getElementById('hzRoleWorkspaceContainer');
+  if (!container) {
+    const mainContent = document.querySelector('#gz-dashboard .main-content') || document.getElementById('gz-dashboard');
+    if (!mainContent) return;
+    container = document.createElement('div');
+    container.id = 'hzRoleWorkspaceContainer';
+    mainContent.insertBefore(container, mainContent.firstChild);
+  }
+
+  container.innerHTML = `
+    <div style="padding:24px;max-width:1200px;margin:0 auto;">
+      <!-- Student Header Banner -->
+      <div style="background:linear-gradient(135deg, #065F46 0%, #0D9488 50%, #06B6D4 100%);color:#fff;padding:28px 32px;border-radius:20px;margin-bottom:28px;box-shadow:0 10px 30px rgba(13,148,136,0.2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.18);padding:4px 12px;border-radius:100px;font-size:0.8rem;font-weight:700;letter-spacing:0.04em;margin-bottom:10px;">
+            🎓 STUDENT LEARNING WORKSPACE
+          </div>
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:4px;">${user.name || 'Student'}</h2>
+          <p style="opacity:0.9;font-size:0.95rem;">${user.institution || 'Institution'} ${user.roll_number ? '• Roll: ' + user.roll_number : ''}</p>
+        </div>
+
+        <!-- Join Code Form -->
+        <div style="background:rgba(255,255,255,0.95);padding:14px 18px;border-radius:14px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,0.1);">
+          <input id="hzInputJoinCode" type="text" placeholder="Enter 6-char code" style="text-transform:uppercase;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;font-weight:700;font-size:0.95rem;width:160px;letter-spacing:0.05em;color:#0F172A;" maxlength="6" />
+          <button onclick="hzStudentJoinCode()" style="background:#0F172A;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;">
+            Join Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div style="display:flex;gap:12px;border-bottom:2px solid #E2E8F0;margin-bottom:24px;overflow-x:auto;padding-bottom:8px;">
+        <button onclick="hzSwitchStudentTab('assessments')" id="hzSTabBtn-assessments" style="padding:10px 18px;border:none;background:none;font-weight:700;font-size:0.95rem;color:#0D9488;border-bottom:3px solid #0D9488;cursor:pointer;">
+          🎯 My Assessments (${ass.length})
+        </button>
+        <button onclick="hzSwitchStudentTab('performance')" id="hzSTabBtn-performance" style="padding:10px 18px;border:none;background:none;font-weight:600;font-size:0.95rem;color:#64748B;cursor:pointer;">
+          📈 My Performance
+        </button>
+        <button onclick="hzSwitchStudentTab('notes')" id="hzSTabBtn-notes" style="padding:10px 18px;border:none;background:none;font-weight:600;font-size:0.95rem;color:#64748B;cursor:pointer;">
+          📖 Teacher Notes (${notes.length})
+        </button>
+      </div>
+
+      <div id="hzStudentTabArea"></div>
+    </div>
+  `;
+
+  window.hzSwitchStudentTab('assessments');
+};
+
+// ── Teacher Tab Switcher & Sub-renders ──────────────────────────
+window.hzSwitchTeacherTab = function(tab) {
+  const area = document.getElementById('hzTeacherTabArea');
+  if (!area) return;
+
+  ['assessments', 'performance', 'notes'].forEach(t => {
+    const btn = document.getElementById(`hzTabBtn-${t}`);
+    if (btn) {
+      const active = t === tab;
+      btn.style.color = active ? '#2563EB' : '#64748B';
+      btn.style.borderBottom = active ? '3px solid #2563EB' : 'none';
+      btn.style.fontWeight = active ? '700' : '600';
+    }
+  });
+
+  if (tab === 'assessments') {
+    const ass = window.hzTeacherState.assignments;
+    if (!ass.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">📝</div>
+          <div class="hz-empty-title">No assessments have been assigned yet.</div>
+          <div class="hz-empty-desc">Click "+ Create Assessment" above to generate a 6-character code and shareable quiz for your students.</div>
+          <button onclick="hzOpenCreateAssignmentModal()" style="background:#2563EB;color:#fff;border:none;padding:12px 24px;border-radius:100px;font-weight:700;cursor:pointer;">
+            + Create Assessment
+          </button>
+        </div>
+      `;
+    } else {
+      let cards = ass.map(a => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-weight:800;font-size:1.1rem;color:#0F172A;">${a.title}</span>
+              <span style="background:#EFF6FF;color:#2563EB;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:100px;">${a.subject}</span>
+              <span style="background:${a.is_expired ? '#FEE2E2' : '#DCFCE7'};color:${a.is_expired ? '#DC2626' : '#16A34A'};font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:100px;">${a.is_expired ? 'Expired' : 'Active 7-hr Expiry'}</span>
+            </div>
+            <div style="font-size:0.88rem;color:#64748B;">${a.description || 'Interactive Assessment'}</div>
+            <div style="margin-top:10px;display:flex;gap:16px;font-size:0.85rem;color:#475569;">
+              <span>🔑 Code: <strong style="color:#0F172A;font-family:monospace;font-size:1rem;background:#F1F5F9;padding:2px 8px;border-radius:6px;">${a.code}</strong></span>
+              <span>📩 Submissions: <strong>${a.completed_count || 0}</strong></span>
+              <span>📈 Avg Score: <strong>${a.average_score || 0}%</strong></span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      area.innerHTML = `<div>${cards}</div>`;
+    }
+  } else if (tab === 'performance') {
+    const perf = window.hzTeacherState.performance;
+    if (!perf.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">📊</div>
+          <div class="hz-empty-title">No performance data available yet.</div>
+          <div class="hz-empty-desc">Student quiz scores and completion analytics will appear here automatically once students complete your assessments.</div>
+        </div>
+      `;
+    } else {
+      let rows = perf.map(p => `
+        <tr style="border-bottom:1px solid #E2E8F0;">
+          <td style="padding:14px;font-weight:700;color:#0F172A;">${p.student_name}</td>
+          <td style="padding:14px;color:#64748B;">${p.roll_number}</td>
+          <td style="padding:14px;color:#334155;">${p.assignment_title}</td>
+          <td style="padding:14px;color:#3B82F6;font-weight:600;">${p.subject}</td>
+          <td style="padding:14px;font-weight:800;color:#10B981;">${p.percentage}%</td>
+          <td style="padding:14px;"><span style="background:#DCFCE7;color:#15803D;padding:4px 10px;border-radius:100px;font-size:0.8rem;font-weight:700;">Completed</span></td>
+        </tr>
+      `).join('');
+      area.innerHTML = `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.03);">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.9rem;">
+            <thead>
+              <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;color:#64748B;font-weight:700;">
+                <th style="padding:14px;">STUDENT NAME</th>
+                <th style="padding:14px;">ROLL NUMBER</th>
+                <th style="padding:14px;">ASSESSMENT TITLE</th>
+                <th style="padding:14px;">SUBJECT</th>
+                <th style="padding:14px;">SCORE %</th>
+                <th style="padding:14px;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+  } else if (tab === 'notes') {
+    const notes = window.hzTeacherState.notes;
+    if (!notes.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">📝</div>
+          <div class="hz-empty-title">No notes available yet.</div>
+          <div class="hz-empty-desc">Click "+ Write Note" to publish teaching notes and explanation materials for your students.</div>
+          <button onclick="hzOpenCreateNoteModal()" style="background:#2563EB;color:#fff;border:none;padding:12px 24px;border-radius:100px;font-weight:700;cursor:pointer;">
+            + Write Teacher Note
+          </button>
+        </div>
+      `;
+    } else {
+      let cards = notes.map(n => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <h4 style="font-size:1.1rem;font-weight:800;color:#0F172A;margin-bottom:4px;">${n.title}</h4>
+              <span style="background:#F1F5F9;color:#475569;font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:100px;">${n.subject || 'General'}</span>
+            </div>
+            <button onclick="hzDeleteNote('${n.note_id}')" style="background:#FEE2E2;color:#DC2626;border:none;padding:6px 12px;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+              Delete
+            </button>
+          </div>
+          <div style="font-size:0.92rem;color:#334155;line-height:1.6;white-space:pre-wrap;">${n.content}</div>
+        </div>
+      `).join('');
+      area.innerHTML = `<div>${cards}</div>`;
+    }
+  }
+};
+
+// ── Student Tab Switcher & Sub-renders ──────────────────────────
+window.hzSwitchStudentTab = function(tab) {
+  const area = document.getElementById('hzStudentTabArea');
+  if (!area) return;
+
+  ['assessments', 'performance', 'notes'].forEach(t => {
+    const btn = document.getElementById(`hzSTabBtn-${t}`);
+    if (btn) {
+      const active = t === tab;
+      btn.style.color = active ? '#0D9488' : '#64748B';
+      btn.style.borderBottom = active ? '3px solid #0D9488' : 'none';
+      btn.style.fontWeight = active ? '700' : '600';
+    }
+  });
+
+  if (tab === 'assessments') {
+    const ass = window.hzStudentState.assignments;
+    if (!ass.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">🎯</div>
+          <div class="hz-empty-title">No assignments have been assigned yet.</div>
+          <div class="hz-empty-desc">Enter a 6-character code provided by your teacher in the top banner to join and take a 7-hour quiz.</div>
+        </div>
+      `;
+    } else {
+      let cards = ass.map(a => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-weight:800;font-size:1.1rem;color:#0F172A;">${a.title}</span>
+              <span style="background:#CCFBF1;color:#0D9488;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:100px;">${a.subject}</span>
+            </div>
+            <div style="font-size:0.88rem;color:#64748B;">Teacher: ${a.teacher_name || 'Teacher'} • Institution: ${a.institution || ''}</div>
+          </div>
+          <div>
+            <span style="background:${a.status === 'Completed' ? '#DCFCE7' : '#F1F5F9'};color:${a.status === 'Completed' ? '#15803D' : '#475569'};padding:6px 14px;border-radius:100px;font-size:0.85rem;font-weight:700;">
+              ${a.status} ${a.student_score !== undefined && a.student_score !== null ? '(' + a.student_score + '%)' : ''}
+            </span>
+          </div>
+        </div>
+      `).join('');
+      area.innerHTML = `<div>${cards}</div>`;
+    }
+  } else if (tab === 'performance') {
+    const perf = window.hzStudentState.performance;
+    if (!perf || !perf.submissions || !perf.submissions.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">📈</div>
+          <div class="hz-empty-title">Your performance data will appear here once you complete an assessment.</div>
+          <div class="hz-empty-desc">Complete assigned quizzes to track your personal learning progress and score trends.</div>
+        </div>
+      `;
+    } else {
+      let cards = perf.submissions.map(s => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:800;font-size:1.05rem;color:#0F172A;">${s.assignment_title}</div>
+            <div style="font-size:0.85rem;color:#64748B;">${s.subject}</div>
+          </div>
+          <div style="font-size:1.3rem;font-weight:800;color:#10B981;">
+            ${s.percentage}%
+          </div>
+        </div>
+      `).join('');
+      area.innerHTML = `
+        <div style="margin-bottom:20px;background:#F8FAFC;padding:20px;border-radius:16px;display:flex;gap:24px;align-items:center;">
+          <div>
+            <div style="font-size:0.85rem;color:#64748B;font-weight:700;">AVERAGE SCORE</div>
+            <div style="font-size:2rem;font-weight:800;color:#0D9488;">${perf.average_percentage || 0}%</div>
+          </div>
+          <div>
+            <div style="font-size:0.85rem;color:#64748B;font-weight:700;">COMPLETED QUIZZES</div>
+            <div style="font-size:2rem;font-weight:800;color:#0F172A;">${perf.total_completed || 0}</div>
+          </div>
+        </div>
+        <div>${cards}</div>
+      `;
+    }
+  } else if (tab === 'notes') {
+    const notes = window.hzStudentState.notes;
+    if (!notes.length) {
+      area.innerHTML = `
+        <div class="hz-empty-state">
+          <div class="hz-empty-icon">📖</div>
+          <div class="hz-empty-title">No notes available yet.</div>
+          <div class="hz-empty-desc">Teaching notes shared by teachers from your institution will appear here.</div>
+        </div>
+      `;
+    } else {
+      let cards = notes.map(n => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+            <h4 style="font-size:1.1rem;font-weight:800;color:#0F172A;">${n.title}</h4>
+            <span style="background:#CCFBF1;color:#0D9488;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:100px;">${n.subject || 'General'}</span>
+          </div>
+          <div style="font-size:0.85rem;color:#64748B;margin-bottom:12px;">By Teacher: <strong>${n.teacher_name || 'Teacher'}</strong></div>
+          <div style="font-size:0.92rem;color:#334155;line-height:1.6;white-space:pre-wrap;">${n.content}</div>
+        </div>
+      `).join('');
+      area.innerHTML = `<div>${cards}</div>`;
+    }
+  }
+};
+
+// ── Modals & Actions ─────────────────────────────────────────────
+
+window.hzOpenCreateAssignmentModal = function() {
+  const title = prompt('Enter Assessment Title:');
+  if (!title) return;
+  const subject = prompt('Enter Subject (e.g. Physics / Math):') || 'General';
+  const description = prompt('Enter Short Description (Optional):') || '';
+
+  window.apiCreateAssignment({
+    title: title.trim(),
+    subject: subject.trim(),
+    description: description.trim(),
+    deadline_hours: 7.0
+  }).then(res => {
+    if (res && res.ok) {
+      alert(`Assessment Created Successfully!\nShareable Code: ${res.data.code}`);
+      window.hzLoadTeacherDashboard();
+    } else {
+      alert('Failed to create assessment.');
+    }
+  });
+};
+
+window.hzOpenCreateNoteModal = function() {
+  const title = prompt('Enter Note Title:');
+  if (!title) return;
+  const subject = prompt('Enter Subject:') || 'General';
+  const content = prompt('Enter Note Content:') || '';
+  if (!content) return;
+
+  window.apiCreateTeacherNote({
+    title: title.trim(),
+    subject: subject.trim(),
+    content: content.trim()
+  }).then(res => {
+    if (res && res.ok) {
+      alert('Note Published Successfully!');
+      window.hzLoadTeacherDashboard();
+    } else {
+      alert('Failed to create note.');
+    }
+  });
+};
+
+window.hzDeleteNote = function(id) {
+  if (!confirm('Are you sure you want to delete this note?')) return;
+  window.apiDeleteTeacherNote(id).then(res => {
+    if (res && res.ok) {
+      window.hzLoadTeacherDashboard();
+    }
+  });
+};
+
+window.hzStudentJoinCode = function() {
+  const inp = document.getElementById('hzInputJoinCode');
+  const code = (inp ? inp.value : '').trim().toUpperCase();
+  if (!code) {
+    alert('Please enter a 6-character assessment code.');
+    return;
+  }
+
+  window.apiJoinAssignment(code).then(res => {
+    if (res && res.ok) {
+      alert(`Assessment Loaded Successfully!\nTitle: ${res.data.assignment.title}`);
+      window.hzLoadStudentDashboard();
+    } else {
+      alert(res.error || 'Invalid or Expired Assessment Code.');
+    }
+  });
+};
 </script>
 
 </body>
