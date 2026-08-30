@@ -9918,8 +9918,8 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
 #authModal{
   position:fixed;inset:0;z-index:10000;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(5,11,24,.75);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(5,11,24,.72);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   opacity:0;visibility:hidden;
   transition:opacity .3s ease,visibility .3s ease;
   padding:20px;
@@ -9929,126 +9929,183 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
 
 /* ─── CARD ─── */
 .lpam-card{
-  width:100%;max-width:460px;
-  background:rgba(255,255,255,.97);
-  border:1px solid rgba(186,230,253,0.8);
-  border-radius:24px;padding:40px 36px 36px;
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  box-shadow:0 32px 80px rgba(2,132,199,.18),0 0 0 1px rgba(2,132,199,.08);
-  transform:translateY(24px) scale(.97);opacity:0;
-  transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;
+  width:100%;max-width:440px;
+  background:#ffffff;
+  border:1px solid rgba(186,230,253,0.6);
+  border-radius:20px;padding:36px 32px 32px;
+  box-shadow:0 24px 64px rgba(2,132,199,.14),0 4px 16px rgba(2,132,199,.08);
+  transform:translateY(20px) scale(.97);opacity:0;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;
   position:relative;max-height:90vh;overflow-y:auto;
 }
 .lpam-card::-webkit-scrollbar{width:3px}
-.lpam-card::-webkit-scrollbar-thumb{background:#0284C7;border-radius:2px}
+.lpam-card::-webkit-scrollbar-thumb{background:#BAE6FD;border-radius:2px}
 
 /* close button */
 .lpam-close{
-  position:absolute;top:16px;right:16px;
-  background:rgba(2,132,199,.06);border:1px solid rgba(2,132,199,.15);
-  color:rgba(12,45,78,0.6);width:32px;height:32px;border-radius:50%;
+  position:absolute;top:14px;right:14px;
+  background:rgba(241,245,249,1);border:1px solid rgba(226,232,240,1);
+  color:rgba(71,85,105,0.8);width:30px;height:30px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:1rem;cursor:pointer;transition:background .2s,color .2s;line-height:1;
+  font-size:.85rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s;line-height:1;
 }
-.lpam-close:hover{background:rgba(2,132,199,.12);color:#0C2D4E}
+.lpam-close:hover{background:rgba(219,234,254,1);color:#1e40af;border-color:rgba(147,197,253,0.6)}
 
 /* brand */
 .lpam-brand{
-  font-family:var(--font-display);font-weight:800;font-size:1.3rem;
-  background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;margin-bottom:.25rem;
+  font-family:var(--font-display);font-weight:800;font-size:1.45rem;
+  background:linear-gradient(135deg,#0B1F3A 0%,#2563EB 55%,#7C3AED 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:4px;letter-spacing:-.01em;
 }
-.lpam-tagline{font-size:.8rem;color:rgba(12,45,78,0.55);margin-bottom:1.8rem;font-family:var(--font-mono);letter-spacing:.04em}
+.lpam-tagline{font-size:.78rem;color:rgba(71,85,105,0.7);margin-bottom:1.6rem;font-family:var(--font-mono);letter-spacing:.04em}
 
 /* ─── TABS ─── */
-.lpam-tabs{display:flex;background:rgba(2,132,199,.05);border:1px solid rgba(186,230,253,.7);border-radius:12px;padding:4px;margin-bottom:1.6rem}
-.lpam-tab{flex:1;padding:9px;border:none;background:transparent;color:rgba(12,45,78,.5);font-family:var(--font-body);font-size:.875rem;font-weight:500;cursor:pointer;border-radius:9px;transition:all .2s;letter-spacing:.01em}
-.lpam-tab.active{background:var(--gradient-hero);color:#fff;box-shadow:0 4px 16px rgba(2,132,199,.3)}
-.lpam-tab:hover:not(.active){color:#0C2D4E;background:rgba(2,132,199,.08)}
+.lpam-tabs{
+  display:flex;background:#F1F5F9;
+  border:1px solid rgba(226,232,240,0.9);
+  border-radius:10px;padding:3px;margin-bottom:1.5rem;
+  gap:2px;
+}
+.lpam-tab{
+  flex:1;padding:9px 12px;border:none;background:transparent;
+  color:rgba(71,85,105,.7);font-family:var(--font-body);
+  font-size:.855rem;font-weight:500;cursor:pointer;
+  border-radius:8px;transition:all .2s;letter-spacing:.01em;
+}
+.lpam-tab.active{
+  background:#ffffff;color:#1e40af;
+  box-shadow:0 1px 4px rgba(37,99,235,.12),0 0 0 1px rgba(147,197,253,.4);
+  font-weight:600;
+}
+.lpam-tab:hover:not(.active){color:#1e40af;background:rgba(219,234,254,.5)}
 
 /* ─── FIELDS ─── */
-.lpam-section{display:none;flex-direction:column;gap:1rem}
+.lpam-section{display:none;flex-direction:column;gap:.85rem}
 .lpam-section.active{display:flex;animation:amIn .25s ease forwards}
-@keyframes amIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.lpam-field{display:flex;flex-direction:column;gap:.35rem}
-.lpam-label{font-size:.72rem;font-weight:600;color:rgba(12,45,78,.5);letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono)}
+@keyframes amIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.lpam-field{display:flex;flex-direction:column;gap:.3rem}
+.lpam-label{
+  font-size:.68rem;font-weight:600;
+  color:rgba(71,85,105,.75);letter-spacing:.07em;
+  text-transform:uppercase;font-family:var(--font-mono);
+}
 .lpam-input-wrap{position:relative}
 .lpam-input{
-  width:100%;background:#F0F9FF;
-  border:1px solid rgba(186,230,253,.8);color:#0C2D4E;
-  padding:11px 14px;border-radius:10px;
-  font-family:var(--font-body);font-size:.92rem;outline:none;
+  width:100%;background:#F8FAFC;
+  border:1.5px solid #E2E8F0;color:#0F172A;
+  padding:10px 14px;border-radius:9px;
+  font-family:var(--font-body);font-size:.9rem;outline:none;
   transition:border-color .2s,background .2s,box-shadow .2s;
 }
-.lpam-input::placeholder{color:rgba(12,45,78,.3)}
-.lpam-input:focus{border-color:rgba(2,132,199,.6);background:rgba(2,132,199,.04);box-shadow:0 0 0 3px rgba(2,132,199,.1)}
-.lpam-input.err{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.04)}
-.lpam-input.err:focus{box-shadow:0 0 0 3px rgba(255,80,80,.1)}
-.lpam-pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(12,45,78,.4);cursor:pointer;font-size:.95rem;padding:4px;transition:color .2s}
-.lpam-pw-eye:hover{color:#0C2D4E}
-.lpam-field-err{font-size:.72rem;color:rgba(220,50,50,.9);display:none;margin-top:.15rem}
+.lpam-input::placeholder{color:rgba(15,23,42,.28)}
+.lpam-input:focus{
+  border-color:#3B82F6;
+  background:#ffffff;
+  box-shadow:0 0 0 3px rgba(59,130,246,.12);
+}
+.lpam-input.err{border-color:#EF4444;background:rgba(254,242,242,1)}
+.lpam-input.err:focus{box-shadow:0 0 0 3px rgba(239,68,68,.1)}
+.lpam-pw-eye{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:rgba(71,85,105,.5);
+  cursor:pointer;font-size:.9rem;padding:4px;transition:color .2s;
+}
+.lpam-pw-eye:hover{color:#334155}
+.lpam-field-err{font-size:.7rem;color:#DC2626;display:none;margin-top:.1rem}
 .lpam-field-err.show{display:block;animation:amIn .2s forwards}
 .lpam-forgot{text-align:right}
-.lpam-forgot a{font-size:.78rem;color:#0284C7;text-decoration:none;font-weight:500;transition:color .2s}
-.lpam-forgot a:hover{color:#38BDF8}
+.lpam-forgot a{
+  font-size:.77rem;color:#2563EB;text-decoration:none;
+  font-weight:500;transition:color .2s;
+}
+.lpam-forgot a:hover{color:#1d4ed8;text-decoration:underline}
 
 /* ─── SUBMIT BTN ─── */
 .lpam-btn{
-  background:var(--gradient-hero);color:#fff;border:none;
-  padding:13px 24px;border-radius:10px;width:100%;
-  font-family:var(--font-body);font-size:.95rem;font-weight:600;
-  cursor:pointer;letter-spacing:.01em;margin-top:.2rem;
-  box-shadow:0 8px 24px rgba(107,79,255,.4);
+  background:linear-gradient(135deg,#1e40af 0%,#2563EB 50%,#7C3AED 100%);
+  color:#fff;border:none;
+  padding:12px 24px;border-radius:9px;width:100%;
+  font-family:var(--font-body);font-size:.9rem;font-weight:600;
+  cursor:pointer;letter-spacing:.02em;margin-top:.1rem;
+  box-shadow:0 4px 14px rgba(37,99,235,.35);
   transition:transform .2s,box-shadow .2s,opacity .2s;
   position:relative;overflow:hidden;
 }
-.lpam-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 36px rgba(2,132,199,.45)}
-.lpam-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.lpam-btn:hover:not(:disabled){
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(37,99,235,.45);
+}
+.lpam-btn:active:not(:disabled){transform:translateY(0)}
+.lpam-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .lpam-btn .lpam-btn-txt{transition:opacity .2s}
 .lpam-btn .lpam-btn-spin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
 .lpam-btn.loading .lpam-btn-txt{opacity:0}
 .lpam-btn.loading .lpam-btn-spin{opacity:1}
-.lpam-spin-ring{width:19px;height:19px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:amSpin .7s linear infinite}
+.lpam-spin-ring{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:amSpin .7s linear infinite}
 @keyframes amSpin{to{transform:rotate(360deg)}}
 
 /* ─── DIVIDER ─── */
-.lpam-divider{display:flex;align-items:center;gap:.9rem;margin:.2rem 0}
-.lpam-divider::before,.lpam-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
-.lpam-divider span{font-size:.72rem;color:rgba(240,244,255,.4);font-family:var(--font-mono);letter-spacing:.08em;white-space:nowrap}
+.lpam-divider{display:flex;align-items:center;gap:.75rem;margin:.1rem 0}
+.lpam-divider::before,.lpam-divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.lpam-divider span{
+  font-size:.7rem;color:rgba(71,85,105,.55);
+  font-family:var(--font-mono);letter-spacing:.08em;white-space:nowrap;
+}
 
 /* ── SOCIAL BUTTONS ── */
-.lpam-social{display:grid;grid-template-columns:1fr;gap:.65rem}
+.lpam-social{display:grid;grid-template-columns:1fr;gap:.55rem}
 .lpam-social-btn{
-  display:flex;align-items:center;justify-content:center;gap:.6rem;
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
-  color:var(--white);padding:11px 14px;border-radius:10px;
-  font-family:var(--font-body);font-size:.88rem;font-weight:500;cursor:pointer;
-  transition:border-color .2s,background .2s,transform .15s;
+  display:flex;align-items:center;justify-content:center;gap:.55rem;
+  background:#F8FAFC;border:1.5px solid #E2E8F0;
+  color:#334155;padding:10px 14px;border-radius:9px;
+  font-family:var(--font-body);font-size:.855rem;font-weight:500;cursor:pointer;
+  transition:border-color .2s,background .2s,box-shadow .2s,transform .15s;
   width:100%;
 }
-.lpam-social-btn:hover:not(:disabled){border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.08);transform:translateY(-1px)}
-.lpam-social-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.lpam-social-btn.google-btn:hover:not(:disabled){border-color:rgba(66,133,244,.4);background:rgba(66,133,244,.06)}
-.lpam-social-icon{width:18px;height:18px;flex-shrink:0}
-.lpam-social-btn-txt{transition:opacity .2s}
+.lpam-social-btn:hover:not(:disabled){
+  border-color:#BFDBFE;
+  background:#EFF6FF;
+  transform:translateY(-1px);
+  box-shadow:0 2px 8px rgba(37,99,235,.1);
+}
+.lpam-social-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.lpam-social-btn.google-btn:hover:not(:disabled){
+  border-color:rgba(66,133,244,.35);
+  background:rgba(239,246,255,1);
+}
+.lpam-social-icon{width:17px;height:17px;flex-shrink:0}
+.lpam-social-btn-txt{color:#334155;transition:opacity .2s}
 .lpam-social-btn.loading .lpam-social-btn-txt{opacity:0}
-.lpam-google-spin{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:amSpin .7s linear infinite}
+.lpam-google-spin{display:none;width:15px;height:15px;border:2px solid rgba(37,99,235,.2);border-top-color:#2563EB;border-radius:50%;animation:amSpin .7s linear infinite}
 .lpam-social-btn.loading .lpam-google-spin{display:block}
 
 /* ─── ERROR BANNER ─── */
-.lpam-err-banner{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:rgba(255,140,140,.95);padding:9px 13px;border-radius:9px;font-size:.8rem;display:none;margin-bottom:.4rem;line-height:1.5}
+.lpam-err-banner{
+  background:#FEF2F2;border:1px solid rgba(239,68,68,.25);
+  color:#DC2626;padding:8px 12px;
+  border-radius:8px;font-size:.78rem;display:none;
+  margin-bottom:.3rem;line-height:1.5;
+}
 .lpam-err-banner.show{display:block;animation:amIn .2s forwards}
 
 /* ─── SUCCESS ─── */
 .lpam-success{display:none;flex-direction:column;align-items:center;text-align:center;gap:1rem;padding:1.5rem 0}
-.lpam-success-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(107,79,255,.2));border:1px solid rgba(107,79,255,.3);display:flex;align-items:center;justify-content:center;font-size:1.7rem;animation:amSuccessPop .4s cubic-bezier(.34,1.56,.64,1) forwards}
+.lpam-success-icon{
+  width:64px;height:64px;border-radius:50%;
+  background:linear-gradient(135deg,#DBEAFE,#EDE9FE);
+  border:1px solid rgba(147,197,253,.6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;
+  animation:amSuccessPop .4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
 @keyframes amSuccessPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-.lpam-success h3{font-family:var(--font-display);font-size:1.35rem;font-weight:700}
-.lpam-success p{color:var(--white-dim);font-size:.88rem}
+.lpam-success h3{font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:#0F172A}
+.lpam-success p{color:#64748B;font-size:.88rem}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:500px){
-  .lpam-card{padding:28px 20px 24px;border-radius:18px}
+  .lpam-card{padding:26px 18px 22px;border-radius:16px}
 }
 </style>
 
@@ -10057,7 +10114,7 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
   <div class="lpam-card">
     <button class="lpam-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
 
-    <div class="lpam-brand">Haezet</div>
+    <div class="lpam-brand">Haezet Portal</div>
 
     <!-- Tabs -->
     <div class="lpam-tabs" role="tablist">
@@ -10117,7 +10174,7 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
         <span class="lpam-field-err" id="lpam-signup-email-err"></span>
       </div>
       <div class="lpam-field">
-        <label class="lpam-label" for="lpam-signup-pw">Password</label>
+        <label class="lpam-label" for="lpam-signup-pw">Create Password</label>
         <div class="lpam-input-wrap">
           <input class="lpam-input" id="lpam-signup-pw" type="password" placeholder="Min 6 characters" autocomplete="new-password"/>
           <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-signup-pw',this)">👁</button>
