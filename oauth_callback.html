@@ -208,11 +208,13 @@
         localStorage.removeItem('haezet_authenticated');
         localStorage.removeItem('haezet_local_session');
 
-        // ── 6. Show success, then redirect to app ────────────────────────
+        // ── 6. Show success, then redirect to onboarding ─────────────────
         showSuccess(data.name || data.email);
         setTimeout(function () {
-          // Redirect to root — _authInit() will read localStorage and enter dashboard
-          window.location.href = '/';
+          // Redirect to onboarding.html — it self-skips instantly for
+          // returning users (localStorage fast-path) and shows the school/
+          // role flow for first-time Google OAuth sign-ins.
+          window.location.href = '/onboarding.html';
         }, 900);
 
       } catch (err) {
