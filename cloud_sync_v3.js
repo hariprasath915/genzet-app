@@ -193,6 +193,10 @@
     localStorage.removeItem('haezet_local_session');
     localStorage.removeItem('genzet_authenticated');
     localStorage.removeItem('genzet_local_session');
+    // Clear onboarding fast-path so the server check re-runs on next login
+    // (server will return completed:true for returning users — this just
+    // ensures new logins on shared devices always verify server-side).
+    localStorage.removeItem('haezet_onboarding_done');
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -821,6 +825,34 @@
       };
       localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
 
+      // ── Onboarding gate ─────────────────────────────────────────────────
+      // Check if this user has completed the school + role onboarding step.
+      // Use a localStorage fast-path first to avoid a network round-trip for
+      // returning users; fall back to a server check for new/unknown state.
+      const onboardingDone = localStorage.getItem('haezet_onboarding_done') === 'true';
+      if (!onboardingDone) {
+        try {
+          const obRes = await fetch(`${BACKEND}/onboarding/status`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` },
+          });
+          if (obRes.ok) {
+            const obData = await obRes.json();
+            if (!obData.completed) {
+              // First-time user (or onboarding flag was cleared) — send to onboarding
+              window.location.href = '/onboarding.html';
+              return;
+            }
+            // Mark done so future page loads skip this check
+            localStorage.setItem('haezet_onboarding_done', 'true');
+          }
+          // If obRes is not ok (e.g. 500) we fall through and enter dashboard
+        } catch (_obErr) {
+          // Network error — allow entry into dashboard; user can re-onboard later
+          console.warn('[AUTH] Onboarding status check failed (network) — entering dashboard.');
+        }
+      }
+      // ── End onboarding gate ─────────────────────────────────────────────
+
       _enterDashboard();
       _setSyncStatus('Loading your data…');
       await _syncAll();
@@ -868,14 +900,10 @@
   // Called from login/register modal on success
   async function _onAuthSuccess(data) {
     _storeSession(data);
-    _enterDashboard();
-    _setSyncStatus('Syncing…');
-    await _syncAll();
-    _setSyncStatus('');
-    // Pre-fetch lessons + topic caches so Library & Assessment modes are instant
-    _loadLessons().catch(() => {});
-    _loadMathsTopics().catch(() => {});
-    _loadSocialTopics().catch(() => {});
+    // After login, always send through the onboarding flow.
+    // onboarding.html will skip itself instantly for returning users
+    // (localStorage fast-path + server-side /onboarding/status check).
+    window.location.href = '/onboarding.html';
   }
 
 
