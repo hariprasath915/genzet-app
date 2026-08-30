@@ -12943,14 +12943,7 @@ function amShowSuccess() {
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -13137,11 +13130,7 @@ function amShowSuccess() {
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -13287,11 +13276,7 @@ function amShowSuccess() {
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -13966,6 +13951,105 @@ window.hzStudentJoinCode = function() {
     }
   });
 };
+</script>
+
+
+<script>
+// ── Robust BACKEND URL Helper ────────────────────────────────────
+function getBackendURL() {
+  if (window.BACKEND) return window.BACKEND;
+  const isLocal = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.protocol === 'file:' ||
+    !window.location.hostname
+  );
+  return isLocal ? 'http://127.0.0.1:8000' : '/api';
+}
+window.BACKEND = getBackendURL();
+
+// ── STEP 1: SIGN IN / LOGIN ─────────────────────────────────────
+async function amHandleStep1Login() {
+  amClearErrors(); amHideErr();
+  const email = (document.getElementById('lpam-login-email')?.value || '').trim();
+  const pw = (document.getElementById('lpam-login-pw')?.value || '').trim();
+
+  if (!email) { amShowErr('Please enter your email'); return; }
+  if (!pw) { amShowErr('Please enter your password'); return; }
+
+  const btn = document.getElementById('amLoginBtn');
+  const btnTxt = document.getElementById('amLoginBtnTxt');
+  if (btn) btn.disabled = true;
+  if (btnTxt) btnTxt.textContent = 'Signing you in...';
+
+  try {
+    const backendUrl = getBackendURL();
+    const res = await fetch(`${backendUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      amShowErr(data.detail || 'The details entered are incorrect. Please check and try again.');
+      return;
+    }
+
+    if (typeof window.authStoreSession === 'function') window.authStoreSession(data);
+    amShowErr('Authentication successful! Moving to institution step...', 'success');
+    setTimeout(() => {
+      hzGoToStep(2); // Step 2: Enter Institution
+    }, 600);
+  } catch (err) {
+    console.error('[AUTH ERROR]', err);
+    amShowErr('Unable to connect to the server. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnTxt) btnTxt.textContent = 'Sign In →';
+  }
+}
+
+async function amHandleStep1Signup() {
+  amClearErrors(); amHideErr();
+  const name = (document.getElementById('lpam-signup-name')?.value || '').trim();
+  const email = (document.getElementById('lpam-signup-email')?.value || '').trim();
+  const pw = (document.getElementById('lpam-signup-pw')?.value || '').trim();
+
+  if (!name) { amShowErr('Please enter your full name'); return; }
+  if (!email) { amShowErr('Please enter your email'); return; }
+  if (!pw || pw.length < 6) { amShowErr('Password must be at least 6 characters'); return; }
+
+  const btn = document.getElementById('amSignupBtn');
+  const btnTxt = document.getElementById('amSignupBtnTxt');
+  if (btn) btn.disabled = true;
+  if (btnTxt) btnTxt.textContent = 'Creating account...';
+
+  try {
+    const backendUrl = getBackendURL();
+    const res = await fetch(`${backendUrl}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw, name })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      amShowErr(data.detail || 'Registration failed. Please check your details.');
+      return;
+    }
+
+    if (typeof window.authStoreSession === 'function') window.authStoreSession(data);
+    amShowErr('Account created! Moving to institution step...', 'success');
+    setTimeout(() => {
+      hzGoToStep(2); // Step 2: Enter Institution
+    }, 600);
+  } catch (err) {
+    console.error('[SIGNUP ERROR]', err);
+    amShowErr('Unable to connect to the server. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnTxt) btnTxt.textContent = 'Create Account →';
+  }
+}
 </script>
 
 </body>
@@ -16160,14 +16244,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -16354,11 +16431,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -16504,11 +16577,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -17275,14 +17344,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -17469,11 +17531,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -17619,11 +17677,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -17847,14 +17901,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -18041,11 +18088,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -18191,11 +18234,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -18419,14 +18458,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -18613,11 +18645,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -18763,11 +18791,7 @@ window.hzStudentJoinCode = function() {
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -22965,14 +22989,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -23159,11 +23176,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -23309,11 +23322,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -26239,14 +26248,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -26433,11 +26435,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -26583,11 +26581,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
@@ -26814,14 +26808,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Populate Teacher View Student Table
-  window.hzStudentsData = [
-    { name: 'Alex Student', roll: 'CS2026-042', batch: 'B.Tech CSE', score: '94.2%', progress: 92, status: 'Excellent' },
-    { name: 'Jessica Taylor', roll: 'CS2026-015', batch: 'B.Tech CSE', score: '96.8%', progress: 98, status: 'Mastered' },
-    { name: 'David Miller', roll: 'PH2026-008', batch: 'Physics Hons', score: '88.0%', progress: 82, status: 'Good' },
-    { name: 'Emma Watson', roll: 'CS2026-022', batch: 'B.Tech CSE', score: '91.5%', progress: 90, status: 'Excellent' },
-    { name: 'Michael Brown', roll: 'CL11-004', batch: 'Class 11-A', score: '82.4%', progress: 78, status: 'Good' },
-    { name: 'Sophia Garcia', roll: 'PH2026-019', batch: 'Physics Hons', score: '95.2%', progress: 94, status: 'Excellent' }
-  ];
+  window.hzStudentsData = [];
 
   window.hzPopulateStudentTable = function(data) {
     const list = data || window.hzStudentsData;
@@ -27008,11 +26995,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 2. Render Teacher Assignments Table
-  window.hzMockTeacherAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', created_at: 'Today 10:00 AM', expires_in: 'Expires in 4h 30m', count: 18, avg: '88.5%', status: 'Active' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', created_at: 'Today 08:30 AM', expires_in: 'Expires in 3h 00m', count: 24, avg: '91.2%', status: 'Active' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', created_at: 'Yesterday', expires_in: 'Expired', count: 32, avg: '94.0%', status: 'Expired' }
-  ];
+  window.hzMockTeacherAssignments = [];
 
   window.hzRenderTeacherAssignments = async function() {
     const tbody = document.getElementById('hzTeacherAssignmentsTableBody');
@@ -27158,11 +27141,7 @@ ${text.substring(0, 4500)}`
   };
 
   // 6. Render Student My Assignments List
-  window.hzMockStudentAssignments = [
-    { title: 'Quantum Physics & Wave Mechanics Quiz', code: 'PHY842', subject: 'Physics', teacher_name: 'Prof. Sarah Jenkins', expires_in: 'Expires in 4h 30m', status: 'Completed', score: '95.0%' },
-    { title: 'Linear Algebra & Vector Spaces', code: 'MTH519', subject: 'Mathematics', teacher_name: 'Dr. Robert Vance', expires_in: 'Expires in 3h 00m', status: 'In Progress', score: '--' },
-    { title: 'Data Structures & Trees Assignment', code: 'CSE301', subject: 'Computer Science', teacher_name: 'Prof. Alan Turing', expires_in: 'Expired', status: 'Expired', score: '--' }
-  ];
+  window.hzMockStudentAssignments = [];
 
   window.hzRenderStudentAssignments = async function() {
     const tbody = document.getElementById('hzStudentMyAssignmentsTableBody');
