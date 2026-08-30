@@ -691,6 +691,167 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
   .agreement-grid{grid-template-columns:1fr}
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   KAHOOT + VEDANTU + BYJU'S + CHITTI INSPIRED PREMIUM EDUCATIONAL UI
+   ══════════════════════════════════════════════════════════════════ */
+
+#hz-animated-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 70%),
+              radial-gradient(circle at 10% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 60%);
+}
+
+.hz-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.25;
+  animation: hzFloatBlob 20s ease-in-out infinite alternate;
+}
+.hz-bg-blob-1 { top: -15%; left: -10%; width: 55vw; height: 55vw; background: linear-gradient(135deg, #1E40AF, #3B82F6); }
+.hz-bg-blob-2 { bottom: -15%; right: -10%; width: 60vw; height: 60vw; background: linear-gradient(135deg, #6D28D9, #8B5CF6); }
+.hz-bg-blob-3 { top: 40%; left: 30%; width: 35vw; height: 35vw; background: linear-gradient(135deg, #0891B2, #06B6D4); opacity: 0.18; }
+
+@keyframes hzFloatBlob {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(50px, -35px) scale(1.1) rotate(180deg); }
+  100% { transform: translate(-35px, 50px) scale(0.92) rotate(360deg); }
+}
+
+.hz-floating-symbol {
+  position: absolute;
+  color: rgba(37, 99, 235, 0.15);
+  font-family: 'JetBrains Mono', var(--font-mono, monospace);
+  font-weight: 800;
+  user-select: none;
+  pointer-events: none;
+  animation: hzFloatSymbol 12s ease-in-out infinite alternate;
+}
+@keyframes hzFloatSymbol {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  100% { transform: translateY(-40px) rotate(20deg) scale(1.12); }
+}
+
+/* Modal Step Pages */
+.hz-step-page {
+  display: none;
+  animation: hzStepSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hz-step-page.active { display: block; }
+
+@keyframes hzStepSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Kahoot / BYJU'S Style Interactive Role Cards */
+.hz-role-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 22px 0 26px;
+}
+@media (max-width: 500px) {
+  .hz-role-card-grid { grid-template-columns: 1fr; gap: 14px; }
+}
+
+.hz-role-card {
+  position: relative;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  outline: none;
+}
+.hz-role-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(124,58,237,0.08));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hz-role-card:hover::before, .hz-role-card:focus::before {
+  opacity: 1;
+}
+.hz-role-card:hover, .hz-role-card:focus {
+  border-color: #4F46E5;
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 16px 36px rgba(79, 70, 229, 0.22);
+}
+.hz-role-card-icon {
+  font-size: 3.2rem;
+  margin-bottom: 14px;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+}
+.hz-role-card:hover .hz-role-card-icon {
+  transform: scale(1.2) rotate(-8deg);
+}
+.hz-role-card-title {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #0F172A;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  font-family: var(--font-display, sans-serif);
+}
+.hz-role-card-sub {
+  font-size: 0.85rem;
+  color: #64748B;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* Gradient Action Button */
+.hz-btn-gradient {
+  background: linear-gradient(135deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.hz-btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.5);
+  background: linear-gradient(135deg, #1D4ED8 0%, #4338CA 50%, #6D28D9 100%);
+}
+
+/* Empty States */
+.hz-empty-state {
+  text-align: center;
+  padding: 52px 24px;
+  background: linear-gradient(145deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+  border: 2px dashed rgba(199, 210, 254, 0.8);
+  border-radius: 20px;
+  margin: 18px 0;
+}
+.hz-empty-icon { font-size: 3.2rem; margin-bottom: 14px; opacity: 0.88; }
+.hz-empty-title { font-weight: 800; font-size: 1.15rem; color: #1E293B; margin-bottom: 8px; }
+.hz-empty-desc { font-size: 0.9rem; color: #64748B; max-width: 440px; margin: 0 auto 18px; line-height: 1.6; }
+
 </style>
 <style>
 
@@ -10680,80 +10841,129 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
 
 <!-- Modal HTML -->
 <div id="authModal" role="dialog" aria-modal="true" aria-label="Sign in to Haezet" onclick="amBackdropClose(event)">
-  <div class="lpam-card" style="max-width:460px;">
+  <div class="lpam-card" style="max-width:480px;border-radius:24px;padding:32px 28px;">
     <button class="lpam-close" onclick="closeAuthModal()" aria-label="Close"></button>
 
-    <div class="lpam-brand" style="margin-bottom:14px;">Haezet Educational Portal</div>
+    <div class="lpam-brand" style="margin-bottom:16px;font-weight:800;font-size:1.3rem;background:linear-gradient(135deg,#1E40AF,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Haezet Portal</div>
 
     <!-- Error / Success banner -->
     <div class="lpam-err-banner" id="amErrBanner"></div>
 
-    <!-- PAGE 1 — WELCOME & SIGN IN -->
+    <!-- STEP 1 — SIGN IN / LOGIN (FIRST SCREEN) -->
     <div class="hz-step-page active" id="hzStep1">
       <div style="text-align:center;margin-bottom:20px;">
-        <h3 style="font-size:1.4rem;font-weight:700;color:#0F172A;margin-bottom:6px;">Welcome</h3>
-        <p style="font-size:0.9rem;color:#64748B;line-height:1.4;">Sign in to access your interactive learning or teaching workspace.</p>
+        <h3 style="font-size:1.5rem;font-weight:800;color:#0F172A;margin-bottom:6px;">Sign In / Login</h3>
+        <p style="font-size:0.92rem;color:#64748B;line-height:1.5;">Access your learning or teaching workspace using your account.</p>
       </div>
 
-      <button class="lpam-btn" style="margin-bottom:16px;" onclick="hzGoToStep(2)">
-        <span class="lpam-btn-txt">Sign In</span>
-      </button>
+      <!-- Tabs (Sign In / Create Account) -->
+      <div class="lpam-tabs" role="tablist" style="margin-bottom:16px;">
+        <button class="lpam-tab active" id="amTab-login" onclick="amSwitchTab('login')" role="tab">Sign In</button>
+        <button class="lpam-tab" id="amTab-signup" onclick="amSwitchTab('signup')" role="tab">Create Account</button>
+      </div>
 
-      <div class="lpam-divider"><span>or sign in with</span></div>
-      <div class="lpam-social" style="margin-bottom:16px;">
-        <button class="lpam-social-btn google-btn" onclick="amGoogleLogin(this)">
-          <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          <span class="lpam-social-btn-txt">Continue with Google</span>
+      <!-- LOGIN SECTION -->
+      <div class="lpam-section active" id="amSec-login">
+        <div class="lpam-field">
+          <label class="lpam-label" for="lpam-login-email">Email / Username</label>
+          <div class="lpam-input-wrap">
+            <input class="lpam-input" id="lpam-login-email" type="email" placeholder="Enter your email" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="lpam-field">
+          <label class="lpam-label" for="lpam-login-pw">Password</label>
+          <div class="lpam-input-wrap">
+            <input class="lpam-input" id="lpam-login-pw" type="password" placeholder="Enter password" autocomplete="current-password"/>
+            <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-login-pw',this)"></button>
+          </div>
+        </div>
+        <button class="hz-btn-gradient" id="amLoginBtn" onclick="amHandleStep1Login()">
+          <span class="lpam-btn-txt" id="amLoginBtnTxt">Sign In →</span>
+          <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
+        </button>
+        <div class="lpam-divider"><span>or continue with</span></div>
+        <div class="lpam-social">
+          <button class="lpam-social-btn google-btn" onclick="amGoogleLogin(this)">
+            <svg class="lpam-social-icon" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            <span class="lpam-social-btn-txt">Continue with Google</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SIGNUP SECTION -->
+      <div class="lpam-section" id="amSec-signup">
+        <div class="lpam-field">
+          <label class="lpam-label" for="lpam-signup-name">Full Name</label>
+          <div class="lpam-input-wrap">
+            <input class="lpam-input" id="lpam-signup-name" type="text" placeholder="Your full name" autocomplete="name"/>
+          </div>
+        </div>
+        <div class="lpam-field">
+          <label class="lpam-label" for="lpam-signup-email">Email</label>
+          <div class="lpam-input-wrap">
+            <input class="lpam-input" id="lpam-signup-email" type="email" placeholder="Enter email" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="lpam-field">
+          <label class="lpam-label" for="lpam-signup-pw">Create Password</label>
+          <div class="lpam-input-wrap">
+            <input class="lpam-input" id="lpam-signup-pw" type="password" placeholder="At least 6 characters" autocomplete="new-password"/>
+            <button class="lpam-pw-eye" type="button" onclick="amTogglePw('lpam-signup-pw',this)"></button>
+          </div>
+        </div>
+        <button class="hz-btn-gradient" id="amSignupBtn" onclick="amHandleStep1Signup()">
+          <span class="lpam-btn-txt" id="amSignupBtnTxt">Create Account →</span>
+          <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
         </button>
       </div>
     </div>
 
-    <!-- PAGE 2 — ENTER INSTITUTION -->
+    <!-- STEP 2 — ENTER INSTITUTION (AFTER SUCCESSFUL SIGN IN/LOGIN) -->
     <div class="hz-step-page" id="hzStep2">
-      <button class="hz-step-back" onclick="hzGoToStep(1)">← Back</button>
-      <div style="margin-bottom:18px;">
-        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Enter Your Institution</h3>
-        <p style="font-size:0.88rem;color:#64748B;">Enter your school, college, or university name to continue.</p>
+      <div style="margin-bottom:20px;text-align:center;">
+        <div style="font-size:2.2rem;margin-bottom:8px;">🏫</div>
+        <h3 style="font-size:1.4rem;font-weight:800;color:#0F172A;margin-bottom:6px;">Enter Your Institution</h3>
+        <p style="font-size:0.9rem;color:#64748B;">Enter your school or college name to associate with your account.</p>
       </div>
       <div class="lpam-field">
-        <label class="lpam-label" for="hzInputInstitution">Institution / School</label>
+        <label class="lpam-label" for="hzInputInstitution">Institution / School Name</label>
         <div class="lpam-input-wrap">
-          <input class="lpam-input" id="hzInputInstitution" type="text" placeholder="Enter your institution" onkeydown="if(event.key==='Enter')hzSubmitInstitution()" />
+          <input class="lpam-input" id="hzInputInstitution" type="text" placeholder="Enter your institution name" onkeydown="if(event.key==='Enter')hzSubmitInstitution()" />
         </div>
       </div>
-      <button class="lpam-btn" onclick="hzSubmitInstitution()">
-        <span class="lpam-btn-txt">Continue</span>
+      <button class="hz-btn-gradient" onclick="hzSubmitInstitution()">
+        <span>Continue →</span>
       </button>
     </div>
 
-    <!-- PAGE 3 — SELECT ROLE -->
+    <!-- STEP 3 — CHOOSE YOUR ROLE -->
     <div class="hz-step-page" id="hzStep3">
-      <button class="hz-step-back" onclick="hzGoToStep(2)">← Back to Institution</button>
-      <div style="margin-bottom:14px;">
-        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Select Your Role</h3>
-        <p style="font-size:0.88rem;color:#64748B;">Choose your role to access your dedicated workspace.</p>
+      <button class="hz-step-back" onclick="hzGoToStep(2)">← Back</button>
+      <div style="margin-bottom:16px;text-align:center;">
+        <h3 style="font-size:1.4rem;font-weight:800;color:#0F172A;margin-bottom:4px;">Choose Your Role</h3>
+        <p style="font-size:0.9rem;color:#64748B;">Select your workspace type to complete sign in.</p>
       </div>
 
       <div class="hz-role-card-grid">
         <button class="hz-role-card" onclick="hzChooseRole('teacher')" type="button">
           <div class="hz-role-card-icon">👨‍🏫</div>
           <div class="hz-role-card-title">TEACHER</div>
-          <div class="hz-role-card-sub">Access your teaching workspace</div>
+          <div class="hz-role-card-sub">Teaching Workspace</div>
         </button>
         <button class="hz-role-card" onclick="hzChooseRole('student')" type="button">
           <div class="hz-role-card-icon">🎓</div>
           <div class="hz-role-card-title">STUDENT</div>
-          <div class="hz-role-card-sub">Access your learning workspace</div>
+          <div class="hz-role-card-sub">Learning Workspace</div>
         </button>
       </div>
     </div>
 
-    <!-- PAGE 4a — TEACHER SIGN IN -->
+    <!-- STEP 4a — TEACHER ACCESS -->
     <div class="hz-step-page" id="hzStep4Teacher">
       <button class="hz-step-back" onclick="hzGoToStep(3)">← Back to Role</button>
-      <div style="margin-bottom:16px;">
-        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Teacher Sign In</h3>
-        <p style="font-size:0.88rem;color:#64748B;">Enter your name and institute-provided passcode.</p>
+      <div style="margin-bottom:18px;">
+        <h3 style="font-size:1.35rem;font-weight:800;color:#0F172A;margin-bottom:4px;">Teacher Login</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Enter your credentials to access your teaching workspace.</p>
       </div>
 
       <div class="lpam-field">
@@ -10765,22 +10975,22 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
       <div class="lpam-field">
         <label class="lpam-label" for="hzInputTeacherPasscode">Passcode</label>
         <div class="lpam-input-wrap">
-          <input class="lpam-input" id="hzInputTeacherPasscode" type="password" placeholder="Enter your institute-provided passcode" onkeydown="if(event.key==='Enter')hzSubmitTeacherLogin()" />
+          <input class="lpam-input" id="hzInputTeacherPasscode" type="password" placeholder="Enter your institution-provided passcode" onkeydown="if(event.key==='Enter')hzSubmitTeacherAccess()" />
           <button class="lpam-pw-eye" type="button" onclick="amTogglePw('hzInputTeacherPasscode',this)"></button>
         </div>
       </div>
-      <button class="lpam-btn" id="hzBtnTeacherLogin" onclick="hzSubmitTeacherLogin()">
-        <span class="lpam-btn-txt" id="hzBtnTeacherLoginTxt">Sign In</span>
+      <button class="hz-btn-gradient" id="hzBtnTeacherLogin" onclick="hzSubmitTeacherAccess()">
+        <span class="lpam-btn-txt" id="hzBtnTeacherLoginTxt">Continue</span>
         <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
       </button>
     </div>
 
-    <!-- PAGE 4b — STUDENT SIGN IN -->
+    <!-- STEP 4b — STUDENT ACCESS -->
     <div class="hz-step-page" id="hzStep4Student">
       <button class="hz-step-back" onclick="hzGoToStep(3)">← Back to Role</button>
-      <div style="margin-bottom:16px;">
-        <h3 style="font-size:1.3rem;font-weight:700;color:#0F172A;margin-bottom:4px;">Student Sign In</h3>
-        <p style="font-size:0.88rem;color:#64748B;">Enter your name and roll number to enter your workspace.</p>
+      <div style="margin-bottom:18px;">
+        <h3 style="font-size:1.35rem;font-weight:800;color:#0F172A;margin-bottom:4px;">Student Login</h3>
+        <p style="font-size:0.88rem;color:#64748B;">Enter your credentials to access your learning workspace.</p>
       </div>
 
       <div class="lpam-field">
@@ -10792,11 +11002,11 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
       <div class="lpam-field">
         <label class="lpam-label" for="hzInputStudentRoll">Roll Number</label>
         <div class="lpam-input-wrap">
-          <input class="lpam-input" id="hzInputStudentRoll" type="text" placeholder="Enter your roll number" onkeydown="if(event.key==='Enter')hzSubmitStudentLogin()" />
+          <input class="lpam-input" id="hzInputStudentRoll" type="text" placeholder="Enter your roll number" onkeydown="if(event.key==='Enter')hzSubmitStudentAccess()" />
         </div>
       </div>
-      <button class="lpam-btn" id="hzBtnStudentLogin" onclick="hzSubmitStudentLogin()">
-        <span class="lpam-btn-txt" id="hzBtnStudentLoginTxt">Sign In</span>
+      <button class="hz-btn-gradient" id="hzBtnStudentLogin" onclick="hzSubmitStudentAccess()">
+        <span class="lpam-btn-txt" id="hzBtnStudentLoginTxt">Continue</span>
         <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
       </button>
     </div>
