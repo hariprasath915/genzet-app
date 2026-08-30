@@ -10975,11 +10975,11 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
       <div class="lpam-field">
         <label class="lpam-label" for="hzInputTeacherPasscode">Passcode</label>
         <div class="lpam-input-wrap">
-          <input class="lpam-input" id="hzInputTeacherPasscode" type="password" placeholder="Enter your institution-provided passcode" onkeydown="if(event.key==='Enter')hzSubmitTeacherAccess()" />
+          <input class="lpam-input" id="hzInputTeacherPasscode" type="password" placeholder="Enter your institution-provided passcode" onkeydown="if(event.key==='Enter')hzSubmitTeacherLogin()" />
           <button class="lpam-pw-eye" type="button" onclick="amTogglePw('hzInputTeacherPasscode',this)"></button>
         </div>
       </div>
-      <button class="hz-btn-gradient" id="hzBtnTeacherLogin" onclick="hzSubmitTeacherAccess()">
+      <button class="hz-btn-gradient" id="hzBtnTeacherLogin" onclick="hzSubmitTeacherLogin()">
         <span class="lpam-btn-txt" id="hzBtnTeacherLoginTxt">Continue</span>
         <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
       </button>
@@ -11002,10 +11002,10 @@ function navigateToAuth() { hzAllowAuthModal = true; openAuthModal(); }
       <div class="lpam-field">
         <label class="lpam-label" for="hzInputStudentRoll">Roll Number</label>
         <div class="lpam-input-wrap">
-          <input class="lpam-input" id="hzInputStudentRoll" type="text" placeholder="Enter your roll number" onkeydown="if(event.key==='Enter')hzSubmitStudentAccess()" />
+          <input class="lpam-input" id="hzInputStudentRoll" type="text" placeholder="Enter your roll number" onkeydown="if(event.key==='Enter')hzSubmitStudentLogin()" />
         </div>
       </div>
-      <button class="hz-btn-gradient" id="hzBtnStudentLogin" onclick="hzSubmitStudentAccess()">
+      <button class="hz-btn-gradient" id="hzBtnStudentLogin" onclick="hzSubmitStudentLogin()">
         <span class="lpam-btn-txt" id="hzBtnStudentLoginTxt">Continue</span>
         <span class="lpam-btn-spin"><div class="lpam-spin-ring"></div></span>
       </button>
@@ -11297,7 +11297,8 @@ async function amHandleRoleLogin() {
 
     amSetLoading('amLoginBtn', true);
     try {
-      const res = await fetch(`${BACKEND_URL}/auth/teacher-login`, {
+      const backendUrl = getBackendURL();
+      const res = await fetch(`${backendUrl}/auth/teacher-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -11307,7 +11308,7 @@ async function amHandleRoleLogin() {
           passcode: pw
         })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || 'Teacher Login failed.');
 
       authStoreSession(data);
@@ -11332,7 +11333,8 @@ async function amHandleRoleLogin() {
 
     amSetLoading('amLoginBtn', true);
     try {
-      const res = await fetch(`${BACKEND_URL}/auth/student-login`, {
+      const backendUrl = getBackendURL();
+      const res = await fetch(`${backendUrl}/auth/student-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -11342,7 +11344,7 @@ async function amHandleRoleLogin() {
           passcode: pw || 'student123'
         })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || 'Student Login failed.');
 
       authStoreSession(data);
@@ -11377,15 +11379,16 @@ async function amHandleLogin() {
   amSetLoading('amLoginBtn', true);
   
   try {
-    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+    const backendUrl = getBackendURL();
+    const res = await fetch(`${backendUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      throw new Error(data.detail || 'Login failed.');
+      throw new Error(data.detail || 'The details entered are incorrect. Please check and try again.');
     }
 
     // Success
@@ -11428,7 +11431,8 @@ async function amHandleSignup() {
   amSetLoading('amSignupBtn', true);
 
   try {
-    const res = await fetch(`${BACKEND_URL}/auth/register`, {
+    const backendUrl = getBackendURL();
+    const res = await fetch(`${backendUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name, email: email, password: pw }),
@@ -12844,8 +12848,7 @@ function amShowSuccess() {
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -12887,21 +12890,12 @@ function amShowSuccess() {
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -12993,8 +12987,7 @@ function amShowSuccess() {
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -13416,6 +13409,8 @@ async function hzSubmitTeacherLogin() {
   }
 }
 
+window.hzSubmitTeacherAccess = function() { return hzSubmitTeacherLogin(); };
+window.hzSubmitStudentAccess = function() { return hzSubmitStudentLogin(); };
 async function hzSubmitStudentLogin() {
   amClearErrors(); amHideErr();
   const sName = (document.getElementById('hzInputStudentName')?.value || '').trim();
@@ -13979,7 +13974,7 @@ async function amHandleStep1Login() {
 
   const btn = document.getElementById('amLoginBtn');
   const btnTxt = document.getElementById('amLoginBtnTxt');
-  if (btn) btn.disabled = true;
+  if (btn) { btn.disabled = true; btn.classList.add('loading'); }
   if (btnTxt) btnTxt.textContent = 'Signing you in...';
 
   try {
@@ -13989,7 +13984,7 @@ async function amHandleStep1Login() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pw })
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       amShowErr(data.detail || 'The details entered are incorrect. Please check and try again.');
       return;
@@ -14004,7 +13999,7 @@ async function amHandleStep1Login() {
     console.error('[AUTH ERROR]', err);
     amShowErr('Unable to connect to the server. Please try again.');
   } finally {
-    if (btn) btn.disabled = false;
+    if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
     if (btnTxt) btnTxt.textContent = 'Sign In →';
   }
 }
@@ -16145,8 +16140,7 @@ async function amHandleStep1Signup() {
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -16188,21 +16182,12 @@ async function amHandleStep1Signup() {
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -16294,8 +16279,7 @@ async function amHandleStep1Signup() {
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -17245,8 +17229,7 @@ async function amHandleStep1Signup() {
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -17288,21 +17271,12 @@ async function amHandleStep1Signup() {
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -17394,8 +17368,7 @@ async function amHandleStep1Signup() {
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -17802,8 +17775,7 @@ async function amHandleStep1Signup() {
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -17845,21 +17817,12 @@ async function amHandleStep1Signup() {
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -17951,8 +17914,7 @@ async function amHandleStep1Signup() {
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -18359,8 +18321,7 @@ async function amHandleStep1Signup() {
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -18402,21 +18363,12 @@ async function amHandleStep1Signup() {
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -18508,8 +18460,7 @@ async function amHandleStep1Signup() {
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -22890,8 +22841,7 @@ ${text.substring(0, 4500)}`
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -22933,21 +22883,12 @@ ${text.substring(0, 4500)}`
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -23039,8 +22980,7 @@ ${text.substring(0, 4500)}`
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -23619,7 +23559,7 @@ ${text.substring(0, 4500)}`
       authClearMsg();
 
       try {
-        const res = await fetch(`${BACKEND_URL}/auth/register`, {
+        const res = await fetch(`${getBackendURL()}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password }),
@@ -23672,7 +23612,7 @@ ${text.substring(0, 4500)}`
       authClearMsg();
 
       try {
-        const res = await fetch(`${BACKEND_URL}/auth/login`, {
+        const res = await fetch(`${getBackendURL()}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -26149,8 +26089,7 @@ ${text.substring(0, 4500)}`
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -26192,21 +26131,12 @@ ${text.substring(0, 4500)}`
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -26298,8 +26228,7 @@ ${text.substring(0, 4500)}`
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
@@ -26709,8 +26638,7 @@ ${text.substring(0, 4500)}`
     const loginBtn = document.getElementById('amLoginBtn');
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
 
     try {
       const res = await fetch(`${backendUrl}/auth/login`, {
@@ -26752,21 +26680,12 @@ ${text.substring(0, 4500)}`
       window.hzRenderRoleDashboard(window.authUser);
 
     } catch (err) {
-      console.warn('[AUTH] Role Login fallback mode:', err.message);
-      // Friendly fallback so user is wowed even if backend is offline
-      const mockData = {
-        token: 'mock-jwt-token-' + Date.now(),
-        user_id: 'usr-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        name: email.split('@')[0] || 'User',
-        role: role,
-        institution: inst,
-        roll_number: rollNumber || 'CS2026-042'
-      };
-      if (typeof authStoreSession === 'function') authStoreSession(mockData);
-      if (typeof closeAuthModal === 'function') closeAuthModal();
-      if (typeof authHideGate === 'function') authHideGate();
-      window.hzRenderRoleDashboard(mockData);
+      console.warn('[AUTH] Role Login error:', err.message);
+      if (typeof amShowErr === 'function') {
+        amShowErr(err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed') ? 
+          'Unable to connect to the server. Please try again.' : 
+          (err.message || 'The details entered are incorrect. Please check and try again.'));
+      }
     } finally {
       if (loginBtn) loginBtn.classList.remove('loading');
     }
@@ -26858,8 +26777,7 @@ ${text.substring(0, 4500)}`
   };
 
   window.hzRefreshAdminLogs = async function() {
-    const backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000' : '/api';
+    const backendUrl = (typeof getBackendURL === 'function' ? getBackendURL() : (window.BACKEND || 'http://127.0.0.1:8000'));
     try {
       const res = await fetch(`${backendUrl}/admin/users`, {
         headers: { 'X-Admin-Token': 'haezet-admin-secret-token' }
