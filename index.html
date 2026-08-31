@@ -10380,14 +10380,9 @@ async function amHandleLogin() {
     authStoreSession(data);
     amShowSuccess(); // shows success animation
     
-    // After animation, go to dashboard via authHideGate instead of legacy showDashboard
-    setTimeout(async () => {
-      closeAuthModal();
-      authHideGate();
-      authUpdateStatusBar();
-      authSetSyncStatus('Restoring library…');
-      await syncPullFromCloud();
-      authSetSyncStatus('');
+    // After animation, go to onboarding.html instead of legacy dashboard entry
+    setTimeout(() => {
+      window.location.href = '/onboarding.html';
     }, 1400);
 
   } catch (err) {
@@ -10437,12 +10432,8 @@ async function amHandleSignup() {
     if (btn) { btn.textContent = '✅ Account Created!'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
     amShowErr(`Welcome, ${data.name}! Taking you to your dashboard...`, 'success');
     
-    setTimeout(async () => {
-      closeAuthModal();
-      authHideGate();
-      authUpdateStatusBar();
-      await syncPullFromCloud(); // pull any existing cloud data to the new device
-      if (btn) { btn.textContent = 'Create Account'; btn.style.background = ''; }
+    setTimeout(() => {
+      window.location.href = '/onboarding.html';
     }, 1500);
 
   } catch (err) {
@@ -17911,11 +17902,8 @@ ${text.substring(0, 4500)}`
         authShowMsg(`Welcome, ${data.name}! Account created.`, 'success');
 
         // Short delay for the user to see success message
-        setTimeout(async () => {
-          authHideGate();
-          authUpdateStatusBar();
-          // New account — pull cloud data for consistency with login
-          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
+        setTimeout(() => {
+          window.location.href = '/onboarding.html';
         }, 800);
 
       } catch (err) {
@@ -17967,27 +17955,8 @@ ${text.substring(0, 4500)}`
         if (successText) successText.textContent = `Welcome back, ${data.name}!`;
         if (overlay) overlay.classList.add('active');
 
-        setTimeout(async () => {
-          // Fade out the success overlay
-          if (overlay) {
-            overlay.style.transition = 'opacity .4s ease';
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-              overlay.classList.remove('active');
-              overlay.style.opacity = '';
-              overlay.style.transition = '';
-            }, 400);
-          }
-          authHideGate();
-          authUpdateStatusBar();
-          authSetSyncStatus('Restoring library…');
-          // Always call via window so cloud_sync_v3.js override is used
-          // This pulls animations + courses + vault in the correct order
-          if (typeof window.syncPullFromCloud === 'function') await window.syncPullFromCloud();
-          // Load global animations + show/hide the main-user Share button
-          if (typeof fetchGlobalAnimations === 'function') fetchGlobalAnimations();
-          if (typeof updateGlobalUploadBtn === 'function') updateGlobalUploadBtn();
-          authSetSyncStatus('');
+        setTimeout(() => {
+          window.location.href = '/onboarding.html';
         }, 1200);
 
       } catch (err) {
