@@ -448,10 +448,10 @@
 
   // ── Supabase JS client (direct DB access, RLS enforced via JWT) ─────────
   var SUPA_URL  = 'https://fkincmzpteuibbegghti.supabase.co';
-  var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZraW5jbXpwdGV1aWJiZWdnaHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NjUzOTQsImV4cCI6MjA2OTQ0MTM5NH0.3mNMcgUMuMqWJRp9vWqLvGQbf3JIAMWe2c1FCKTS3ZA';
-  // createClient(url, anonKey) automatically sends apikey: anonKey on every request.
-  // We additionally override Authorization with the user's JWT so RLS
-  // evaluates auth.uid() = the logged-in user (not the anon role).
+  // Real anon key from /sync/config (iat:1780330046)
+  var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZraW5jbXpwdGV1aWJiZWdnaHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzAwNDYsImV4cCI6MjA5NTkwNjA0Nn0.MBQNWBhIht5MLBIadivdw8GXjO9hYj6RK-AfFCI-RT4';
+  // createClient sends apikey: SUPA_ANON on every request automatically.
+  // We override Authorization so RLS evaluates auth.uid() = the logged-in user.
   var supa = supabase.createClient(SUPA_URL, SUPA_ANON, {
     global: { headers: { Authorization: 'Bearer ' + jwt } },
     auth:   { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
