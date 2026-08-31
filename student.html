@@ -2032,14 +2032,28 @@
   <!-- ──────────────────────── JAVASCRIPT ──────────────────────── -->
   <script>
     /* ══════════════════════════════════════════════════════════════════
-       APP STATE
+       AUTH GUARD — must come from onboarding (haezet_jwt in localStorage)
        ══════════════════════════════════════════════════════════════════ */
+    const TOKEN_KEY   = 'haezet_jwt';
+    const USER_KEY    = 'haezet_user';
     const SB_URL_KEY  = 'hz_sb_url';
     const SB_KEY_KEY  = 'hz_sb_key';
 
+    // Real anon key — same project as onboarding.html
+    const DEFAULT_SUPA_URL  = 'https://fkincmzpteuibbegghti.supabase.co';
+    const DEFAULT_SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZraW5jbXpwdGV1aWJiZWdnaHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzAwNDYsImV4cCI6MjA5NTkwNjA0Nn0.MBQNWBhIht5MLBIadivdw8GXjO9hYj6RK-AfFCI-RT4';
+
+    const jwt     = localStorage.getItem(TOKEN_KEY);
+    const userRaw = localStorage.getItem(USER_KEY);
+    const userMeta = userRaw ? JSON.parse(userRaw) : {};
+
+    // Redirect to login if not authenticated
+    if (!jwt) { location.href = '/index.html'; }
+
     const app = {
-      sbUrl:       localStorage.getItem(SB_URL_KEY)  || 'https://fkincmzpteuibbegghti.supabase.co',
-      sbKey:       localStorage.getItem(SB_KEY_KEY)  || '',
+      sbUrl:       localStorage.getItem(SB_URL_KEY)  || DEFAULT_SUPA_URL,
+      // Use saved key OR fall back to the known anon key — never empty
+      sbKey:       localStorage.getItem(SB_KEY_KEY)  || DEFAULT_SUPA_ANON,
       client:      null,
       subject:     'science',
       allTopics:   [],
@@ -2054,7 +2068,11 @@
     function initClient() {
       try {
         if (window.supabase && app.sbUrl && app.sbKey) {
-          app.client = window.supabase.createClient(app.sbUrl, app.sbKey);
+          // Include the user JWT so RLS policies apply (auth.uid() works)
+          app.client = window.supabase.createClient(app.sbUrl, app.sbKey, {
+            global: { headers: { Authorization: 'Bearer ' + (jwt || '') } },
+            auth:   { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+          });
           setStatus(true, 'Supabase Live');
         } else {
           app.client = null;
@@ -2066,6 +2084,7 @@
         console.warn('[SB] init error:', e);
       }
     }
+
 
     function setStatus(ok, txt) {
       document.getElementById('connPulse').className = ok ? 'conn-pulse' : 'conn-pulse offline';
