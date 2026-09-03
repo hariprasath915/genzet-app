@@ -19113,8 +19113,10 @@ ${text.substring(0, 4500)}`
           const rows = await window.assessmentAPI.load(_assessCurrentSubject) || [];
           const row  = rows.find(r => r.topic_title === topicTitle) || {};
           for (let i = 1; i <= 10; i++) {
-            const key = `assessment_${i}`;
-            if (row[key]) assessData[key] = row[key];
+            const key      = `assessment_${i}`;
+            const thumbKey = `thumbnail_url_${i}`;
+            if (row[key])      assessData[key]      = row[key];      // HTML URL
+            if (row[thumbKey]) assessData[thumbKey] = row[thumbKey]; // thumbnail URL
           }
         }
       } catch (err) {
@@ -19142,18 +19144,21 @@ ${text.substring(0, 4500)}`
         if (iframe)  { iframe.style.display = 'none'; }
         if (emptyEl) emptyEl.style.display = '';
       }
-      if (overlay) overlay.classList.add('active');
+      if (overlay) overlay.classList.add('open');
     };
 
     function renderAssessListGrid(assessData) {
       const grid = document.getElementById('assessListGrid');
       if (!grid) return;
+
+      // Only render tiles that have actual content uploaded — skip empty slots.
       const tiles = [];
       for (let i = 1; i <= 10; i++) {
         const key      = `assessment_${i}`;
         const thumbKey = `thumbnail_url_${i}`;
-        const hasData  = !!(assessData[key]);
-        const thumbUrl = assessData[thumbKey] || '';
+        if (!assessData[key]) continue; // ← skip slots with no HTML URL
+
+        const thumbUrl  = assessData[thumbKey] || '';
         const thumbHTML = thumbUrl
           ? `<img src="${thumbUrl}" alt="Assessment ${i}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" loading="lazy" />`
           : `<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--surface2,#1e293b);border-radius:8px 8px 0 0;">📝</div>`;
@@ -19162,13 +19167,22 @@ ${text.substring(0, 4500)}`
             ${thumbHTML}
             <div class="assess-tile-number">${i}</div>
             <div class="assess-tile-label">Assessment ${i}</div>
-            <div class="assess-tile-status ${hasData ? 'has-content' : 'no-content'}">
-              ${hasData ? '✓ Available' : 'Coming Soon'}
-            </div>
+            <div class="assess-tile-status has-content">✓ Available</div>
           </div>
         `);
       }
-      grid.innerHTML = tiles.join('');
+
+      if (tiles.length === 0) {
+        // No assessments uploaded yet for this topic
+        grid.innerHTML = `<div class="lessons-empty" style="grid-column:1/-1">
+          <div class="lessons-empty-icon">📋</div>
+          <h3>No assessments yet</h3>
+          <p>Admin hasn't uploaded assessments for this topic yet.</p>
+        </div>`;
+      } else {
+        grid.innerHTML = tiles.join('');
+      }
+
       // Stash assessData for viewer
       grid._assessData = assessData;
     }
@@ -19196,12 +19210,12 @@ ${text.substring(0, 4500)}`
         if (emptyEl) emptyEl.style.display = '';
       }
 
-      if (overlay) overlay.classList.add('active');
+      if (overlay) overlay.classList.add('open');
     };
 
     window.closeAssessViewer = function () {
       const overlay = document.getElementById('assessViewerOverlay');
-      if (overlay) overlay.classList.remove('active');
+      if (overlay) overlay.classList.remove('open');
       const iframe  = document.getElementById('assessViewerIframe');
       if (iframe) { iframe.src = 'about:blank'; iframe.style.display = 'none'; }
     };
