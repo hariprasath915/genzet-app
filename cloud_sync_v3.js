@@ -58,8 +58,73 @@
     );
   }
 
-  // ── Low-level fetch helper ──────────────────────────────────────────────
-  async function _api(method, path, body) {
+  // ── Token-refresh lock: prevents a stampede when multiple 401s fire at once ──
+  let _refreshInProgress = null;   // Promise | null
+
+  /**
+   * _refreshToken()
+   * Calls GET /auth/refresh with the current (possibly expired) Bearer token.
+   * The backend exchanges it with Supabase for a fresh JWT and returns
+   * { token, user_id, email, name }.
+   * Updates window.authToken + localStorage so every subsequent call uses
+   * the new token.
+   * Returns the new token string, or null on failure.
+   */
+  async function _refreshToken() {
+    // Deduplicate: if a refresh is already running, piggyback on it
+    if (_refreshInProgress) return _refreshInProgress;
+
+    _refreshInProgress = (async () => {
+      const oldToken = window.authToken;
+      if (!oldToken) return null;
+      try {
+        const res = await fetch(`${BACKEND}/auth/refresh`, {
+          method:  'GET',
+          headers: { 'Authorization': `Bearer ${oldToken}` },
+        });
+        if (!res.ok) {
+          console.warn('[AUTH] Token refresh failed —', res.status, '— forcing re-login');
+          _clearSession();
+          _showLanding();
+          return null;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!data.token) {
+          console.warn('[AUTH] Refresh response missing token — forcing re-login');
+          _clearSession();
+          _showLanding();
+          return null;
+        }
+        // Persist the fresh token
+        window.authToken = data.token;
+        localStorage.setItem(TOKEN_KEY, data.token);
+        if (data.user_id || data.email) {
+          window.authUser = {
+            user_id: data.user_id || window.authUser?.user_id || null,
+            email:   data.email   || window.authUser?.email   || '',
+            name:    data.name    || window.authUser?.name    || '',
+          };
+          localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
+        }
+        console.log('[AUTH] ✅ Token refreshed silently');
+        return data.token;
+      } catch (err) {
+        console.warn('[AUTH] Token refresh network error:', err.message);
+        return null;
+      } finally {
+        _refreshInProgress = null;
+      }
+    })();
+
+    return _refreshInProgress;
+  }
+
+  // ── Low-level fetch helper ───────────────────────────────────────────────
+  // On a 401 response the helper automatically attempts ONE silent token
+  // refresh and retries the original request.  If the refresh also fails
+  // (expired refresh token, revoked session, etc.) the user is sent back to
+  // the landing/login screen — no silent infinite loops.
+  async function _api(method, path, body, _isRetry) {
     const token = window.authToken;
     if (!token) return { ok: false, error: 'Not authenticated' };
     const opts = {
@@ -73,6 +138,19 @@
     try {
       const res  = await fetch(`${BACKEND}${path}`, opts);
       const data = await res.json().catch(() => ({}));
+
+      // ── Silent token refresh on 401 ──────────────────────────────────────
+      if (res.status === 401 && !_isRetry) {
+        console.warn(`[SYNC] ${method} ${path} → 401 — attempting silent token refresh`);
+        const newToken = await _refreshToken();
+        if (newToken) {
+          // Retry once with the fresh token
+          return _api(method, path, body, true);
+        }
+        // Refresh failed — session gone, user must log in again
+        return { ok: false, status: 401, error: 'Session expired. Please sign in again.', data };
+      }
+
       if (!res.ok) {
         console.warn(`[SYNC] ${method} ${path} → HTTP ${res.status}`, data);
         return { ok: false, status: res.status, error: data.detail || `HTTP ${res.status}`, data };
