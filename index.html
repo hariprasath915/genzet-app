@@ -10898,6 +10898,92 @@ function amShowSuccess() {
   .assess-list-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
 }
 
+
+/* ============================================================
+   ASSESSMENT ACTION MODAL - Kahoot-style card (View / Share)
+============================================================ */
+#assessActionOverlay{
+  position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;
+  background:rgba(4,4,13,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+#assessActionOverlay.open{opacity:1;pointer-events:all;}
+.aam-card{
+  background:linear-gradient(145deg,#0f172a 0%,#1e1b4b 100%);
+  border:1.5px solid rgba(99,102,241,.35);border-radius:28px;
+  box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(99,102,241,.12);
+  width:90%;max-width:680px;overflow:hidden;
+  transform:scale(.88) translateY(24px);transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+#assessActionOverlay.open .aam-card{transform:scale(1) translateY(0);}
+.aam-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.aam-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.18);color:#a5b4fc;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;}
+.aam-close-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.55);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.aam-close-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+.aam-body{display:flex;}
+.aam-thumb-col{width:240px;flex-shrink:0;background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(139,92,246,.08));border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:14px;min-height:240px;}
+.aam-thumb-img{width:160px;height:110px;object-fit:cover;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);}
+.aam-thumb-placeholder{width:160px;height:110px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(139,92,246,.16));display:flex;align-items:center;justify-content:center;font-size:44px;}
+.aam-thumb-label{font-size:13px;font-weight:800;color:#e2e8f0;text-align:center;line-height:1.4;}
+.aam-thumb-sub{font-size:11px;color:rgba(255,255,255,.45);text-align:center;}
+.aam-actions-col{flex:1;display:flex;flex-direction:column;gap:14px;padding:28px 26px;}
+.aam-action-btn{width:100%;padding:20px 22px;border-radius:18px;border:1.5px solid;cursor:pointer;display:flex;align-items:flex-start;gap:16px;text-align:left;transition:all .25s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;background:none;}
+.aam-action-btn::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .2s;border-radius:inherit;}
+.aam-action-btn:hover::before{opacity:1;}
+.aam-action-btn:hover{transform:translateY(-3px);}
+.aam-action-btn:active{transform:translateY(0);}
+.aam-action-btn.view{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3);}
+.aam-action-btn.view::before{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08));}
+.aam-action-btn.view:hover{border-color:rgba(99,102,241,.6);box-shadow:0 8px 28px rgba(99,102,241,.28);}
+.aam-action-btn.share{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);}
+.aam-action-btn.share::before{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.06));}
+.aam-action-btn.share:hover{border-color:rgba(16,185,129,.55);box-shadow:0 8px 28px rgba(16,185,129,.22);}
+.aam-action-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.aam-action-btn.view .aam-action-icon{background:rgba(99,102,241,.2);}
+.aam-action-btn.share .aam-action-icon{background:rgba(16,185,129,.2);}
+.aam-action-text-wrap{display:flex;flex-direction:column;gap:4px;padding-top:2px;}
+.aam-action-title{font-size:15px;font-weight:800;color:#f1f5f9;}
+.aam-action-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.4;}
+@media(max-width:560px){.aam-body{flex-direction:column;}.aam-thumb-col{width:100%;min-height:140px;border-right:none;border-bottom:1px solid rgba(255,255,255,.06);padding:20px;}.aam-thumb-img,.aam-thumb-placeholder{width:100px;height:70px;}}
+
+/* ============================================================
+   ASSESSMENT SHARE MODAL - Kahoot-style PIN screen
+============================================================ */
+#assessShareOverlay{position:fixed;inset:0;z-index:3100;display:flex;align-items:center;justify-content:center;background:rgba(4,4,13,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:opacity .25s ease;}
+#assessShareOverlay.open{opacity:1;pointer-events:all;}
+.asm-modal{background:linear-gradient(160deg,#0d1117 0%,#0f172a 50%,#1a0533 100%);border:1.5px solid rgba(139,92,246,.3);border-radius:28px;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 60px rgba(99,102,241,.1);width:92%;max-width:560px;overflow:hidden;transform:scale(.86) translateY(32px);transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+#assessShareOverlay.open .asm-modal{transform:scale(1) translateY(0);}
+.asm-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 12px;border-bottom:1px solid rgba(255,255,255,.06);}
+.asm-header-left{display:flex;flex-direction:column;gap:3px;}
+.asm-header-title{font-size:17px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px;}
+.asm-header-sub{font-size:12px;color:rgba(255,255,255,.38);}
+.asm-close{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.asm-close:hover{background:rgba(255,255,255,.12);color:#fff;}
+.asm-body{padding:24px 22px 22px;display:flex;flex-direction:column;gap:20px;}
+.asm-pin-block{background:linear-gradient(135deg,rgba(99,102,241,.12) 0%,rgba(139,92,246,.08) 100%);border:1.5px solid rgba(99,102,241,.25);border-radius:20px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;overflow:hidden;}
+.asm-pin-block::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.18),transparent 70%);pointer-events:none;}
+.asm-pin-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(165,180,252,.7);}
+.asm-pin-digits{display:flex;gap:8px;align-items:center;}
+.asm-pin-digit{width:48px;height:60px;background:rgba(255,255,255,.06);border:2px solid rgba(99,102,241,.35);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#e2e8f0;font-family:"JetBrains Mono",monospace;box-shadow:0 4px 16px rgba(99,102,241,.15);animation:pinDigitPop .4s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes pinDigitPop{from{transform:scale(0) rotateY(90deg);opacity:0;}to{transform:scale(1) rotateY(0);opacity:1;}}
+.asm-pin-digit:nth-child(1){animation-delay:.05s}.asm-pin-digit:nth-child(2){animation-delay:.1s}.asm-pin-digit:nth-child(3){animation-delay:.15s}.asm-pin-digit:nth-child(4){animation-delay:.2s}.asm-pin-digit:nth-child(5){animation-delay:.25s}.asm-pin-digit:nth-child(6){animation-delay:.3s}
+.asm-pin-actions{display:flex;gap:10px;width:100%;align-items:center;justify-content:space-between;}
+.asm-copy-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(99,102,241,.15);border:1.5px solid rgba(99,102,241,.3);border-radius:10px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
+.asm-copy-btn:hover{background:rgba(99,102,241,.28);color:#fff;}
+.asm-timer{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.45);font-family:"JetBrains Mono",monospace;}
+.asm-timer-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:timerPulse 1.4s ease-in-out infinite;}
+@keyframes timerPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+.asm-url-block{background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.asm-url-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.asm-url-row{display:flex;align-items:center;gap:10px;}
+.asm-url-text{flex:1;font-size:12px;color:#94a3b8;font-family:"JetBrains Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 12px;background:rgba(0,0,0,.25);border-radius:8px;border:1px solid rgba(255,255,255,.06);}
+.asm-howto{background:rgba(16,185,129,.05);border:1.5px solid rgba(16,185,129,.15);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
+.asm-howto-title{font-size:11px;font-weight:700;color:rgba(52,211,153,.8);letter-spacing:.06em;text-transform:uppercase;}
+.asm-howto-item{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:rgba(255,255,255,.6);line-height:1.5;}
+.asm-howto-item::before{content:"›";color:#34d399;font-weight:900;flex-shrink:0;margin-top:1px;}
+.asm-join-counter{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:700;color:rgba(255,255,255,.5);padding:4px 0;}
+.asm-join-count-num{font-size:20px;font-weight:900;color:#a5b4fc;font-family:"JetBrains Mono",monospace;}
+
 /* ══════════════════════════════════════════════════════════════
    ASSESSMENT VIEWER OVERLAY — Premium Full-Screen Viewer
 ══════════════════════════════════════════════════════════════ */
@@ -19598,8 +19684,8 @@ ${text.substring(0, 4500)}`
              </div>`;
 
         tiles.push(`
-          <div class="assess-tile" onclick="openAssessViewer(${i},'${key}')" role="button" tabindex="0"
-               onkeydown="if(event.key==='Enter'||event.key===' ')openAssessViewer(${i},'${key}')">
+          <div class="assess-tile" onclick="openAssessActionModal(${i},'${key}')" role="button" tabindex="0"
+               onkeydown="if(event.key==='Enter'||event.key===' ')openAssessActionModal(${i},'${key}')">
             ${thumbSection}
             <div class="assess-tile-body">
               <div class="assess-tile-label">Assessment ${i}</div>
@@ -19638,14 +19724,38 @@ ${text.substring(0, 4500)}`
       setTimeout(() => { if (sb) sb.style.display = ''; }, 300);
     };
 
-    window.assessViewerReload = function () {
+    
+    // Core helper: fetch HTML and inject via srcdoc
+    // Supabase Storage sometimes serves .html files as text/plain,
+    // so iframe.src shows raw source. srcdoc always renders as HTML.
+    async function _loadAssessIframeSrcdoc(url) {
+      const iframe  = document.getElementById('assessViewerIframe');
+      const loading = document.getElementById('assessViewerLoading');
+      if (!iframe || !url) return;
+      try {
+        const res  = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let html = await res.text();
+        const base = `<base href="${url}" target="_blank">`;
+        html = html.replace(/(<head[^>]*>)/i, `$1${base}`);
+        if (!html.includes('<base')) html = base + html;
+        iframe.removeAttribute('src');
+        iframe.srcdoc = html;
+      } catch (err) {
+        console.warn('[ASSESS VIEWER] falling back to iframe.src:', err.message);
+        iframe.removeAttribute('srcdoc');
+        iframe.src = url;
+      }
+    }
+
+window.assessViewerReload = function () {
       const iframe = document.getElementById('assessViewerIframe');
       const loading = document.getElementById('assessViewerLoading');
       const sb      = document.getElementById('assessViewerStatusbar');
       if (iframe && _assessViewerCurrentUrl) {
         if (loading) loading.classList.remove('hidden');
         if (sb) sb.style.display = 'none';
-        iframe.src = _assessViewerCurrentUrl;
+        _loadAssessIframeSrcdoc(_assessViewerCurrentUrl);
       }
     };
 
@@ -19714,7 +19824,8 @@ ${text.substring(0, 4500)}`
         if (iframeWrap) { iframeWrap.style.display = 'flex'; }
         if (loading)    { loading.classList.remove('hidden'); }
         if (sb)         { sb.style.display = 'none'; }
-        if (iframe)     { iframe.src = htmlUrl; }
+        if (iframe)     { // Use srcdoc to bypass Supabase Content-Type issues
+        _loadAssessIframeSrcdoc(htmlUrl); }
         // close code panel if open
         const codePanel = document.getElementById('assessCodePanel');
         if (codePanel) codePanel.classList.remove('open');
@@ -19744,7 +19855,7 @@ ${text.substring(0, 4500)}`
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       }
       const iframe = document.getElementById('assessViewerIframe');
-      if (iframe) { iframe.src = 'about:blank'; }
+      if (iframe) { iframe.removeAttribute('srcdoc'); iframe.src = 'about:blank'; }
       _assessViewerCurrentUrl = null;
       const loading = document.getElementById('assessViewerLoading');
       const sb = document.getElementById('assessViewerStatusbar');
@@ -19993,6 +20104,163 @@ ${text.substring(0, 4500)}`
     };
 
     // ────────────────────────────────────────────────────
+    
+    // ------------------------------------------------
+    // ASSESSMENT ACTION MODAL - View / Share choice
+    // ------------------------------------------------
+    let _aamCurrentNum = null;
+    let _aamCurrentKey = null;
+
+    window.openAssessActionModal = function (num, key) {
+      _aamCurrentNum = num;
+      _aamCurrentKey = key;
+      const grid       = document.getElementById('assessListGrid');
+      const assessData = grid ? (grid._assessData || {}) : {};
+      const thumbUrl   = assessData['thumbnail_url_' + num] || '';
+      const thumbWrap  = document.getElementById('aamThumbWrap');
+      if (thumbWrap) {
+        thumbWrap.innerHTML = thumbUrl
+          ? '<img class="aam-thumb-img" src="' + thumbUrl + '" alt="Assessment ' + num + '" />'
+          : '<div class="aam-thumb-placeholder">&#128221;</div>';
+      }
+      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
+      const titleEl = document.getElementById('aamTitleLabel');
+      const subEl   = document.getElementById('aamSubLabel');
+      if (titleEl) titleEl.textContent = 'Assessment ' + num;
+      if (subEl)   subEl.textContent   = subjectLabel + ' · ' + (_assessCurrentTopicTitle || '');
+      const overlay = document.getElementById('assessActionOverlay');
+      if (overlay) overlay.classList.add('open');
+    };
+
+    window.closeAssessActionModal = function () {
+      const overlay = document.getElementById('assessActionOverlay');
+      if (overlay) overlay.classList.remove('open');
+    };
+
+    window.aamClickView = function () {
+      closeAssessActionModal();
+      if (_aamCurrentNum !== null && _aamCurrentKey !== null) {
+        openAssessViewer(_aamCurrentNum, _aamCurrentKey);
+      }
+    };
+
+    window.aamClickShare = async function () {
+      closeAssessActionModal();
+      const grid       = document.getElementById('assessListGrid');
+      const assessData = grid ? (grid._assessData || {}) : {};
+      const htmlUrl    = assessData[_aamCurrentKey] || null;
+      const thumbUrl   = assessData['thumbnail_url_' + _aamCurrentNum] || null;
+      _openAssessShareModal({ pin: '......', slug: null, session_id: null, expires_at: null });
+      try {
+        const token = (window.authUser && window.authUser.access_token) ? window.authUser.access_token : '';
+        const res = await fetch(BACKEND_URL + '/sync/assessment-session/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            subject:        _assessCurrentSubject,
+            topic_title:    _assessCurrentTopicTitle,
+            assessment_num: _aamCurrentNum,
+            assessment_url: htmlUrl,
+            thumbnail_url:  thumbUrl,
+          }),
+        });
+        if (!res.ok) throw new Error('Server error ' + res.status);
+        const data = await res.json();
+        _openAssessShareModal(data);
+      } catch (err) {
+        console.error('[ASSESS SHARE]', err);
+        const pinDigits = document.getElementById('asmPinDigits');
+        if (pinDigits) pinDigits.innerHTML = '<div style="color:#f87171;font-size:13px;font-weight:600;">⚠ ' + err.message + '</div>';
+      }
+    };
+
+    // ------------------------------------------------
+    // ASSESSMENT SHARE MODAL - PIN + URL display
+    // ------------------------------------------------
+    let _asmPin       = null;
+    let _asmUrl       = null;
+    let _asmExpires   = null;
+    let _asmSessionId = null;
+    let _asmTimerInt  = null;
+    let _asmJoinInt   = null;
+
+    function _openAssessShareModal(data) {
+      _asmPin       = data.pin || '......';
+      _asmSessionId = data.session_id || null;
+      _asmExpires   = data.expires_at ? new Date(data.expires_at) : null;
+      _asmUrl       = data.slug ? (window.location.origin + '/student.html?session=' + data.slug) : null;
+      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
+      const bc = document.getElementById('asmBreadcrumb');
+      if (bc) bc.textContent = subjectLabel + ' › ' + (_assessCurrentTopicTitle || '') + ' › Assessment ' + _aamCurrentNum;
+      const pinDigits = document.getElementById('asmPinDigits');
+      if (pinDigits) {
+        const digits = String(_asmPin).padStart(6, '0').split('');
+        pinDigits.innerHTML = digits.map(function(d, i) {
+          return '<div class="asm-pin-digit" style="animation-delay:' + (0.05 + i * 0.05) + 's">' + d + '</div>';
+        }).join('');
+      }
+      const urlEl = document.getElementById('asmUrlText');
+      if (urlEl) urlEl.textContent = _asmUrl || 'Generating…';
+      const jc = document.getElementById('asmJoinCount');
+      if (jc) jc.textContent = '0';
+      const overlay = document.getElementById('assessShareOverlay');
+      if (overlay) overlay.classList.add('open');
+      _startAsmTimer();
+      clearInterval(_asmJoinInt);
+      if (_asmSessionId) { _asmJoinInt = setInterval(_pollAsmJoinCount, 10000); }
+    }
+
+    window.closeAssessShareModal = function () {
+      const overlay = document.getElementById('assessShareOverlay');
+      if (overlay) overlay.classList.remove('open');
+      clearInterval(_asmTimerInt); clearInterval(_asmJoinInt);
+      _asmTimerInt = null; _asmJoinInt = null;
+    };
+
+    function _startAsmTimer() {
+      clearInterval(_asmTimerInt);
+      function tick() {
+        const el = document.getElementById('asmTimerText');
+        if (!el || !_asmExpires) return;
+        var ms = _asmExpires - Date.now();
+        if (ms <= 0) { el.textContent = 'Expired'; clearInterval(_asmTimerInt); return; }
+        var h = Math.floor(ms / 3600000);
+        var m = Math.floor((ms % 3600000) / 60000);
+        var s = Math.floor((ms % 60000) / 1000);
+        el.textContent = h > 0 ? (h + 'h ' + m + 'm left') : (m + 'm ' + s + 's left');
+      }
+      tick();
+      _asmTimerInt = setInterval(tick, 1000);
+    }
+
+    async function _pollAsmJoinCount() {
+      if (!_asmPin || _asmPin === '......') return;
+      try {
+        const r = await fetch(BACKEND_URL + '/sync/assessment-session/by-pin/' + _asmPin);
+        if (!r.ok) return;
+        const d = await r.json();
+        const jc = document.getElementById('asmJoinCount');
+        if (jc && d.join_count != null) jc.textContent = d.join_count;
+      } catch (_) {}
+    }
+
+    window.asmCopyPin = function () {
+      if (!_asmPin || _asmPin === '......') return;
+      navigator.clipboard.writeText(_asmPin).then(function() {
+        const btn = document.getElementById('asmCopyPinBtn');
+        if (btn) { var t = btn.innerHTML; btn.innerHTML = '✓ Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
+      }).catch(function(){});
+    };
+
+    window.asmCopyUrl = function () {
+      if (!_asmUrl) return;
+      navigator.clipboard.writeText(_asmUrl).then(function() {
+        const btn = document.getElementById('asmCopyUrlBtn');
+        if (btn) { var t = btn.innerHTML; btn.innerHTML = '✓ Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
+      }).catch(function(){});
+    };
+
+
     // ══ END ASSESSMENT MODE JS ══
     // ────────────────────────────────────────────────────
 
@@ -20867,5 +21135,91 @@ ${text.substring(0, 4500)}`
 </body>
 
 </div>
+
+  <!-- == ASSESSMENT ACTION MODAL == -->
+  <div id="assessActionOverlay" onclick="if(event.target===this)closeAssessActionModal()">
+    <div class="aam-card">
+      <div class="aam-header">
+        <span class="aam-pill">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Assessment
+        </span>
+        <button class="aam-close-btn" onclick="closeAssessActionModal()">&#x2715;</button>
+      </div>
+      <div class="aam-body">
+        <div class="aam-thumb-col">
+          <div id="aamThumbWrap"></div>
+          <div class="aam-thumb-label" id="aamTitleLabel">Assessment</div>
+          <div class="aam-thumb-sub" id="aamSubLabel"></div>
+        </div>
+        <div class="aam-actions-col">
+          <button class="aam-action-btn view" onclick="aamClickView()">
+            <div class="aam-action-icon">&#128214;</div>
+            <div class="aam-action-text-wrap">
+              <div class="aam-action-title">View Assessment</div>
+              <div class="aam-action-desc">Browse theory &amp; quiz content uploaded for this assessment slot</div>
+            </div>
+          </button>
+          <button class="aam-action-btn share" onclick="aamClickShare()">
+            <div class="aam-action-icon">&#128640;</div>
+            <div class="aam-action-text-wrap">
+              <div class="aam-action-title">Share with Students</div>
+              <div class="aam-action-desc">Generate a 6-digit PIN &amp; shareable link for students to join live</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- == ASSESSMENT SHARE MODAL == -->
+  <div id="assessShareOverlay" onclick="if(event.target===this)closeAssessShareModal()">
+    <div class="asm-modal">
+      <div class="asm-header">
+        <div class="asm-header-left">
+          <div class="asm-header-title">&#128273; Share Assessment</div>
+          <div class="asm-header-sub" id="asmBreadcrumb">Loading&#8230;</div>
+        </div>
+        <button class="asm-close" onclick="closeAssessShareModal()">&#x2715;</button>
+      </div>
+      <div class="asm-body">
+        <div class="asm-pin-block">
+          <div class="asm-pin-label">Session PIN &mdash; Share with students</div>
+          <div class="asm-pin-digits" id="asmPinDigits">
+            <div class="asm-pin-digit">&#183;</div><div class="asm-pin-digit">&#183;</div>
+            <div class="asm-pin-digit">&#183;</div><div class="asm-pin-digit">&#183;</div>
+            <div class="asm-pin-digit">&#183;</div><div class="asm-pin-digit">&#183;</div>
+          </div>
+          <div class="asm-pin-actions">
+            <button class="asm-copy-btn" id="asmCopyPinBtn" onclick="asmCopyPin()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy PIN
+            </button>
+            <div class="asm-timer"><div class="asm-timer-dot"></div><span id="asmTimerText">10h 0m left</span></div>
+          </div>
+        </div>
+        <div class="asm-url-block">
+          <div class="asm-url-label">Shareable Link</div>
+          <div class="asm-url-row">
+            <div class="asm-url-text" id="asmUrlText">&mdash;</div>
+            <button class="asm-copy-btn" id="asmCopyUrlBtn" onclick="asmCopyUrl()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+        </div>
+        <div class="asm-howto">
+          <div class="asm-howto-title">How Students Join</div>
+          <div class="asm-howto-item">Go to the student portal &rarr; Enter the 6-digit PIN above</div>
+          <div class="asm-howto-item">Or share the link above &mdash; opens the assessment directly</div>
+        </div>
+        <div class="asm-join-counter">
+          <span class="asm-join-count-num" id="asmJoinCount">0</span>
+          <span>students joined</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
