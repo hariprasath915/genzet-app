@@ -10745,55 +10745,113 @@ function amShowSuccess() {
   .lib-category-card { padding: 20px 14px; }
   .lib-category-icon { width: 52px; height: 52px; font-size: 24px; }
 }
-/* ── ASSESSMENT MODE: 10 assessment tiles ── */
+/* ══════════════════════════════════════════════════════════════
+   ASSESSMENT MODE — Premium Tile Grid
+══════════════════════════════════════════════════════════════ */
 .assess-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
 }
 .assess-tile {
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 16px;
-  padding: 24px 16px;
+  border-radius: 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 10px;
   cursor: pointer;
-  transition: all .25s cubic-bezier(.34,1.56,.64,1);
-  box-shadow: var(--shadow);
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
   position: relative;
   overflow: hidden;
+  min-height: 180px;
 }
-.assess-tile::before {
+/* Shimmer overlay on hover */
+.assess-tile::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(145deg, rgba(99,102,241,.14), transparent 65%);
+  background: linear-gradient(135deg,
+    rgba(99,102,241,.18) 0%,
+    rgba(139,92,246,.10) 50%,
+    transparent 100%);
+  opacity: 0;
+  transition: opacity .3s ease;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.assess-tile:hover::after { opacity: 1; }
+.assess-tile:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(99,102,241,.5);
+  box-shadow: 0 16px 40px rgba(99,102,241,.22), 0 0 0 1px rgba(99,102,241,.15);
+}
+.assess-tile:active { transform: translateY(-2px) scale(1.01); }
+/* Thumbnail area */
+.assess-tile-thumb-wrap {
+  width: 100%;
+  flex-shrink: 0;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  position: relative;
+}
+.assess-tile-thumb-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s ease;
+}
+.assess-tile:hover .assess-tile-thumb-wrap img { transform: scale(1.05); }
+/* Play-icon badge over thumb */
+.assess-tile-play-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
   transition: opacity .25s;
-  border-radius: inherit;
+  background: rgba(0,0,0,.25);
 }
-.assess-tile:hover::before { opacity: 1; }
-.assess-tile:hover {
-  transform: translateY(-4px) scale(1.03);
-  border-color: rgba(99,102,241,.4);
-  box-shadow: 0 12px 28px rgba(99,102,241,.18);
+.assess-tile:hover .assess-tile-play-badge { opacity: 1; }
+.assess-tile-play-badge svg { filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+/* Default thumb when no image */
+.assess-tile-thumb-placeholder {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  background: linear-gradient(135deg, rgba(99,102,241,.1), rgba(139,92,246,.08));
+  border-radius: 20px 20px 0 0;
 }
-.assess-tile-number {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+/* Number badge — top-left of placeholder */
+.assess-tile-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(99,102,241,.3);
+  box-shadow: 0 3px 10px rgba(99,102,241,.45);
+  z-index: 2;
+}
+/* Body */
+.assess-tile-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
 }
 .assess-tile-label {
   font-size: 13px;
@@ -10801,24 +10859,335 @@ function amShowSuccess() {
   color: var(--text);
   letter-spacing: .01em;
 }
-.assess-tile-status {
+.assess-tile-desc {
   font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.assess-tile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.assess-tile-status {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
   border-radius: 20px;
+  letter-spacing: .02em;
 }
 .assess-tile-status.has-content {
   background: rgba(16,185,129,.12);
   color: #059669;
-  border: 1px solid rgba(16,185,129,.3);
+  border: 1px solid rgba(16,185,129,.28);
 }
 .assess-tile-status.no-content {
   background: var(--border);
   color: var(--text3);
   border: 1px solid var(--border2);
 }
+.assess-tile-arrow {
+  font-size: 16px;
+  color: var(--text3);
+  transition: transform .25s, color .25s;
+}
+.assess-tile:hover .assess-tile-arrow { transform: translateX(4px); color: #6366f1; }
 @media (max-width: 640px) {
-  .assess-list-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .assess-list-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ASSESSMENT VIEWER OVERLAY — Premium Full-Screen Viewer
+══════════════════════════════════════════════════════════════ */
+#assessViewerOverlay {
+  background: var(--bg);
+}
+/* Premium top bar for assessment viewer */
+.assess-viewer-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 14px;
+  flex-shrink: 0;
+  position: relative;
+}
+.assess-viewer-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.assess-viewer-back-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: rgba(99,102,241,.08);
+}
+.assess-viewer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.10));
+  border: 1px solid rgba(99,102,241,.25);
+  font-size: 11px;
+  font-weight: 700;
+  color: #818cf8;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.assess-viewer-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.assess-viewer-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.assess-viewer-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .2s;
+  font-size: 14px;
+}
+.assess-viewer-ctrl-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: rgba(99,102,241,.08);
+}
+.assess-viewer-ctrl-btn.active {
+  background: rgba(99,102,241,.15);
+  border-color: rgba(99,102,241,.4);
+  color: #818cf8;
+}
+/* Loading state inside iframe area */
+.assess-viewer-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--bg);
+  z-index: 5;
+  transition: opacity .3s ease;
+}
+.assess-viewer-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.assess-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(99,102,241,.15);
+  border-top-color: #6366f1;
+  animation: assessSpin .85s linear infinite;
+}
+@keyframes assessSpin { to { transform: rotate(360deg); } }
+.assess-loading-text {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 600;
+}
+/* Empty state */
+.assess-viewer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  padding: 60px 24px;
+  text-align: center;
+}
+.assess-viewer-empty-icon {
+  font-size: 52px;
+  line-height: 1;
+  opacity: .7;
+}
+.assess-viewer-empty h4 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+.assess-viewer-empty p {
+  font-size: 13px;
+  color: var(--text3);
+  margin: 0;
+  max-width: 280px;
+}
+/* iframe wrapper */
+.assess-iframe-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.assess-iframe-wrap iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  display: block;
+}
+/* Bottom status bar */
+.assess-viewer-statusbar {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.assess-statusbar-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16,185,129,.5);
+  animation: assessPulse 2s ease-in-out infinite;
+}
+@keyframes assessPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .6; transform: scale(.85); }
+}
+.assess-statusbar-label {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.assess-statusbar-label strong {
+  color: var(--text2);
+  font-weight: 700;
+}
+.assess-statusbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.assess-open-external-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all .2s;
+}
+.assess-open-external-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+/* Fullscreen mode — hides statusbar for clean reading */
+#assessViewerOverlay.assess-fullscreen .assess-viewer-statusbar,
+#assessViewerOverlay.assess-fullscreen .assess-viewer-topbar {
+  display: none;
+}
+#assessViewerOverlay.assess-fullscreen .assess-iframe-wrap {
+  height: 100vh;
+}
+/* Code-preview side panel (optional toggle) */
+.assess-code-panel {
+  width: 0;
+  overflow: hidden;
+  transition: width .35s cubic-bezier(.4,0,.2,1);
+  background: #0f172a;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.assess-code-panel.open { width: 400px; }
+.assess-code-header {
+  padding: 10px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.assess-code-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0;
+  line-height: 1;
+  transition: color .15s;
+}
+.assess-code-close:hover { color: #e2e8f0; }
+.assess-code-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #e2e8f0;
+  white-space: pre;
+  tab-size: 2;
+}
+/* Token colours (basic HTML) */
+.assess-code-body .tok-tag    { color: #f472b6; }
+.assess-code-body .tok-attr   { color: #34d399; }
+.assess-code-body .tok-value  { color: #fbbf24; }
+.assess-code-body .tok-comment{ color: #475569; font-style: italic; }
+/* Assess viewer content area layout */
+.assess-viewer-content-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
 }
 /* ── CLASS NUMBER inside class card ── */
 .lib-class-number {
@@ -13365,30 +13734,87 @@ function amShowSuccess() {
 
   </div>
 
-  <!-- ══ ASSESSMENT CONTENT VIEWER OVERLAY ══ -->
+  <!-- ══ ASSESSMENT CONTENT VIEWER OVERLAY — Premium UI ══ -->
   <div class="lesson-viewer-overlay" id="assessViewerOverlay">
     <div class="lv-content-screen active" id="assessViewerScreen">
-      <!-- Top bar -->
-      <div class="lv-content-topbar">
-        <button class="lv-content-back-btn" onclick="closeAssessViewer()">← Back</button>
-        <span class="lv-content-mode-label" id="assessViewerLabel">Assessment</span>
-        <span class="lv-content-lesson-name" id="assessViewerTopicName"></span>
+
+      <!-- Premium Top Bar -->
+      <div class="assess-viewer-topbar">
+        <button class="assess-viewer-back-btn" onclick="closeAssessViewer()" id="assessViewerBackBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <span class="assess-viewer-pill" id="assessViewerPill">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Assessment
+        </span>
+        <div class="assess-viewer-title" id="assessViewerTitle">—</div>
+        <!-- Controls -->
+        <div class="assess-viewer-controls">
+          <!-- Reload -->
+          <button class="assess-viewer-ctrl-btn" onclick="assessViewerReload()" title="Reload content">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <!-- Open in new tab -->
+          <button class="assess-viewer-ctrl-btn" id="assessOpenExtBtn" onclick="assessViewerOpenExternal()" title="Open in new tab">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <!-- Fullscreen toggle -->
+          <button class="assess-viewer-ctrl-btn" id="assessFullscreenBtn" onclick="assessViewerToggleFullscreen()" title="Toggle fullscreen">
+            <svg id="assessFsIconExpand" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <svg id="assessFsIconCompress" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+          </button>
+        </div>
       </div>
-      <!-- Content: HTML iframe -->
-      <div class="lv-content-body">
-        <div class="lv-mode-pane active" id="assessViewerPane">
-          <div class="lv-mode-empty" id="assessViewerEmpty" style="display:none;">
-            <span class="lv-mode-empty-icon">📝</span>
-            <h4>No content uploaded</h4>
-            <p>The admin hasn't added content for this assessment yet.</p>
-          </div>
+
+      <!-- Content area -->
+      <div class="assess-viewer-content-area">
+        <!-- Loading overlay -->
+        <div class="assess-viewer-loading" id="assessViewerLoading">
+          <div class="assess-loading-icon">📝</div>
+          <div class="assess-loading-text">Loading assessment…</div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="assess-viewer-empty" id="assessViewerEmpty" style="display:none;">
+          <div class="assess-viewer-empty-icon">📋</div>
+          <h4>No Content Yet</h4>
+          <p>The admin hasn't uploaded content for this assessment slot yet. Check back soon!</p>
+        </div>
+
+        <!-- iframe + code panel wrapper -->
+        <div class="assess-iframe-wrap" id="assessIframeWrap" style="display:none;">
           <iframe id="assessViewerIframe"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             title="Assessment Content"
-            style="display:none;width:100%;height:100%;border:none;flex:1;">
+            onload="assessIframeLoaded()">
           </iframe>
+          <!-- Side code panel -->
+          <div class="assess-code-panel" id="assessCodePanel">
+            <div class="assess-code-header">
+              <span>HTML Source</span>
+              <button class="assess-code-close" onclick="assessToggleCodePanel()" title="Close panel">✕</button>
+            </div>
+            <div class="assess-code-body" id="assessCodeBody"></div>
+          </div>
         </div>
       </div>
+
+      <!-- Status bar -->
+      <div class="assess-viewer-statusbar" id="assessViewerStatusbar" style="display:none;">
+        <span class="assess-statusbar-dot"></span>
+        <span class="assess-statusbar-label">
+          <span id="assessStatusSubject"></span>
+          <strong id="assessStatusTitle"></strong>
+        </span>
+        <div class="assess-statusbar-right">
+          <button class="assess-open-external-btn" id="assessStatusOpenBtn" onclick="assessViewerOpenExternal()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open in tab
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -19156,24 +19582,38 @@ ${text.substring(0, 4500)}`
       for (let i = 1; i <= 10; i++) {
         const key      = `assessment_${i}`;
         const thumbKey = `thumbnail_url_${i}`;
-        if (!assessData[key]) continue; // ← skip slots with no HTML URL
+        if (!assessData[key]) continue;
 
-        const thumbUrl  = assessData[thumbKey] || '';
-        const thumbHTML = thumbUrl
-          ? `<img src="${thumbUrl}" alt="Assessment ${i}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;display:block;" loading="lazy" />`
-          : `<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--surface2,#1e293b);border-radius:8px 8px 0 0;">📝</div>`;
+        const thumbUrl = assessData[thumbKey] || '';
+        const thumbSection = thumbUrl
+          ? `<div class="assess-tile-thumb-wrap" style="height:110px;">
+               <img src="${thumbUrl}" alt="Assessment ${i}" loading="lazy" style="height:110px;" />
+               <div class="assess-tile-play-badge">
+                 <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+               </div>
+             </div>
+             <div class="assess-tile-badge">${i}</div>`
+          : `<div class="assess-tile-thumb-placeholder">📝
+               <div class="assess-tile-badge">${i}</div>
+             </div>`;
+
         tiles.push(`
-          <div class="assess-tile" onclick="openAssessViewer(${i},'${key}')">
-            ${thumbHTML}
-            <div class="assess-tile-number">${i}</div>
-            <div class="assess-tile-label">Assessment ${i}</div>
-            <div class="assess-tile-status has-content">✓ Available</div>
+          <div class="assess-tile" onclick="openAssessViewer(${i},'${key}')" role="button" tabindex="0"
+               onkeydown="if(event.key==='Enter'||event.key===' ')openAssessViewer(${i},'${key}')">
+            ${thumbSection}
+            <div class="assess-tile-body">
+              <div class="assess-tile-label">Assessment ${i}</div>
+              <div class="assess-tile-desc">${_assessCurrentTopicTitle || ''}</div>
+              <div class="assess-tile-footer">
+                <span class="assess-tile-status has-content">✓ Available</span>
+                <span class="assess-tile-arrow">→</span>
+              </div>
+            </div>
           </div>
         `);
       }
 
       if (tiles.length === 0) {
-        // No assessments uploaded yet for this topic
         grid.innerHTML = `<div class="lessons-empty" style="grid-column:1/-1">
           <div class="lessons-empty-icon">📋</div>
           <h3>No assessments yet</h3>
@@ -19187,37 +19627,129 @@ ${text.substring(0, 4500)}`
       grid._assessData = assessData;
     }
 
-    // ── Open the assessment content viewer ──
+    // ── Open the assessment content viewer (premium) ──
+    let _assessViewerCurrentUrl = null;
+
+    window.assessIframeLoaded = function () {
+      const loading = document.getElementById('assessViewerLoading');
+      const sb      = document.getElementById('assessViewerStatusbar');
+      if (loading) loading.classList.add('hidden');
+      // show statusbar after brief delay
+      setTimeout(() => { if (sb) sb.style.display = ''; }, 300);
+    };
+
+    window.assessViewerReload = function () {
+      const iframe = document.getElementById('assessViewerIframe');
+      const loading = document.getElementById('assessViewerLoading');
+      const sb      = document.getElementById('assessViewerStatusbar');
+      if (iframe && _assessViewerCurrentUrl) {
+        if (loading) loading.classList.remove('hidden');
+        if (sb) sb.style.display = 'none';
+        iframe.src = _assessViewerCurrentUrl;
+      }
+    };
+
+    window.assessViewerOpenExternal = function () {
+      if (_assessViewerCurrentUrl) window.open(_assessViewerCurrentUrl, '_blank');
+    };
+
+    window.assessViewerToggleFullscreen = function () {
+      const overlay  = document.getElementById('assessViewerOverlay');
+      const expand   = document.getElementById('assessFsIconExpand');
+      const compress = document.getElementById('assessFsIconCompress');
+      if (!overlay) return;
+      const isFs = overlay.classList.toggle('assess-fullscreen');
+      if (expand)   expand.style.display   = isFs ? 'none' : '';
+      if (compress) compress.style.display = isFs ? '' : 'none';
+      // Toggle fullscreen API if available
+      if (isFs && document.documentElement.requestFullscreen) {
+        overlay.requestFullscreen().catch(() => {});
+      } else if (!isFs && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+
+    window.assessToggleCodePanel = function () {
+      const panel = document.getElementById('assessCodePanel');
+      if (panel) panel.classList.toggle('open');
+    };
+
     window.openAssessViewer = function (num, key) {
       const grid       = document.getElementById('assessListGrid');
       const assessData = grid ? (grid._assessData || {}) : {};
-      const htmlUrl    = assessData[key]; // public URL from assessment bucket
+      const htmlUrl    = assessData[key];
 
-      const overlay   = document.getElementById('assessViewerOverlay');
-      const iframe    = document.getElementById('assessViewerIframe');
-      const emptyEl   = document.getElementById('assessViewerEmpty');
-      const nameEl    = document.getElementById('assessViewerTopicName');
-      const labelEl   = document.getElementById('assessViewerLabel');
+      const overlay     = document.getElementById('assessViewerOverlay');
+      const iframeWrap  = document.getElementById('assessIframeWrap');
+      const iframe      = document.getElementById('assessViewerIframe');
+      const emptyEl     = document.getElementById('assessViewerEmpty');
+      const loading     = document.getElementById('assessViewerLoading');
+      const titleEl     = document.getElementById('assessViewerTitle');
+      const pillEl      = document.getElementById('assessViewerPill');
+      const statusTitle = document.getElementById('assessStatusTitle');
+      const statusSubj  = document.getElementById('assessStatusSubject');
+      const sb          = document.getElementById('assessViewerStatusbar');
+      const extBtn      = document.getElementById('assessOpenExtBtn');
 
-      if (nameEl)  nameEl.textContent  = `Assessment ${num}`;
-      if (labelEl) labelEl.textContent = `Assessment ${num}`;
-
-      if (htmlUrl) {
-        if (iframe)  { iframe.style.display = ''; iframe.src = htmlUrl; iframe.removeAttribute('srcdoc'); }
-        if (emptyEl) emptyEl.style.display = 'none';
-      } else {
-        if (iframe)  { iframe.style.display = 'none'; iframe.src = 'about:blank'; }
-        if (emptyEl) emptyEl.style.display = '';
+      // Set pill label
+      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
+      if (pillEl) {
+        pillEl.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>${subjectLabel}`;
       }
 
-      if (overlay) overlay.classList.add('open');
+      // Title
+      const label = `${_assessCurrentTopicTitle || 'Assessment'} — #${num}`;
+      if (titleEl) titleEl.textContent = label;
+
+      // Status bar
+      if (statusSubj)  statusSubj.textContent = subjectLabel + ' · ';
+      if (statusTitle) statusTitle.textContent = label;
+
+      _assessViewerCurrentUrl = htmlUrl || null;
+      if (extBtn) extBtn.style.display = htmlUrl ? '' : 'none';
+
+      if (htmlUrl) {
+        // Show loading, hide empty & wrap first
+        if (emptyEl)    { emptyEl.style.display = 'none'; }
+        if (iframeWrap) { iframeWrap.style.display = 'flex'; }
+        if (loading)    { loading.classList.remove('hidden'); }
+        if (sb)         { sb.style.display = 'none'; }
+        if (iframe)     { iframe.src = htmlUrl; }
+        // close code panel if open
+        const codePanel = document.getElementById('assessCodePanel');
+        if (codePanel) codePanel.classList.remove('open');
+      } else {
+        if (loading)    { loading.classList.add('hidden'); }
+        if (iframeWrap) { iframeWrap.style.display = 'none'; }
+        if (emptyEl)    { emptyEl.style.display = ''; }
+        if (sb)         { sb.style.display = 'none'; }
+      }
+
+      if (overlay) {
+        overlay.classList.add('open');
+        overlay.classList.remove('assess-fullscreen');
+        // reset fullscreen icons
+        const exp = document.getElementById('assessFsIconExpand');
+        const cmp = document.getElementById('assessFsIconCompress');
+        if (exp) exp.style.display = '';
+        if (cmp) cmp.style.display = 'none';
+      }
     };
 
     window.closeAssessViewer = function () {
       const overlay = document.getElementById('assessViewerOverlay');
-      if (overlay) overlay.classList.remove('open');
-      const iframe  = document.getElementById('assessViewerIframe');
-      if (iframe) { iframe.src = 'about:blank'; iframe.style.display = 'none'; }
+      if (overlay) {
+        overlay.classList.remove('open');
+        overlay.classList.remove('assess-fullscreen');
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }
+      const iframe = document.getElementById('assessViewerIframe');
+      if (iframe) { iframe.src = 'about:blank'; }
+      _assessViewerCurrentUrl = null;
+      const loading = document.getElementById('assessViewerLoading');
+      const sb = document.getElementById('assessViewerStatusbar');
+      if (loading) loading.classList.remove('hidden');
+      if (sb) sb.style.display = 'none';
     };
 
     // ── Navigation helpers ──
