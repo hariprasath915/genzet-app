@@ -1757,6 +1757,204 @@
       .topic-banner-card { flex-direction: column; text-align: center; }
       .quiz-grid { grid-template-columns: 1fr; }
     }
+
+    /* ========================================================
+       STUDENT ASSESSMENT PORTAL OVERLAY
+       Full-screen viewer that opens after PIN is validated
+    ======================================================== */
+    #studentAssessPortal {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      display: flex;
+      flex-direction: column;
+      background: #04040D;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #studentAssessPortal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .sap-topbar {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(4,4,13,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+      gap: 12px;
+    }
+    .sap-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+    .sap-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sap-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sap-pin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(99,102,241,0.15);
+      border: 1.5px solid rgba(99,102,241,0.3);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #a5b4fc;
+      letter-spacing: 0.12em;
+      flex-shrink: 0;
+    }
+    .sap-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .sap-btn {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .sap-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+    }
+    .sap-btn.danger:hover {
+      background: rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.4);
+      color: #fca5a5;
+    }
+    .sap-iframe-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #sapIframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+    #sapLoading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: #04040D;
+    }
+    #sapLoading.hidden { display: none; }
+    .sap-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(99,102,241,0.2);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: sapSpin 0.8s linear infinite;
+    }
+    @keyframes sapSpin { to { transform: rotate(360deg); } }
+    .sap-loading-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      font-family: var(--font-mono);
+    }
+    #sapError {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 32px;
+      text-align: center;
+      background: #04040D;
+    }
+    #sapError.visible { display: flex; }
+    .sap-error-icon { font-size: 48px; }
+    .sap-error-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: #f87171;
+    }
+    .sap-error-msg {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    .sap-retry-btn {
+      padding: 10px 24px;
+      background: rgba(99,102,241,0.15);
+      border: 1.5px solid rgba(99,102,241,0.35);
+      border-radius: 10px;
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sap-retry-btn:hover {
+      background: rgba(99,102,241,0.28);
+      color: #fff;
+    }
+    /* PIN input shake animation on wrong PIN */
+    @keyframes pinShake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+    .pin-input.shake { animation: pinShake 0.4s ease; }
+    /* Pin error message */
+    #pinError {
+      font-size: 12px;
+      color: #f87171;
+      font-family: var(--font-mono);
+      text-align: center;
+      min-height: 18px;
+      transition: opacity 0.2s;
+    }
+
   </style>
 </head>
 <body>
@@ -1828,6 +2026,7 @@
           <button class="pin-join-btn" id="joinPinBtn">
             Join Session <span>→</span>
           </button>
+          <div id="pinError"></div>
 
           <div class="pin-divider">
             <div class="pin-divider-line"></div>
@@ -2034,6 +2233,7 @@
     /* ══════════════════════════════════════════════════════════════════
        AUTH GUARD — must come from onboarding (haezet_jwt in localStorage)
        ══════════════════════════════════════════════════════════════════ */
+    const BACKEND_URL  = '/api';
     const TOKEN_KEY   = 'haezet_jwt';
     const USER_KEY    = 'haezet_user';
     const SB_URL_KEY  = 'hz_sb_url';
@@ -2466,19 +2666,233 @@
       // Top Learn button
       document.getElementById('topLearnBtn').addEventListener('click', () => { sound('nav'); showScreen('screenSubjects'); });
 
-      // PIN Join
+      // ================================================
+      // PIN JOIN — validate via API, open assessment portal
+      // ================================================
+      let _sapCurrentSession = null;
+
       const pinInput = document.getElementById('pinInput');
       const joinBtn  = document.getElementById('joinPinBtn');
-      function handlePin() {
-        sound('open');
-        joinBtn.textContent = pinInput.value.trim() ? `Joining ${pinInput.value}…` : 'Entering…';
+      const pinError = document.getElementById('pinError');
+
+      function showPinError(msg) {
+        if (pinError) pinError.textContent = msg;
+        pinInput.classList.remove('shake');
+        void pinInput.offsetWidth; // reflow to restart animation
+        pinInput.classList.add('shake');
+        pinInput.style.borderColor = 'rgba(248,113,113,0.6)';
+        pinInput.style.boxShadow   = '0 0 0 3px rgba(248,113,113,0.15)';
         setTimeout(() => {
-          joinBtn.innerHTML = 'Join Session <span>→</span>';
-          showScreen('screenSubjects');
-        }, 500);
+          pinInput.style.borderColor = '';
+          pinInput.style.boxShadow   = '';
+          pinInput.classList.remove('shake');
+        }, 800);
       }
+
+      function clearPinError() {
+        if (pinError) pinError.textContent = '';
+        pinInput.style.borderColor = '';
+        pinInput.style.boxShadow   = '';
+      }
+
+      async function handlePin() {
+        const pin = pinInput.value.trim().replace(/\D/g, '');
+        if (!pin) {
+          showPinError('Please enter a 6-digit PIN');
+          return;
+        }
+        if (pin.length !== 6) {
+          showPinError('PIN must be exactly 6 digits');
+          return;
+        }
+        clearPinError();
+        joinBtn.disabled = true;
+        joinBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Validating PIN…';
+        sound('open');
+
+        try {
+          const res = await fetch(BACKEND_URL + '/sync/assessment-session/by-pin/' + pin);
+          if (res.status === 404) {
+            showPinError('PIN not found. Double-check the code and try again.');
+            joinBtn.disabled = false;
+            joinBtn.innerHTML = 'Join Session <span>→</span>';
+            return;
+          }
+          if (!res.ok) throw new Error('Server error ' + res.status);
+          const session = await res.json();
+
+          if (session.is_expired) {
+            showPinError('This session PIN has expired. Ask your teacher for a new one.');
+            joinBtn.disabled = false;
+            joinBtn.innerHTML = 'Join Session <span>→</span>';
+            return;
+          }
+
+          _sapCurrentSession = session;
+          openStudentAssessPortal(session, pin);
+
+          // Record join event (fire and forget)
+          fetch(BACKEND_URL + '/sync/assessment-session/' + session.id + '/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_email: userMeta.email || null })
+          }).catch(() => {});
+
+        } catch (err) {
+          console.error('[PIN JOIN]', err);
+          showPinError('Connection error. Check your internet and try again.');
+        } finally {
+          joinBtn.disabled = false;
+          joinBtn.innerHTML = 'Join Session <span>→</span>';
+        }
+      }
+
       joinBtn.addEventListener('click', handlePin);
       pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePin(); });
+      // Clear error as user types
+      pinInput.addEventListener('input', clearPinError);
+
+      // ================================================
+      // ASSESSMENT PORTAL — open / close / load
+      // ================================================
+      window.openStudentAssessPortal = function(session, pin) {
+        const portal   = document.getElementById('studentAssessPortal');
+        const sapIframe   = document.getElementById('sapIframe');
+        const loading     = document.getElementById('sapLoading');
+        const errEl       = document.getElementById('sapError');
+        const titleEl     = document.getElementById('sapTitle');
+        const metaEl      = document.getElementById('sapMeta');
+        const pinBadgeEl  = document.getElementById('sapPinBadge');
+        const loadingText = document.getElementById('sapLoadingText');
+
+        // Reset state
+        if (sapIframe) { sapIframe.removeAttribute('srcdoc'); sapIframe.src = 'about:blank'; }
+        if (loading) loading.classList.remove('hidden');
+        if (errEl)   errEl.classList.remove('visible');
+
+        // Set metadata
+        const subjectLabel = { science: 'Science', maths: 'Mathematics', social: 'Social Science' }[session.subject] || 'Assessment';
+        if (titleEl)    titleEl.textContent    = session.topic_title || 'Assessment';
+        if (metaEl)     metaEl.textContent     = subjectLabel + ' · Assessment ' + (session.assessment_num || '');
+        if (pinBadgeEl) pinBadgeEl.textContent = '������ ' + String(pin).padStart(6, '0');
+
+        // Open portal
+        portal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        // Load assessment via srcdoc (same method as teacher viewer)
+        const url = session.assessment_url;
+        if (!url) {
+          if (loadingText) loadingText.textContent = 'No assessment URL found.';
+          setTimeout(() => {
+            if (loading) loading.classList.add('hidden');
+            if (errEl) {
+              document.getElementById('sapErrorTitle').textContent = 'No Content';
+              document.getElementById('sapErrorMsg').textContent   = 'The teacher has not uploaded an assessment file for this session yet.';
+              errEl.classList.add('visible');
+            }
+          }, 800);
+          return;
+        }
+
+        if (loadingText) loadingText.textContent = 'Loading assessment…';
+        _sapLoadContent(url);
+      };
+
+      async function _sapLoadContent(url) {
+        const sapIframe   = document.getElementById('sapIframe');
+        const loading     = document.getElementById('sapLoading');
+        const errEl       = document.getElementById('sapError');
+        try {
+          const res  = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          let html = await res.text();
+          const base = '<base href="' + url + '" target="_blank">';
+          html = html.replace(/(<head[^>]*>)/i, '$1' + base);
+          if (!html.includes('<base')) html = base + html;
+          sapIframe.removeAttribute('src');
+          sapIframe.srcdoc = html;
+          sapIframe.onload = function() {
+            if (loading) loading.classList.add('hidden');
+          };
+        } catch(err) {
+          console.warn('[SAP] fetch failed, trying iframe.src:', err.message);
+          try {
+            sapIframe.removeAttribute('srcdoc');
+            sapIframe.src = url;
+            sapIframe.onload = function() {
+              if (loading) loading.classList.add('hidden');
+            };
+          } catch(_) {
+            if (loading) loading.classList.add('hidden');
+            if (errEl) {
+              document.getElementById('sapErrorTitle').textContent = 'Load Failed';
+              document.getElementById('sapErrorMsg').textContent   = err.message || 'Could not load the assessment. Please try again.';
+              errEl.classList.add('visible');
+            }
+          }
+        }
+      }
+
+      window.closeStudentAssessPortal = function() {
+        const portal  = document.getElementById('studentAssessPortal');
+        const sapIframe  = document.getElementById('sapIframe');
+        portal.classList.remove('open');
+        document.body.style.overflow = '';
+        if (sapIframe) { sapIframe.removeAttribute('srcdoc'); sapIframe.src = 'about:blank'; }
+        _sapCurrentSession = null;
+        // Clear the PIN input
+        if (pinInput) pinInput.value = '';
+        clearPinError();
+      };
+
+      // Wire portal buttons
+      document.getElementById('sapCloseBtn').addEventListener('click', closeStudentAssessPortal);
+
+      document.getElementById('sapReloadBtn').addEventListener('click', function() {
+        if (_sapCurrentSession && _sapCurrentSession.assessment_url) {
+          const loading = document.getElementById('sapLoading');
+          const errEl   = document.getElementById('sapError');
+          if (loading) loading.classList.remove('hidden');
+          if (errEl)   errEl.classList.remove('visible');
+          _sapLoadContent(_sapCurrentSession.assessment_url);
+        }
+      });
+
+      document.getElementById('sapFullscreenBtn').addEventListener('click', function() {
+        const portal = document.getElementById('studentAssessPortal');
+        if (!document.fullscreenElement) portal.requestFullscreen().catch(() => {});
+        else document.exitFullscreen().catch(() => {});
+      });
+
+      // Keyboard: ESC closes portal
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          const portal = document.getElementById('studentAssessPortal');
+          if (portal && portal.classList.contains('open')) closeStudentAssessPortal();
+        }
+      });
+
+      // Auto-join if URL has ?session=<slug>
+      (function checkSessionSlug() {
+        const params = new URLSearchParams(window.location.search);
+        const slug   = params.get('session');
+        if (!slug) return;
+        fetch(BACKEND_URL + '/sync/assessment-session/by-slug/' + slug)
+          .then(r => r.ok ? r.json() : Promise.reject(r.status))
+          .then(session => {
+            if (!session.is_expired) {
+              _sapCurrentSession = session;
+              openStudentAssessPortal(session, session.pin);
+              fetch(BACKEND_URL + '/sync/assessment-session/' + session.id + '/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_email: userMeta.email || null })
+              }).catch(() => {});
+            }
+          })
+          .catch(err => console.warn('[SAP slug]', err));
+      })();
 
       // Explore button
       document.getElementById('exploreBtn').addEventListener('click', () => { sound('nav'); showScreen('screenSubjects'); });
@@ -2552,5 +2966,44 @@
       });
     });
   </script>
+
+  <!-- ===== STUDENT ASSESSMENT PORTAL ===== -->
+  <div id="studentAssessPortal">
+    <div class="sap-topbar">
+      <div class="sap-info">
+        <div class="sap-title" id="sapTitle">Assessment</div>
+        <div class="sap-meta" id="sapMeta"></div>
+      </div>
+      <div class="sap-pin-badge" id="sapPinBadge">&#128273; &#183;&#183;&#183;&#183;&#183;&#183;</div>
+      <div class="sap-actions">
+        <button class="sap-btn" id="sapFullscreenBtn" title="Fullscreen">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          Fullscreen
+        </button>
+        <button class="sap-btn" id="sapReloadBtn" title="Reload">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Reload
+        </button>
+        <button class="sap-btn danger" id="sapCloseBtn" title="Exit assessment">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Exit
+        </button>
+      </div>
+    </div>
+    <div class="sap-iframe-wrap">
+      <div id="sapLoading">
+        <div class="sap-spinner"></div>
+        <div class="sap-loading-text" id="sapLoadingText">Validating PIN…</div>
+      </div>
+      <div id="sapError">
+        <div class="sap-error-icon">&#128274;</div>
+        <div class="sap-error-title" id="sapErrorTitle">Invalid PIN</div>
+        <div class="sap-error-msg" id="sapErrorMsg">This PIN does not exist or has expired. Check the PIN and try again.</div>
+        <button class="sap-retry-btn" onclick="closeStudentAssessPortal()">&#8592; Back to PIN entry</button>
+      </div>
+      <iframe id="sapIframe" allow="fullscreen; autoplay; camera; microphone" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-presentation"></iframe>
+    </div>
+  </div>
+
 </body>
 </html>
