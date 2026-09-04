@@ -19638,6 +19638,93 @@ ${text.substring(0, 4500)}`
       renderAssessListGrid(assessData);
     };
 
+    window.aamClickShare = async function () {
+      closeAssessActionModal();
+      const grid       = document.getElementById('assessListGrid');
+      const assessData = grid ? (grid._assessData || {}) : {};
+      const htmlUrl    = assessData[_aamCurrentKey] || null;
+      const thumbUrl   = assessData['thumbnail_url_' + _aamCurrentNum] || null;
+      _openAssessShareModal({ pin: '......', slug: null, session_id: null, expires_at: null });
+
+      // ── Helper: call the create endpoint with a given token ────────────
+      async function _createSession(tok) {
+        return fetch(BACKEND_URL + '/sync/assessment-session/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+          body: JSON.stringify({
+            subject:        _assessCurrentSubject,
+            topic_title:    _assessCurrentTopicTitle,
+            assessment_num: _aamCurrentNum,
+            assessment_url: htmlUrl,
+            thumbnail_url:  thumbUrl,
+          }),
+        });
+      }
+
+      // ── Helper: try to silently refresh the JWT via /auth/refresh ──────
+      async function _tryRefreshToken(staleToken) {
+        try {
+          const rr = await fetch(BACKEND_URL + '/auth/refresh', {
+            headers: { 'Authorization': 'Bearer ' + staleToken },
+          });
+          if (!rr.ok) return null;
+          const rd = await rr.json();
+          const newTok = rd.token || null;
+          if (newTok) {
+            window.authToken = newTok;
+            localStorage.setItem('haezet_jwt', newTok);
+            console.log('[ASSESS SHARE] Token refreshed silently ✅');
+          }
+          return newTok;
+        } catch (e) {
+          console.warn('[ASSESS SHARE] Refresh attempt failed:', e.message);
+          return null;
+        }
+      }
+
+      try {
+        // Resolve token: prefer window.authToken, fall back to localStorage.
+        // window.authToken can be null on the legacy/passkey login path even
+        // though a valid JWT is stored in localStorage under 'haezet_jwt'.
+        let token = window.authToken || localStorage.getItem('haezet_jwt') || '';
+        if (!token) {
+          const pinDigits = document.getElementById('asmPinDigits');
+          if (pinDigits) pinDigits.innerHTML = '<div style="color:#f87171;font-size:13px;font-weight:600;">&#9888; Please log in to share an assessment.</div>';
+          return;
+        }
+
+        let res = await _createSession(token);
+
+        // ── Auto-refresh on 401 and retry once ────────────────────────────
+        if (res.status === 401) {
+          console.warn('[ASSESS SHARE] Got 401 — attempting silent token refresh…');
+          const newToken = await _tryRefreshToken(token);
+          if (newToken) {
+            // Retry the create call with the fresh token
+            res = await _createSession(newToken);
+            token = newToken;
+          } else {
+            // Refresh also failed — ask user to log in again
+            window.authToken = null;
+            localStorage.removeItem('haezet_jwt');
+            const pinDigits = document.getElementById('asmPinDigits');
+            if (pinDigits) pinDigits.innerHTML = '<div style="color:#f87171;font-size:13px;font-weight:600;">&#9888; Session expired &mdash; please log out and log in again.</div>';
+            return;
+          }
+        }
+
+        if (!res.ok) throw new Error('Server error ' + res.status);
+        const data = await res.json();
+        // Promote the resolved token back to window so subsequent calls skip localStorage lookup
+        if (!window.authToken) window.authToken = token;
+        _openAssessShareModal(data);
+      } catch (err) {
+        console.error('[ASSESS SHARE]', err);
+        const pinDigits = document.getElementById('asmPinDigits');
+        if (pinDigits) pinDigits.innerHTML = '<div style="color:#f87171;font-size:13px;font-weight:600;">&#9888; ' + err.message + '</div>';
+      }
+    };
+
     // ── Open theory URL in the viewer overlay ──
     window.openAssessTheoryViewer = function (url) {
       const overlay   = document.getElementById('assessViewerOverlay');
@@ -20141,36 +20228,6 @@ window.assessViewerReload = function () {
       closeAssessActionModal();
       if (_aamCurrentNum !== null && _aamCurrentKey !== null) {
         openAssessViewer(_aamCurrentNum, _aamCurrentKey);
-      }
-    };
-
-    window.aamClickShare = async function () {
-      closeAssessActionModal();
-      const grid       = document.getElementById('assessListGrid');
-      const assessData = grid ? (grid._assessData || {}) : {};
-      const htmlUrl    = assessData[_aamCurrentKey] || null;
-      const thumbUrl   = assessData['thumbnail_url_' + _aamCurrentNum] || null;
-      _openAssessShareModal({ pin: '......', slug: null, session_id: null, expires_at: null });
-      try {
-        const token = (window.authUser && window.authUser.access_token) ? window.authUser.access_token : '';
-        const res = await fetch(BACKEND_URL + '/sync/assessment-session/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({
-            subject:        _assessCurrentSubject,
-            topic_title:    _assessCurrentTopicTitle,
-            assessment_num: _aamCurrentNum,
-            assessment_url: htmlUrl,
-            thumbnail_url:  thumbUrl,
-          }),
-        });
-        if (!res.ok) throw new Error('Server error ' + res.status);
-        const data = await res.json();
-        _openAssessShareModal(data);
-      } catch (err) {
-        console.error('[ASSESS SHARE]', err);
-        const pinDigits = document.getElementById('asmPinDigits');
-        if (pinDigits) pinDigits.innerHTML = '<div style="color:#f87171;font-size:13px;font-weight:600;">⚠ ' + err.message + '</div>';
       }
     };
 
