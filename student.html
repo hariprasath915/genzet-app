@@ -351,275 +351,412 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ════════════════════════════════════════════════════════════════
-       SCREEN 1 — PIN ENTRY (AURORA HERO)
-       ════════════════════════════════════════════════════════════════ */
+    /* ════════════════════════════════════════════════════════════════════
+       SCREEN 1 — KAHOOT-STYLE PIN ENTRY
+       ════════════════════════════════════════════════════════════════════ */
+
+    /* Floating particles canvas */
+    #pinParticles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+
     .pin-hero {
       width: 100%;
-      min-height: calc(100vh - 140px);
+      min-height: calc(100vh - 68px);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      gap: 40px;
+      gap: 0;
+      position: relative;
+      z-index: 1;
+      padding: 20px 16px 40px;
     }
 
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      background: rgba(79, 142, 247, 0.12);
-      border: 1px solid rgba(79, 142, 247, 0.25);
-      border-radius: 100px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--neon-cyan);
-    }
-
-    .hero-eyebrow-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--neon-cyan);
-      animation: pulseDot 2s ease-in-out infinite;
-    }
-
-    .hero-headline {
-      font-family: var(--font-display);
-      font-size: clamp(3rem, 8vw, 6rem);
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    .headline-line-1 {
-      display: block;
-      color: var(--text-primary);
-    }
-
-    .headline-line-2 {
-      display: block;
-      background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 50%, var(--neon-pink) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-subtext {
-      font-size: 1.15rem;
-      color: var(--text-secondary);
-      max-width: 500px;
-      font-weight: 400;
-      line-height: 1.7;
-    }
-
-    /* PIN card - Glassmorphism */
-    .pin-glass-card {
-      width: 100%;
-      max-width: 420px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 36px;
+    /* Brand logo at top of pin screen */
+    .kah-logo-wrap {
+      margin-bottom: 28px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      position: relative;
-      overflow: hidden;
+      align-items: center;
+      gap: 6px;
     }
-
-    .pin-glass-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    }
-
-    .pin-card-label {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      text-align: left;
-    }
-
-    .pin-field-wrap {
-      position: relative;
-    }
-
-    .pin-field-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.2rem;
-      opacity: 0.5;
-    }
-
-    .pin-input {
-      width: 100%;
-      height: 58px;
-      padding: 0 20px 0 48px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 700;
-      text-align: center;
-      letter-spacing: 0.15em;
-      color: var(--text-primary);
-      outline: none;
-      transition: all var(--duration-fast) var(--ease-smooth);
-    }
-
-    .pin-input::placeholder {
-      color: rgba(255, 255, 255, 0.2);
-      letter-spacing: 0.06em;
-      font-size: 1.1rem;
-    }
-
-    .pin-input:focus {
-      border-color: var(--neon-blue);
-      background: rgba(79, 142, 247, 0.06);
-      box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.15), 0 0 24px rgba(79, 142, 247, 0.1);
-    }
-
-    .pin-join-btn {
-      width: 100%;
-      height: 56px;
+    .kah-logo-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
       background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
-      border: none;
-      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 30px rgba(79,142,247,.5), 0 0 60px rgba(168,85,247,.2);
+      animation: logoFloat 4s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .kah-logo-name {
       font-family: var(--font-display);
       font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      letter-spacing: 0.02em;
-      position: relative;
-      overflow: hidden;
-      transition: all var(--duration-fast) var(--ease-spring);
-      box-shadow: 0 0 30px rgba(79, 142, 247, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    .pin-join-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-      opacity: 0;
-      transition: opacity var(--duration-fast);
-    }
-
-    .pin-join-btn:hover::before {
-      opacity: 1;
-    }
-
-    .pin-join-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 48px rgba(79, 142, 247, 0.5), 0 12px 32px rgba(0, 0, 0, 0.35);
-    }
-
-    .pin-join-btn:active {
-      transform: translateY(1px);
-    }
-
-    .pin-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pin-divider-line {
-      flex: 1;
-      height: 1px;
-      background: var(--glass-border);
-    }
-
-    .pin-divider-text {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      letter-spacing: 0.06em;
-    }
-
-    .explore-btn {
-      width: 100%;
-      height: 50px;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 12px;
-      font-family: var(--font-body);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all var(--duration-fast) var(--ease-smooth);
-    }
-
-    .explore-btn:hover {
-      background: var(--glass-hover);
-      border-color: rgba(255, 255, 255, 0.14);
+      font-weight: 800;
+      letter-spacing: -0.02em;
       color: var(--text-primary);
     }
-
-    /* Stats row below PIN card */
-    .hero-stats-row {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .hero-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .hero-stat-num {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 800;
+    .kah-logo-name em {
+      font-style: normal;
       background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .hero-stat-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-family: var(--font-mono);
+    /* Main card */
+    .kah-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(10,10,26,0.88);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 28px;
+      padding: 36px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    }
+    .kah-card::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(79,142,247,.4), rgba(168,85,247,.4), transparent);
     }
 
+    /* "Game PIN" label */
+    .kah-game-pin-label {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* 6-box digit input row */
+    .kah-digit-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      cursor: text;
+      position: relative;
+    }
+    .kah-digit {
+      width: 58px; height: 68px;
+      background: rgba(255,255,255,0.04);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      transition: all 200ms cubic-bezier(.34,1.56,.64,1);
+      user-select: none;
+    }
+    .kah-digit.filled {
+      background: rgba(79,142,247,0.12);
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 20px rgba(79,142,247,0.25);
+      transform: scale(1.05);
+    }
+    .kah-digit.active-focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 3px rgba(6,214,214,0.2), 0 0 24px rgba(6,214,214,0.15);
+    }
+    .kah-digit.error {
+      border-color: #f87171 !important;
+      background: rgba(248,113,113,0.1) !important;
+      box-shadow: 0 0 0 3px rgba(248,113,113,0.15) !important;
+      animation: digitShake 0.5s ease-in-out;
+    }
+    @keyframes digitShake {
+      0%,100% { transform: translateX(0) scale(1.05); }
+      20% { transform: translateX(-6px) scale(1.05); }
+      40% { transform: translateX(6px) scale(1.05); }
+      60% { transform: translateX(-4px) scale(1.05); }
+      80% { transform: translateX(4px) scale(1.05); }
+    }
+    /* Hidden real input behind digit row */
+    #pinInput {
+      position: absolute; opacity: 0; width: 1px; height: 1px;
+      pointer-events: none; top: 0; left: 0; font-size: 16px;
+    }
+
+    .kah-pin-error {
+      font-size: 0.82rem;
+      color: #f87171;
+      min-height: 18px;
+      font-family: var(--font-body);
+      text-align: center;
+      margin-top: -8px;
+    }
+
+    /* Name input */
+    .kah-name-wrap {
+      width: 100%;
+      position: relative;
+    }
+    .kah-name-input {
+      width: 100%;
+      height: 54px;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding: 0 20px 0 48px;
+      outline: none;
+      transition: all 200ms ease;
+    }
+    .kah-name-input::placeholder { color: rgba(255,255,255,0.25); }
+    .kah-name-input:focus {
+      border-color: var(--neon-purple);
+      background: rgba(168,85,247,0.07);
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+    }
+    .kah-name-icon {
+      position: absolute; left: 16px; top: 50%;
+      transform: translateY(-50%); font-size: 1.1rem; opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* JOIN button */
+    .kah-join-btn {
+      width: 100%;
+      height: 62px;
+      background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-blue) 100%);
+      border: none;
+      border-radius: 16px;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      position: relative; overflow: hidden;
+      transition: all 180ms cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 0 40px rgba(168,85,247,.4), 0 12px 32px rgba(0,0,0,.4);
+    }
+    .kah-join-btn:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 0 60px rgba(168,85,247,.55), 0 16px 40px rgba(0,0,0,.45);
+    }
+    .kah-join-btn:active { transform: translateY(1px); }
+    .kah-join-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .kah-join-btn::before {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.18), transparent);
+      opacity: 0; transition: opacity 180ms;
+    }
+    .kah-join-btn:hover::before { opacity: 1; }
+
+    /* OR divider */
+    .kah-divider {
+      width: 100%; display: flex; align-items: center; gap: 12px;
+    }
+    .kah-divider-line { flex:1; height:1px; background: rgba(255,255,255,0.08); }
+    .kah-divider-text { font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: .06em; }
+
+    .explore-btn {
+      width: 100%; height: 50px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      font-family: var(--font-body); font-size: 0.95rem; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 200ms ease;
+    }
+    .explore-btn:hover {
+      background: var(--glass-hover);
+      border-color: rgba(255,255,255,.14);
+      color: var(--text-primary);
+    }
+
+    /* ── LOBBY SCREEN ─────────────────────────────────────── */
+    .lobby-wrap {
+      width: 100%; max-width: 520px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 24px; padding: 20px 16px 60px;
+      min-height: calc(100vh - 68px);
+      justify-content: center;
+    }
+    .lobby-session-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .lobby-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 800; color: var(--text-primary);
+      letter-spacing: -0.02em; text-align: center;
+    }
+    .lobby-pin-chip {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 10px 28px;
+      background: rgba(79,142,247,0.1);
+      border: 1px solid rgba(79,142,247,0.3);
+      border-radius: 100px;
+    }
+    .lobby-pin-label {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .lobby-pin-num {
+      font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700;
+      letter-spacing: .25em; color: var(--neon-cyan);
+    }
+    .lobby-counter-card {
+      width: 100%;
+      background: rgba(10,10,26,0.88);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 28px 24px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+      position: relative; overflow: hidden;
+    }
+    .lobby-counter-card::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(79,142,247,.35), rgba(168,85,247,.35), transparent);
+    }
+    .lobby-count-num {
+      font-family: var(--font-display);
+      font-size: 5rem; font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 300ms cubic-bezier(.34,1.56,.64,1);
+    }
+    .lobby-count-label {
+      font-family: var(--font-body);
+      font-size: 0.88rem; color: var(--text-secondary); letter-spacing: .04em;
+    }
+    .lobby-avatars {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 8px; min-height: 52px; width: 100%;
+    }
+    .lobby-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 2px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem;
+      animation: avatarPop 400ms cubic-bezier(.34,1.56,.64,1) forwards;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    @keyframes avatarPop {
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+    .lobby-waiting-row {
+      display: flex; align-items: center; gap: 10px; margin-top: 4px;
+    }
+    .lobby-waiting-dots {
+      display: flex; gap: 5px; align-items: center;
+    }
+    .lobby-waiting-dots span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--neon-purple);
+      animation: lobbyDot 1.4s ease-in-out infinite;
+    }
+    .lobby-waiting-dots span:nth-child(2) { animation-delay: .2s; }
+    .lobby-waiting-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes lobbyDot {
+      0%,80%,100% { transform: scale(0.6); opacity: .4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+    .lobby-waiting-text {
+      font-family: var(--font-body);
+      font-size: 0.85rem; color: var(--text-muted);
+    }
+    .lobby-name-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.25);
+      border-radius: 100px;
+      font-family: var(--font-body); font-size: 0.9rem; font-weight: 600;
+      color: var(--neon-purple);
+    }
+    .lobby-leave-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px; padding: 8px 20px;
+      font-family: var(--font-body); font-size: 0.84rem;
+      color: var(--text-muted); cursor: pointer;
+      transition: all 180ms ease;
+    }
+    .lobby-leave-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+
+    /* Countdown overlay */
+    .lobby-countdown {
+      position: fixed; inset: 0;
+      background: rgba(4,4,13,0.96);
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      z-index: 999; text-align: center;
+    }
+    .lobby-countdown.visible { display: flex; }
+    .lobby-countdown-num {
+      font-family: var(--font-display);
+      font-size: clamp(6rem, 20vw, 12rem);
+      font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: countPop 900ms cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes countPop {
+      from { transform: scale(2.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .lobby-countdown-label {
+      font-family: var(--font-display);
+      font-size: 1.2rem; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* Hero stats row (kept below PIN card) */
+    .hero-stats-row {
+      display: flex; gap: 32px; align-items: center;
+      justify-content: center; flex-wrap: wrap;
+      margin-top: 32px;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .hero-stat-num {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-stat-label {
+      font-size: 0.75rem; color: var(--text-muted);
+      letter-spacing: .06em; text-transform: uppercase; font-family: var(--font-mono);
+    }
     .hero-stat-divider {
-      width: 1px;
-      height: 36px;
-      background: var(--glass-border);
+      width: 1px; height: 36px; background: var(--glass-border);
     }
 
     /* ════════════════════════════════════════════════════════════════
@@ -1994,51 +2131,61 @@
 
     <!-- ══════════════ SCREEN 1: PIN ENTRY ══════════════ -->
     <section class="screen active" id="screenPin">
+      <canvas id="pinParticles"></canvas>
       <div class="pin-hero">
-        <div class="hero-eyebrow">
-          <div class="hero-eyebrow-dot"></div>
-          Interactive Learning Platform
+
+        <!-- Animated brand logo -->
+        <div class="kah-logo-wrap">
+          <div class="kah-logo-icon">🧠</div>
+          <div class="kah-logo-name">Hae<em>zet</em></div>
         </div>
 
-        <h1 class="hero-headline">
-          <span class="headline-line-1">Where Students</span>
-          <span class="headline-line-2">Master Anything.</span>
-        </h1>
+        <!-- Kahoot-style glass card -->
+        <div class="kah-card">
+          <div class="kah-game-pin-label">Game PIN</div>
 
-        <p class="hero-subtext">
-          Enter your learning session PIN to join a live class, or explore all subjects and topics on your own.
-        </p>
+          <!-- 6-box digit display — click anywhere on it to type -->
+          <div class="kah-digit-row" id="kahDigitRow">
+            <div class="kah-digit" id="kd0">_</div>
+            <div class="kah-digit" id="kd1">_</div>
+            <div class="kah-digit" id="kd2">_</div>
+            <div class="kah-digit" id="kd3">_</div>
+            <div class="kah-digit" id="kd4">_</div>
+            <div class="kah-digit" id="kd5">_</div>
+            <!-- Hidden real input: keyboard input goes here -->
+            <input type="text" id="pinInput" inputmode="numeric" maxlength="6" autocomplete="off" />
+          </div>
 
-        <div class="pin-glass-card">
-          <div class="pin-card-label">Enter Session PIN</div>
-          <div class="pin-field-wrap">
-            <span class="pin-field-icon">🔑</span>
+          <div class="kah-pin-error" id="pinError"></div>
+
+          <!-- Nickname input -->
+          <div class="kah-name-wrap">
+            <span class="kah-name-icon">👤</span>
             <input
               type="text"
-              id="pinInput"
-              class="pin-input"
-              placeholder="·  ·  ·  ·  ·  ·"
-              maxlength="10"
-              autocomplete="off"
-              inputmode="numeric"
+              id="nicknameInput"
+              class="kah-name-input"
+              placeholder="Your nickname"
+              maxlength="24"
+              autocomplete="nickname"
             />
           </div>
-          <button class="pin-join-btn" id="joinPinBtn">
-            Join Session <span>→</span>
-          </button>
-          <div id="pinError"></div>
 
-          <div class="pin-divider">
-            <div class="pin-divider-line"></div>
-            <div class="pin-divider-text">or</div>
-            <div class="pin-divider-line"></div>
+          <!-- JOIN button -->
+          <button class="kah-join-btn" id="joinPinBtn">JOIN</button>
+
+          <div class="kah-divider">
+            <div class="kah-divider-line"></div>
+            <div class="kah-divider-text">or</div>
+            <div class="kah-divider-line"></div>
           </div>
 
           <button class="explore-btn" id="exploreBtn">
-            ✦ &nbsp; Explore Subjects &amp; Topics
+            🌍 &nbsp; Explore Subjects &amp; Topics
           </button>
         </div>
 
+        <!-- Stats row -->
         <div class="hero-stats-row">
           <div class="hero-stat">
             <div class="hero-stat-num">3</div>
@@ -2057,6 +2204,47 @@
         </div>
       </div>
     </section>
+
+    <!-- ═══════════════ LOBBY SCREEN ═══════════════ -->
+    <section class="screen" id="screenLobby">
+      <div class="lobby-wrap">
+        <div class="lobby-session-label">Session Lobby</div>
+        <div class="lobby-title" id="lobbySessionTitle">Waiting for teacher...</div>
+
+        <!-- PIN chip -->
+        <div class="lobby-pin-chip">
+          <span class="lobby-pin-label">PIN</span>
+          <span class="lobby-pin-num" id="lobbyPinDisplay">——————</span>
+        </div>
+
+        <!-- Counter card -->
+        <div class="lobby-counter-card">
+          <div class="lobby-count-num" id="lobbyCountNum">0</div>
+          <div class="lobby-count-label">players joined</div>
+          <div class="lobby-avatars" id="lobbyAvatars"></div>
+          <div class="lobby-waiting-row">
+            <div class="lobby-waiting-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="lobby-waiting-text">Waiting for the teacher to start</div>
+          </div>
+        </div>
+
+        <!-- Name chip -->
+        <div class="lobby-name-chip" id="lobbyNameChip">
+          <span>👤</span>
+          <span id="lobbyNameDisplay">Player</span>
+        </div>
+
+        <button class="lobby-leave-btn" id="lobbyLeaveBtn">&#8592; Leave session</button>
+      </div>
+    </section>
+
+    <!-- Countdown overlay -->
+    <div class="lobby-countdown" id="lobbyCountdown">
+      <div class="lobby-countdown-num" id="lobbyCountdownNum">3</div>
+      <div class="lobby-countdown-label">Get Ready!</div>
+    </div>
 
     <!-- ══════════════ SCREEN 2: SUBJECTS ══════════════ -->
     <section class="screen" id="screenSubjects">
@@ -2667,90 +2855,218 @@
       document.getElementById('topLearnBtn').addEventListener('click', () => { sound('nav'); showScreen('screenSubjects'); });
 
       // ================================================
-      // PIN JOIN — validate via API, open assessment portal
+      // KAHOOT-STYLE PIN JOIN — 6-digit boxes + lobby
       // ================================================
       let _sapCurrentSession = null;
+      let _lobbyPollTimer    = null;
+      let _lobbyJoinCount    = 0;
+      let _lobbyNickname     = '';
 
-      const pinInput = document.getElementById('pinInput');
-      const joinBtn  = document.getElementById('joinPinBtn');
-      const pinError = document.getElementById('pinError');
+      // ── Floating particle canvas on PIN screen ─────────────────────
+      (function initPinParticles() {
+        const canvas = document.getElementById('pinParticles');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const COLORS = ['#4F8EF7','#A855F7','#06D6D6','#10F068','#F72585','#FF7A30'];
+        let W, H, particles = [];
+        function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+        resize();
+        window.addEventListener('resize', resize);
+        for (let i = 0; i < 55; i++) {
+          particles.push({
+            x: Math.random() * 1920, y: Math.random() * 1080,
+            r: Math.random() * 3 + 1.5,
+            c: COLORS[Math.floor(Math.random() * COLORS.length)],
+            vx: (Math.random() - .5) * .5,
+            vy: -(Math.random() * .6 + .15),
+            phase: Math.random() * Math.PI * 2,
+          });
+        }
+        function tick() {
+          ctx.clearRect(0, 0, W, H);
+          particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.y < -10) { p.y = H + 10; p.x = Math.random() * W; }
+            const alpha = (Math.sin(Date.now() / 1200 + p.phase) * .5 + .5) * .55;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = p.c; ctx.globalAlpha = alpha; ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+          requestAnimationFrame(tick);
+        }
+        tick();
+      })();
+
+      // ── 6-box PIN digit display ─────────────────────────────────────
+      const pinInput   = document.getElementById('pinInput');
+      const pinError   = document.getElementById('pinError');
+      const joinBtn    = document.getElementById('joinPinBtn');
+      const digitBoxes = [0,1,2,3,4,5].map(i => document.getElementById('kd'+i));
+
+      function updateDigitDisplay(val) {
+        const digits = val.replace(/\D/g, '').slice(0, 6).split('');
+        const focusIdx = document.activeElement === pinInput ? digits.length : -1;
+        digitBoxes.forEach((box, i) => {
+          const ch = digits[i];
+          box.textContent = ch || '_';
+          box.classList.toggle('filled', !!ch);
+          box.classList.toggle('active-focus', i === focusIdx && i < 6);
+          box.classList.remove('error');
+        });
+      }
+
+      // Click on digit row → focus hidden input
+      document.getElementById('kahDigitRow').addEventListener('click', () => pinInput.focus());
+
+      pinInput.addEventListener('focus', () => updateDigitDisplay(pinInput.value));
+      pinInput.addEventListener('blur',  () => updateDigitDisplay(pinInput.value));
+      pinInput.addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 6);
+        e.target.value = v;
+        pinError.textContent = '';
+        updateDigitDisplay(v);
+        if (v.length === 6) setTimeout(handlePin, 300); // auto-submit on 6 digits
+      });
 
       function showPinError(msg) {
         if (pinError) pinError.textContent = msg;
-        pinInput.classList.remove('shake');
-        void pinInput.offsetWidth; // reflow to restart animation
-        pinInput.classList.add('shake');
-        pinInput.style.borderColor = 'rgba(248,113,113,0.6)';
-        pinInput.style.boxShadow   = '0 0 0 3px rgba(248,113,113,0.15)';
-        setTimeout(() => {
-          pinInput.style.borderColor = '';
-          pinInput.style.boxShadow   = '';
-          pinInput.classList.remove('shake');
-        }, 800);
+        digitBoxes.forEach(b => b.classList.add('error'));
+        setTimeout(() => digitBoxes.forEach(b => { b.classList.remove('error'); updateDigitDisplay(pinInput.value); }), 700);
       }
-
       function clearPinError() {
         if (pinError) pinError.textContent = '';
-        pinInput.style.borderColor = '';
-        pinInput.style.boxShadow   = '';
+        digitBoxes.forEach(b => b.classList.remove('error'));
       }
 
+      // ── Emoji avatars for lobby ────────────────────────────────────
+      const LOBBY_EMOJIS = ['🦁','🐯','🦊','🐺','🦋','🐲','🦄','🐸','🐧','🦅','🐬','🌟','⚡','🔥','💎','🌈','🎯','🚀','🧩','🎮'];
+      function randomEmoji() { return LOBBY_EMOJIS[Math.floor(Math.random() * LOBBY_EMOJIS.length)]; }
+
+      function updateLobbyCount(count) {
+        const numEl  = document.getElementById('lobbyCountNum');
+        const avWrap = document.getElementById('lobbyAvatars');
+        if (count === _lobbyJoinCount) return;
+        const added = Math.max(0, count - _lobbyJoinCount);
+        _lobbyJoinCount = count;
+        // Animate number
+        numEl.style.animation = 'none'; void numEl.offsetWidth; numEl.style.animation = '';
+        numEl.textContent = count;
+        // Add emoji avatars for new joiners
+        for (let i = 0; i < Math.min(added, 12); i++) {
+          if (avWrap.childElementCount >= 18) avWrap.firstChild.remove();
+          const av = document.createElement('div');
+          av.className = 'lobby-avatar';
+          av.textContent = randomEmoji();
+          avWrap.appendChild(av);
+        }
+      }
+
+      function openLobby(session, pin, nickname) {
+        _lobbyJoinCount = 0;
+        const titleEl = document.getElementById('lobbySessionTitle');
+        if (titleEl) titleEl.textContent = session.topic_title || 'Live Session';
+        const pinEl = document.getElementById('lobbyPinDisplay');
+        if (pinEl) pinEl.textContent = pin;
+        const nameEl = document.getElementById('lobbyNameDisplay');
+        if (nameEl) nameEl.textContent = nickname || 'Player';
+        const avWrap = document.getElementById('lobbyAvatars');
+        if (avWrap) avWrap.innerHTML = '';
+        const numEl = document.getElementById('lobbyCountNum');
+        if (numEl) numEl.textContent = '0';
+        showScreen('screenLobby');
+        // Add own avatar immediately
+        updateLobbyCount(1);
+        _pollLobbyCount(session.id);
+      }
+
+      function _pollLobbyCount(sessionId) {
+        clearInterval(_lobbyPollTimer);
+        _lobbyPollTimer = setInterval(async () => {
+          try {
+            const r = await fetch(BACKEND_URL + '/sync/assessment-session/' + sessionId + '/join-count');
+            if (r.ok) { const d = await r.json(); updateLobbyCount(d.count || 0); }
+          } catch(e) {}
+        }, 3000);
+      }
+
+      function startLobbyCountdown(cb) {
+        const overlay = document.getElementById('lobbyCountdown');
+        const numEl   = document.getElementById('lobbyCountdownNum');
+        let count = 3;
+        overlay.classList.add('visible');
+        numEl.style.animation = 'none'; void numEl.offsetWidth; numEl.style.animation = '';
+        numEl.textContent = count;
+        const t = setInterval(() => {
+          count--;
+          if (count > 0) {
+            numEl.style.animation = 'none'; void numEl.offsetWidth; numEl.style.animation = '';
+            numEl.textContent = count;
+          } else {
+            clearInterval(t);
+            overlay.classList.remove('visible');
+            if (cb) cb();
+          }
+        }, 900);
+      }
+
+      // ── Main join handler ──────────────────────────────────────────
       async function handlePin() {
         const pin = pinInput.value.trim().replace(/\D/g, '');
-        if (!pin) {
-          showPinError('Please enter a 6-digit PIN');
-          return;
-        }
-        if (pin.length !== 6) {
-          showPinError('PIN must be exactly 6 digits');
-          return;
-        }
+        if (!pin) { showPinError('Enter a 6-digit Game PIN'); return; }
+        if (pin.length !== 6) { showPinError('PIN must be exactly 6 digits'); return; }
+        const nickname = (document.getElementById('nicknameInput').value.trim() || 'Student');
         clearPinError();
         joinBtn.disabled = true;
-        joinBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Validating PIN…';
+        joinBtn.textContent = 'Checking...';
         sound('open');
 
         try {
           const res = await fetch(BACKEND_URL + '/sync/assessment-session/by-pin/' + pin);
           if (res.status === 404) {
-            showPinError('PIN not found. Double-check the code and try again.');
-            joinBtn.disabled = false;
-            joinBtn.innerHTML = 'Join Session <span>→</span>';
-            return;
+            showPinError('PIN not found — double-check and try again');
+            joinBtn.disabled = false; joinBtn.textContent = 'JOIN'; return;
           }
           if (!res.ok) throw new Error('Server error ' + res.status);
           const session = await res.json();
 
           if (session.is_expired) {
-            showPinError('This session PIN has expired. Ask your teacher for a new one.');
-            joinBtn.disabled = false;
-            joinBtn.innerHTML = 'Join Session <span>→</span>';
-            return;
+            showPinError('This session has expired. Ask your teacher for a new PIN.');
+            joinBtn.disabled = false; joinBtn.textContent = 'JOIN'; return;
           }
 
           _sapCurrentSession = session;
-          openStudentAssessPortal(session, pin);
+          _lobbyNickname = nickname;
 
-          // Record join event (fire and forget)
+          // Record join event (fire-and-forget)
           fetch(BACKEND_URL + '/sync/assessment-session/' + session.id + '/join', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ student_email: userMeta.email || null })
+            body: JSON.stringify({ student_email: userMeta.email || null, nickname })
           }).catch(() => {});
 
-        } catch (err) {
+          // Show lobby → short wait → countdown → launch assessment
+          openLobby(session, pin, nickname);
+          setTimeout(() => {
+            clearInterval(_lobbyPollTimer);
+            startLobbyCountdown(() => openStudentAssessPortal(session, pin));
+          }, 3500);
+
+        } catch(err) {
           console.error('[PIN JOIN]', err);
-          showPinError('Connection error. Check your internet and try again.');
+          showPinError('Connection error — check your internet');
         } finally {
-          joinBtn.disabled = false;
-          joinBtn.innerHTML = 'Join Session <span>→</span>';
+          joinBtn.disabled = false; joinBtn.textContent = 'JOIN';
         }
       }
 
       joinBtn.addEventListener('click', handlePin);
       pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePin(); });
-      // Clear error as user types
-      pinInput.addEventListener('input', clearPinError);
+      document.getElementById('nicknameInput').addEventListener('keydown', e => { if (e.key === 'Enter') handlePin(); });
+      document.getElementById('lobbyLeaveBtn').addEventListener('click', () => {
+        clearInterval(_lobbyPollTimer);
+        showScreen('screenPin');
+        sound('nav');
+      });
 
       // ================================================
       // ASSESSMENT PORTAL — open / close / load
@@ -2774,7 +3090,7 @@
         const subjectLabel = { science: 'Science', maths: 'Mathematics', social: 'Social Science' }[session.subject] || 'Assessment';
         if (titleEl)    titleEl.textContent    = session.topic_title || 'Assessment';
         if (metaEl)     metaEl.textContent     = subjectLabel + ' · Assessment ' + (session.assessment_num || '');
-        if (pinBadgeEl) pinBadgeEl.textContent = '������ ' + String(pin).padStart(6, '0');
+        if (pinBadgeEl) pinBadgeEl.textContent = '���� ' + String(pin).padStart(6, '0');
 
         // Open portal
         portal.classList.add('open');
