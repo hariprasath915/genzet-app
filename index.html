@@ -13873,7 +13873,7 @@ function amShowSuccess() {
           <iframe id="assessViewerIframe"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             title="Assessment Content"
-            onload="assessIframeLoaded()">
+            onload="if (window.assessIframeLoaded) assessIframeLoaded()">
           </iframe>
           <!-- Side code panel -->
           <div class="assess-code-panel" id="assessCodePanel">
@@ -14673,6 +14673,37 @@ function amShowSuccess() {
       }
     }
 
+    // ── SSE stream reader for /generate-simulation-stream ───────────────
+    // Reads the response body as it arrives (never buffers the whole
+    // thing), parses each "data: {...}\n\n" frame, calls onEvent() for
+    // live progress ("status"/"chunk" events), and resolves with the
+    // final result object once a "done" or "error" event arrives — same
+    // shape as the old plain-JSON /generate-simulation response, so
+    // everything downstream of this call stays unchanged.
+    async function simReadSSEStream(response, onEvent) {
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      while (true) {
+        var chunkResult = await reader.read();
+        if (chunkResult.done) break;
+        buffer += decoder.decode(chunkResult.value, { stream: true });
+        var frames = buffer.split('\n\n');
+        buffer = frames.pop(); // keep the last (possibly incomplete) frame
+        for (var i = 0; i < frames.length; i++) {
+          var line = frames[i].trim();
+          if (!line.startsWith('data:')) continue;
+          var jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+          var evt;
+          try { evt = JSON.parse(jsonStr); } catch (e) { continue; }
+          if (evt.type === 'done' || evt.type === 'error') return evt.result;
+          if (onEvent) onEvent(evt);
+        }
+      }
+      throw new Error('Connection closed before the simulation finished generating.');
+    }
+
     // ── AI Generate Simulation (preserved) ─────────────────────────────
     async function generateSimulation() {
       var prompt = (document.getElementById('simPrompt').value || '').trim();
@@ -14696,18 +14727,30 @@ function amShowSuccess() {
       document.getElementById('simLoadMsg').textContent = '📂 Checking library…';
       document.getElementById('simPreviewTitle').textContent = 'Generating simulation…';
 
+      // Fake progress runs only until the first real event arrives from the
+      // stream (covers the brief gap before the connection opens). Once
+      // real "status"/"chunk" events start coming in, they drive the bar
+      // and message instead — real progress, not a guess.
       var pct = 0;
       var msgIdx = 0;
+      var usingRealProgress = false;
+      var STAGE_PCT = { classify: 15, image_refs: 28, generating: 42 };
+      var STAGE_LABEL = {
+        classify:    '🔎 Classifying topic…',
+        image_refs:  '🖼️ Gathering visual references…',
+        generating:  '⚙️ Generating simulation…'
+      };
       simProgTimer = setInterval(function() {
-        pct = Math.min(pct + (Math.random() * 6 + 2), 88);
+        if (usingRealProgress) return;
+        pct = Math.min(pct + (Math.random() * 6 + 2), 40);
         document.getElementById('simProgFill').style.width = pct + '%';
-        if (!simProgTimer._cacheHit && msgIdx < SIM_LOADING_MSGS.length - 1) {
+        if (msgIdx < SIM_LOADING_MSGS.length - 1) {
           document.getElementById('simLoadMsg').textContent = SIM_LOADING_MSGS[msgIdx++];
         }
       }, 1800);
 
       try {
-        var response = await fetch(BACKEND_URL + '/generate-simulation', {
+        var response = await fetch(BACKEND_URL + '/generate-simulation-stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic: prompt, mode: simCurrentMode })
@@ -14718,7 +14761,25 @@ function amShowSuccess() {
           try { errBody = await response.json(); } catch (_) {}
           throw new Error(errBody.detail || ('Backend error: ' + response.status));
         }
-        var data = await response.json();
+
+        var data = await simReadSSEStream(response, function(evt) {
+          usingRealProgress = true;
+          if (evt.type === 'status') {
+            document.getElementById('simLoadMsg').textContent =
+              STAGE_LABEL[evt.stage] || evt.message || '';
+            var stagePct = STAGE_PCT[evt.stage];
+            if (stagePct != null) {
+              pct = Math.max(pct, stagePct);
+              document.getElementById('simProgFill').style.width = pct + '%';
+            }
+          } else if (evt.type === 'chunk') {
+            // Real model tokens are streaming in — creep the bar forward
+            // so it visibly keeps moving for the whole generation instead
+            // of sitting still at 42% until the very end.
+            pct = Math.min(pct + 0.35, 92);
+            document.getElementById('simProgFill').style.width = pct + '%';
+          }
+        });
 
         if (data.render_status === 'error') {
           throw new Error(data.error_reason || 'Simulation generation failed on the server.');
