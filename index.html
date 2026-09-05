@@ -10994,12 +10994,17 @@ function amShowSuccess() {
 .vr-td-name{font-weight:700;color:#f1f5f9;}
 .vr-td-roll{font-family:var(--font-mono,monospace);color:#a5b4fc;font-size:12px;}
 .vr-td-uid{font-size:11px;color:rgba(255,255,255,.45);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.vr-td-score{font-weight:800;font-size:14px;}
+.vr-td-score{font-weight:800;font-size:14px;white-space:nowrap;}
 .vr-score-done{color:#34d399;}
 .vr-score-pending{color:rgba(255,255,255,.35);font-weight:500;font-size:12px;}
+.vr-td-pct{font-weight:700;font-size:13px;white-space:nowrap;}
+.vr-pct-high{color:#34d399;}   /* ≥ 75% */
+.vr-pct-mid{color:#fbbf24;}    /* 50–74% */
+.vr-pct-low{color:#f87171;}    /* < 50% */
+.vr-pct-pending{color:rgba(255,255,255,.3);font-size:12px;font-weight:500;}
 .vr-td-time{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;font-family:var(--font-mono,monospace);}
 .vr-error-msg{display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;color:#fca5a5;font-size:13px;}
-@media(max-width:640px){.vr-modal{border-radius:20px;}.vr-table thead th:nth-child(3){display:none;}.vr-table td:nth-child(3){display:none;}}
+@media(max-width:640px){.vr-modal{border-radius:20px;}.vr-table thead th:nth-child(4){display:none;}.vr-table td:nth-child(4){display:none;}}
 
 
 /* ============================================================
@@ -20498,6 +20503,7 @@ window.assessViewerReload = function () {
       const statsEl  = document.getElementById('vrStats');
       const countEl  = document.getElementById('vrCountNum');
       const doneEl   = document.getElementById('vrDoneNum');
+      const avgEl    = document.getElementById('vrStatAvg');
 
       if (!tableBody) return;
 
@@ -20506,24 +20512,55 @@ window.assessViewerReload = function () {
         return;
       }
 
-      const doneCount = students.filter(s => s.result && s.result !== 'Pending').length;
+      // ── Stats ──
+      const scored = students.filter(s => s.quiz_score !== null && s.quiz_score !== undefined);
+      const doneCount = scored.length;
       if (countEl) countEl.textContent = students.length;
       if (doneEl)  doneEl.textContent  = doneCount;
+
+      // Average percentage (only from students who actually scored)
+      if (avgEl) {
+        if (doneCount > 0) {
+          const avgPct = scored.reduce((sum, s) => sum + (s.quiz_percentage || 0), 0) / doneCount;
+          avgEl.textContent = avgPct.toFixed(1) + '%';
+        } else {
+          avgEl.textContent = '—';
+        }
+      }
       if (statsEl) statsEl.style.display = 'flex';
 
+      // ── Table rows ──
       tableBody.innerHTML = students.map(function(s, idx) {
-        const ts = s.timestamp ? new Date(s.timestamp) : null;
-        const dateStr = ts ? ts.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
-          ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true }) : '—';
-        const isPending = !s.result || s.result === 'Pending';
-        const scoreHtml = isPending
-          ? '<span class="vr-score-pending">Pending</span>'
-          : '<span class="vr-score-done">' + (s.result || '—') + '</span>';
+        // Timestamp: prefer quiz submitted_at, fall back to registration timestamp
+        const tsRaw = s.quiz_submitted_at || s.timestamp;
+        const ts = tsRaw ? new Date(tsRaw) : null;
+        const dateStr = ts
+          ? ts.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+            ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
+          : '—';
+
+        // Score column: show "7 / 10"
+        const hasScore = (s.quiz_score !== null && s.quiz_score !== undefined && s.quiz_total);
+        const scoreHtml = hasScore
+          ? '<span class="vr-score-done">' + s.quiz_score + ' / ' + s.quiz_total + '</span>'
+          : '<span class="vr-score-pending">Pending</span>';
+
+        // Percentage column: color-coded badge
+        let pctHtml;
+        if (s.quiz_percentage !== null && s.quiz_percentage !== undefined) {
+          const p = parseFloat(s.quiz_percentage);
+          const cls = p >= 75 ? 'vr-pct-high' : p >= 50 ? 'vr-pct-mid' : 'vr-pct-low';
+          pctHtml = '<span class="' + cls + '">' + p.toFixed(1) + '%</span>';
+        } else {
+          pctHtml = '<span class="vr-pct-pending">—</span>';
+        }
+
         return '<tr>' +
+          '<td style="color:rgba(255,255,255,.35);font-size:12px;">' + (idx + 1) + '</td>' +
           '<td class="vr-td-name">' + _vrEscape(s.student_name || '—') + '</td>' +
           '<td class="vr-td-roll">' + _vrEscape(s.roll_number || '—') + '</td>' +
-          '<td><div class="vr-td-uid" title="' + _vrEscape(s.user_id || '') + '">' + _vrEscape(s.user_id || '—') + '</div></td>' +
           '<td class="vr-td-score">' + scoreHtml + '</td>' +
+          '<td class="vr-td-pct">' + pctHtml + '</td>' +
           '<td class="vr-td-time">' + dateStr + '</td>' +
           '</tr>';
       }).join('');
@@ -21532,21 +21569,21 @@ window.assessViewerReload = function () {
         <div class="vr-spinner"></div>
         <div class="vr-loading-text">Loading submissions...</div>
       </div>
-      <div class="vr-error-msg" id="vrErrorMsg">
+      <div class="vr-error-msg" id="vrErrorMsg" style="display:none;">
         <span>&#9888;&#65039;</span><span id="vrErrorText">Failed to load results.</span>
       </div>
       <div class="vr-stats-row" id="vrStats" style="display:none;">
         <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrCountNum">0</div><div class="vr-stat-label">Submissions</div></div></div>
         <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrDoneNum">0</div><div class="vr-stat-label">Scored</div></div></div>
-        <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrStatAvg">&#8212;</div><div class="vr-stat-label">Avg Score</div></div></div>
+        <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrStatAvg" style="color:#34d399;">—</div><div class="vr-stat-label">Avg %</div></div></div>
       </div>
       <div class="vr-table-wrap" id="vrTableWrap" style="display:none;">
         <table class="vr-table" aria-label="Submissions table">
-          <thead><tr><th>#</th><th>Student</th><th>Roll No.</th><th>Score</th><th>Submitted</th></tr></thead>
+          <thead><tr><th>#</th><th>Student</th><th>Roll No.</th><th>Score</th><th>Percentage</th><th>Submitted</th></tr></thead>
           <tbody id="vrTableBody"></tbody>
         </table>
       </div>
-      <div class="vr-empty" id="vrEmpty">
+      <div class="vr-empty" id="vrEmpty" style="display:none;">
         <div class="vr-empty-icon">&#128237;</div>
         <div class="vr-empty-title">No Submissions Yet</div>
         <div class="vr-empty-msg">Share the assessment with students. Results will appear here once they submit.</div>
