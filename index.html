@@ -20294,6 +20294,85 @@ window.assessViewerReload = function () {
         if (btn) { var t = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
       }).catch(function(){});
     };
+﻿    // ── State for the share modal ─────────────────────────────
+    let _asmPin        = '......';
+    let _asmUrl        = '';
+    let _asmSessionId  = null;
+    let _asmTimerIv    = null;
+
+    // ── Open / populate the Share Assessment modal ────────────
+    // data shape: { pin, slug, session_id, expires_at }
+    function _openAssessShareModal(data) {
+      const pin       = (data && data.pin)        || '......';
+      const slug      = (data && data.slug)       || null;
+      const sessId    = (data && data.session_id) || null;
+      const expiresAt = (data && data.expires_at) || null;
+
+      _asmPin       = pin;
+      _asmSessionId = sessId;
+
+      // Build shareable URL
+      const baseUrl = window.location.origin + '/student.html';
+      _asmUrl = slug ? (baseUrl + '?slug=' + slug)
+              : (pin !== '......' ? baseUrl + '?pin=' + pin : '');
+
+      // Populate breadcrumb
+      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
+      const breadEl = document.getElementById('asmBreadcrumb');
+      if (breadEl) breadEl.textContent = subjectLabel + ' > ' + (_assessCurrentTopicTitle || '') + ' > Assessment ' + (_aamCurrentNum || '');
+
+      // Render PIN digits
+      const pinDigitsEl = document.getElementById('asmPinDigits');
+      if (pinDigitsEl) {
+        if (pin === '......') {
+          pinDigitsEl.innerHTML = Array(6).fill('<div class="asm-pin-digit" style="opacity:.4">&#183;</div>').join('');
+        } else {
+          pinDigitsEl.innerHTML = pin.split('').map(function(d) {
+            return '<div class="asm-pin-digit">' + d + '</div>';
+          }).join('');
+        }
+      }
+
+      // Populate URL text
+      const urlTextEl = document.getElementById('asmUrlText');
+      if (urlTextEl) urlTextEl.textContent = _asmUrl || '\u2014';
+
+      // Join count reset
+      const joinCountEl = document.getElementById('asmJoinCount');
+      if (joinCountEl) joinCountEl.textContent = '0';
+
+      // Timer countdown
+      clearInterval(_asmTimerIv);
+      const timerEl = document.getElementById('asmTimerText');
+      function _updateTimer() {
+        if (!expiresAt || !timerEl) return;
+        const diff = Math.max(0, Math.floor((new Date(expiresAt) - Date.now()) / 1000));
+        if (diff === 0) { timerEl.textContent = 'Expired'; clearInterval(_asmTimerIv); return; }
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        timerEl.textContent = h + 'h ' + m + 'm left';
+      }
+      _updateTimer();
+      _asmTimerIv = setInterval(_updateTimer, 30000);
+
+      // Show overlay
+      const overlay = document.getElementById('assessShareOverlay');
+      if (overlay) overlay.classList.add('open');
+    }
+
+    window.closeAssessShareModal = function () {
+      const overlay = document.getElementById('assessShareOverlay');
+      if (overlay) overlay.classList.remove('open');
+      clearInterval(_asmTimerIv);
+    };
+
+    window.asmCopyPin = function () {
+      if (!_asmPin || _asmPin === '......') return;
+      navigator.clipboard.writeText(_asmPin).then(function() {
+        const btn = document.getElementById('asmCopyPinBtn');
+        if (btn) { var t = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
+      }).catch(function(){});
+    };
 
 
     // ================================================
