@@ -3555,19 +3555,74 @@
       })();
 
       // ── postMessage listener: capture score from assessment iframe ─
+      // Expected message format from iframe:
+      //   { type: 'ASSESSMENT_RESULT', score: 7, total: 10, percentage: 70 }
+      //   OR legacy: { type: 'ASSESSMENT_RESULT', score: '70%' }
       window.addEventListener('message', function(evt) {
         if (!evt.data || typeof evt.data !== 'object') return;
-        const { type, score } = evt.data;
-        if (type !== 'ASSESSMENT_RESULT' || !score) return;
-        if (!_testStudentRecordId) return;
-        fetch(BACKEND_URL + '/sync/test-students/' + _testStudentRecordId + '/result', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ result: String(score) })
-        }).then(r => {
-          if (r.ok) console.log('[REG] Score saved:', score);
-          else console.warn('[REG] Score save failed:', r.status);
-        }).catch(e => console.warn('[REG] Score PATCH error:', e.message));
+        const { type, score, total, percentage } = evt.data;
+        if (type !== 'ASSESSMENT_RESULT') return;
+        if (score === undefined && score === null) return;
+
+        // ── Parse numeric score breakdown ──
+        let numScore = 0, numTotal = 0, numPct = 0;
+
+        if (typeof score === 'number' && typeof total === 'number' && total > 0) {
+          // Preferred: iframe sends { score: 7, total: 10, percentage: 70 }
+          numScore = score;
+          numTotal = total;
+          numPct   = (typeof percentage === 'number') ? percentage : Math.round((score / total) * 10000) / 100;
+        } else if (typeof score === 'string' && score.includes('/')) {
+          // Format: "7/10"
+          const parts = score.split('/');
+          numScore = parseInt(parts[0], 10) || 0;
+          numTotal = parseInt(parts[1], 10) || 0;
+          numPct   = numTotal > 0 ? Math.round((numScore / numTotal) * 10000) / 100 : 0;
+        } else if (typeof score === 'string' && score.endsWith('%')) {
+          // Legacy: "70%" — no breakdown available
+          numPct   = parseFloat(score) || 0;
+          numScore = 0;
+          numTotal = 0;
+        } else if (typeof score === 'number') {
+          numPct   = score;
+          numScore = 0;
+          numTotal = 0;
+        }
+
+        console.log('[REG] Assessment result received:', { numScore, numTotal, numPct });
+
+        // ── POST to /sync/quiz-results (primary — inserts quiz_results row + updates test_students) ──
+        if (_testStudentRecordId && _sapCurrentSession) {
+          const pin  = _sapCurrentSession.pin || (document.getElementById('pinInput') ? document.getElementById('pinInput').value.trim() : '');
+          const sName = (document.getElementById('regNameInput') ? document.getElementById('regNameInput').value.trim() : '') || 'Unknown';
+          const sRoll = (document.getElementById('regRollInput') ? document.getElementById('regRollInput').value.trim() : '') || '-';
+
+          fetch(BACKEND_URL + '/sync/quiz-results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              test_student_id: _testStudentRecordId,
+              session_id:      _sapCurrentSession.id || null,
+              pin_code:        String(pin),
+              student_name:    sName,
+              roll_number:     sRoll,
+              score:           numTotal > 0 ? numScore : 0,
+              total_questions: numTotal > 0 ? numTotal : 1,
+              percentage:      numPct,
+            })
+          }).then(r => {
+            if (r.ok) r.json().then(d => console.log('[REG] Quiz result saved:', d.result));
+            else console.warn('[REG] Quiz result save failed:', r.status);
+          }).catch(e => console.warn('[REG] Quiz result error:', e.message));
+        } else if (_testStudentRecordId) {
+          // Fallback: update test_students.result only (legacy PATCH)
+          const resultStr = numTotal > 0 ? `${numScore}/${numTotal} (${numPct.toFixed(2)}%)` : String(score);
+          fetch(BACKEND_URL + '/sync/test-students/' + _testStudentRecordId + '/result', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ result: resultStr })
+          }).catch(e => console.warn('[REG] Score PATCH error:', e.message));
+        }
       }, false);
 
       // Explore button
