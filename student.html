@@ -2092,6 +2092,201 @@
       transition: opacity 0.2s;
     }
 
+    /* ======================================================
+       REGISTRATION SCREEN  — shown after PIN validation
+       ====================================================== */
+    #screenRegister {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      min-height: 100%;
+      position: relative;
+    }
+    .reg-card {
+      background: rgba(10, 10, 30, 0.72);
+      border: 1.5px solid rgba(99, 102, 241, 0.28);
+      border-radius: 24px;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      padding: 36px 32px 32px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 24px 72px rgba(99, 102, 241, 0.18), 0 0 0 1px rgba(255,255,255,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .reg-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .reg-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .reg-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2));
+      border: 1.5px solid rgba(99,102,241,0.4);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+    .reg-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: #f1f5f9;
+      letter-spacing: -0.3px;
+    }
+    .reg-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.5;
+      max-width: 320px;
+    }
+    .reg-session-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 100px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: #a5b4fc;
+      letter-spacing: 0.04em;
+      text-align: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .reg-badge-dot {
+      width: 6px; height: 6px;
+      background: #6366f1;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: regPulse 1.8s ease infinite;
+    }
+    @keyframes regPulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.45; transform: scale(0.7); }
+    }
+    .reg-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .reg-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .reg-input {
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .reg-input::placeholder { color: rgba(255,255,255,0.25); }
+    .reg-input:focus {
+      border-color: rgba(99,102,241,0.6);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+      background: rgba(99,102,241,0.06);
+    }
+    .reg-input.invalid {
+      border-color: rgba(239,68,68,0.6);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+    .reg-error {
+      font-size: 12px;
+      color: #f87171;
+      font-family: var(--font-mono);
+      min-height: 16px;
+      transition: opacity 0.2s;
+    }
+    .reg-start-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 24px rgba(99,102,241,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .reg-start-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .reg-start-btn:hover::before { opacity: 1; }
+    .reg-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(99,102,241,0.5);
+    }
+    .reg-start-btn:active { transform: translateY(0); }
+    .reg-start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .reg-back-link {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      margin-top: -6px;
+    }
+    .reg-back-link button {
+      background: none;
+      border: none;
+      color: rgba(165,180,252,0.7);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--font-body);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .reg-back-link button:hover { color: #a5b4fc; }
+
   </style>
 </head>
 <body>
@@ -2128,6 +2323,56 @@
 
   <!-- ──────────────────────── MAIN CONTENT ──────────────────────── -->
   <main class="app-main">
+
+    <!-- ══════════════ SCREEN 0: REGISTRATION (shown after PIN validated) ══════════════ -->
+    <section class="screen" id="screenRegister">
+      <div class="reg-card">
+        <div class="reg-header">
+          <div class="reg-icon">📋</div>
+          <div class="reg-title">Student Registration</div>
+          <div class="reg-subtitle">Enter your details to begin the assessment</div>
+          <div class="reg-session-badge" id="regSessionBadge">
+            <div class="reg-badge-dot"></div>
+            <span id="regSessionInfo">Assessment</span>
+          </div>
+        </div>
+
+        <div class="reg-field">
+          <label class="reg-label" for="regNameInput">Full Name</label>
+          <input
+            type="text"
+            id="regNameInput"
+            class="reg-input"
+            placeholder="e.g. Arjun Kumar"
+            maxlength="100"
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="reg-field">
+          <label class="reg-label" for="regRollInput">Roll Number</label>
+          <input
+            type="text"
+            id="regRollInput"
+            class="reg-input"
+            placeholder="e.g. 101"
+            maxlength="30"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="reg-error" id="regError"></div>
+
+        <button class="reg-start-btn" id="regStartBtn">
+          <span>Start Assessment</span>
+          <span>→</span>
+        </button>
+
+        <div class="reg-back-link">
+          Wrong PIN? <button id="regBackBtn">← Go back</button>
+        </div>
+      </div>
+    </section>
 
     <!-- ══════════════ SCREEN 1: PIN ENTRY ══════════════ -->
     <section class="screen active" id="screenPin">
@@ -3009,6 +3254,26 @@
         }, 900);
       }
 
+      // ── Student record ID (for result update after submission) ──────
+      let _testStudentRecordId = null;
+
+      // ── Populate registration screen badge with session info ─────────
+      function _showRegistrationScreen(session, pin) {
+        const subjectLabel = { science: 'Science', maths: 'Mathematics', social: 'Social Science' }[session.subject] || 'Assessment';
+        const infoEl = document.getElementById('regSessionInfo');
+        if (infoEl) infoEl.textContent = subjectLabel + ' · ' + (session.topic_title || '') + ' · Assessment ' + (session.assessment_num || '');
+        // Pre-fill nickname as name if present
+        const nameIn = document.getElementById('regNameInput');
+        const nick = _lobbyNickname || '';
+        if (nameIn && nick && nick !== 'Student') nameIn.value = nick;
+        // Clear fields
+        const rollIn = document.getElementById('regRollInput');
+        if (rollIn) rollIn.value = '';
+        const errEl = document.getElementById('regError');
+        if (errEl) errEl.textContent = '';
+        showScreen('screenRegister');
+      }
+
       // ── Main join handler ──────────────────────────────────────────
       async function handlePin() {
         const pin = pinInput.value.trim().replace(/\D/g, '');
@@ -3044,12 +3309,8 @@
             body: JSON.stringify({ student_email: userMeta.email || null, nickname })
           }).catch(() => {});
 
-          // Show lobby → short wait → countdown → launch assessment
-          openLobby(session, pin, nickname);
-          setTimeout(() => {
-            clearInterval(_lobbyPollTimer);
-            startLobbyCountdown(() => openStudentAssessPortal(session, pin));
-          }, 3500);
+          // ── NEW: Show Registration Screen before assessment ──
+          _showRegistrationScreen(session, pin);
 
         } catch(err) {
           console.error('[PIN JOIN]', err);
@@ -3058,6 +3319,86 @@
           joinBtn.disabled = false; joinBtn.textContent = 'JOIN';
         }
       }
+
+      // ── Registration Screen handlers ───────────────────────────────
+      async function handleStartAssessment() {
+        const session = _sapCurrentSession;
+        if (!session) { showScreen('screenPin'); return; }
+
+        const nameEl  = document.getElementById('regNameInput');
+        const rollEl  = document.getElementById('regRollInput');
+        const errEl   = document.getElementById('regError');
+        const startBtn = document.getElementById('regStartBtn');
+
+        const studentName = (nameEl ? nameEl.value.trim() : '');
+        const rollNumber  = (rollEl ? rollEl.value.trim() : '');
+
+        // Validate
+        if (!studentName) {
+          if (nameEl) nameEl.classList.add('invalid');
+          if (errEl) errEl.textContent = 'Please enter your full name';
+          return;
+        }
+        if (!rollNumber) {
+          if (rollEl) rollEl.classList.add('invalid');
+          if (errEl) errEl.textContent = 'Please enter your roll number';
+          return;
+        }
+        if (nameEl) nameEl.classList.remove('invalid');
+        if (rollEl) rollEl.classList.remove('invalid');
+        if (errEl) errEl.textContent = '';
+
+        if (startBtn) { startBtn.disabled = true; startBtn.querySelector('span').textContent = 'Starting…'; }
+
+        const pin = session.pin || (document.getElementById('pinInput') ? document.getElementById('pinInput').value.trim() : '');
+
+        try {
+          // Register student in test_students table
+          const regRes = await fetch(BACKEND_URL + '/sync/test-students/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id:        session.id || null,
+              pin_code:          String(pin),
+              student_name:      studentName,
+              roll_number:       rollNumber,
+              user_id:           userMeta.email || _lobbyNickname || studentName,
+              subject:           session.subject || null,
+              topic:             session.topic_title || null,
+              assessment_number: session.assessment_num || null,
+            })
+          });
+          if (regRes.ok) {
+            const regData = await regRes.json();
+            _testStudentRecordId = regData.record_id || null;
+          } else {
+            console.warn('[REG] Registration call failed, continuing anyway');
+          }
+        } catch(e) {
+          console.warn('[REG] Registration error:', e.message);
+        }
+
+        // Restore button
+        if (startBtn) {
+          startBtn.disabled = false;
+          const spans = startBtn.querySelectorAll('span');
+          if (spans[0]) spans[0].textContent = 'Start Assessment';
+        }
+
+        // Show lobby countdown then open assessment
+        openLobby(session, pin, studentName);
+        setTimeout(() => {
+          clearInterval(_lobbyPollTimer);
+          startLobbyCountdown(() => openStudentAssessPortal(session, pin));
+        }, 3500);
+      }
+
+      document.getElementById('regStartBtn').addEventListener('click', handleStartAssessment);
+      document.getElementById('regNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('regRollInput').focus(); });
+      document.getElementById('regRollInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleStartAssessment(); });
+      document.getElementById('regNameInput').addEventListener('input', () => document.getElementById('regNameInput').classList.remove('invalid'));
+      document.getElementById('regRollInput').addEventListener('input', () => document.getElementById('regRollInput').classList.remove('invalid'));
+      document.getElementById('regBackBtn').addEventListener('click', () => { sound('nav'); showScreen('screenPin'); });
 
       joinBtn.addEventListener('click', handlePin);
       pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePin(); });
@@ -3189,7 +3530,7 @@
         }
       });
 
-      // Auto-join if URL has ?session=<slug>
+      // Auto-join if URL has ?session=<slug> — show registration screen first
       (function checkSessionSlug() {
         const params = new URLSearchParams(window.location.search);
         const slug   = params.get('session');
@@ -3199,16 +3540,35 @@
           .then(session => {
             if (!session.is_expired) {
               _sapCurrentSession = session;
-              openStudentAssessPortal(session, session.pin);
+              _lobbyNickname = 'Student';
+              // Record join (fire-and-forget)
               fetch(BACKEND_URL + '/sync/assessment-session/' + session.id + '/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ student_email: userMeta.email || null })
               }).catch(() => {});
+              // Show registration screen instead of directly opening assessment
+              _showRegistrationScreen(session, session.pin);
             }
           })
           .catch(err => console.warn('[SAP slug]', err));
       })();
+
+      // ── postMessage listener: capture score from assessment iframe ─
+      window.addEventListener('message', function(evt) {
+        if (!evt.data || typeof evt.data !== 'object') return;
+        const { type, score } = evt.data;
+        if (type !== 'ASSESSMENT_RESULT' || !score) return;
+        if (!_testStudentRecordId) return;
+        fetch(BACKEND_URL + '/sync/test-students/' + _testStudentRecordId + '/result', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: String(score) })
+        }).then(r => {
+          if (r.ok) console.log('[REG] Score saved:', score);
+          else console.warn('[REG] Score save failed:', r.status);
+        }).catch(e => console.warn('[REG] Score PATCH error:', e.message));
+      }, false);
 
       // Explore button
       document.getElementById('exploreBtn').addEventListener('click', () => { sound('nav'); showScreen('screenSubjects'); });
