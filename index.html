@@ -14673,35 +14673,54 @@ function amShowSuccess() {
       }
     }
 
-    // ── SSE stream reader for /generate-simulation-stream ───────────────
-    // Reads the response body as it arrives (never buffers the whole
-    // thing), parses each "data: {...}\n\n" frame, calls onEvent() for
-    // live progress ("status"/"chunk" events), and resolves with the
-    // final result object once a "done" or "error" event arrives — same
-    // shape as the old plain-JSON /generate-simulation response, so
-    // everything downstream of this call stays unchanged.
-    async function simReadSSEStream(response, onEvent) {
-      var reader = response.body.getReader();
-      var decoder = new TextDecoder();
-      var buffer = '';
+    // ── Poll helper for /generate-simulation-job ────────────────────────
+    // Starts a background job, then polls its status every couple of
+    // seconds until it's "done" or "error". Every individual request here
+    // (the start call, each poll) finishes in milliseconds, so this is
+    // immune to both gateway inactivity timeouts AND hard max-request-
+    // duration caps -- neither can fire on a request that's already over.
+    function simSleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+    async function simRunJob(topic, mode, onProgress) {
+      var startRes = await fetch(BACKEND_URL + '/generate-simulation-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic, mode: mode })
+      });
+      if (!startRes.ok) {
+        var errBody = {};
+        try { errBody = await startRes.json(); } catch (_) {}
+        throw new Error(errBody.detail || ('Backend error: ' + startRes.status));
+      }
+      var startData = await startRes.json();
+      var jobId = startData.job_id;
+      if (!jobId) throw new Error('Server did not return a job id.');
+
+      var pollDelay = 1500;      // start fast, back off a little for long jobs
+      var maxPollDelay = 4000;
+      var maxWaitMs = 5 * 60 * 1000; // 5 minutes of polling before giving up client-side
+      var waited = 0;
+
       while (true) {
-        var chunkResult = await reader.read();
-        if (chunkResult.done) break;
-        buffer += decoder.decode(chunkResult.value, { stream: true });
-        var frames = buffer.split('\n\n');
-        buffer = frames.pop(); // keep the last (possibly incomplete) frame
-        for (var i = 0; i < frames.length; i++) {
-          var line = frames[i].trim();
-          if (!line.startsWith('data:')) continue;
-          var jsonStr = line.slice(5).trim();
-          if (!jsonStr) continue;
-          var evt;
-          try { evt = JSON.parse(jsonStr); } catch (e) { continue; }
-          if (evt.type === 'done' || evt.type === 'error') return evt.result;
-          if (onEvent) onEvent(evt);
+        await simSleep(pollDelay);
+        waited += pollDelay;
+        pollDelay = Math.min(pollDelay + 250, maxPollDelay);
+
+        var pollRes = await fetch(BACKEND_URL + '/generate-simulation-job/' + jobId);
+        if (!pollRes.ok) {
+          if (pollRes.status === 404) throw new Error('Generation job expired or was lost. Please try again.');
+          throw new Error('Backend error while checking progress: ' + pollRes.status);
+        }
+        var job = await pollRes.json();
+        if (onProgress) onProgress(job);
+
+        if (job.status === 'done' || job.status === 'error') {
+          return job.result;
+        }
+        if (waited >= maxWaitMs) {
+          throw new Error('Still generating after 5 minutes — please try a shorter or more specific topic.');
         }
       }
-      throw new Error('Connection closed before the simulation finished generating.');
     }
 
     // ── AI Generate Simulation (preserved) ─────────────────────────────
@@ -14727,10 +14746,11 @@ function amShowSuccess() {
       document.getElementById('simLoadMsg').textContent = '📂 Checking library…';
       document.getElementById('simPreviewTitle').textContent = 'Generating simulation…';
 
-      // Fake progress runs only until the first real event arrives from the
-      // stream (covers the brief gap before the connection opens). Once
-      // real "status"/"chunk" events start coming in, they drive the bar
-      // and message instead — real progress, not a guess.
+      // Fake progress runs only until the first real status comes back from
+      // a poll (covers the brief gap before the job starts). Once real
+      // progress starts arriving, it drives the bar and message instead —
+      // real progress, not a guess, and it keeps moving for however long
+      // the job actually takes (no more stalling at some fixed percentage).
       var pct = 0;
       var msgIdx = 0;
       var usingRealProgress = false;
@@ -14750,33 +14770,17 @@ function amShowSuccess() {
       }, 1800);
 
       try {
-        var response = await fetch(BACKEND_URL + '/generate-simulation-stream', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: prompt, mode: simCurrentMode })
-        });
-
-        if (!response.ok) {
-          var errBody = {};
-          try { errBody = await response.json(); } catch (_) {}
-          throw new Error(errBody.detail || ('Backend error: ' + response.status));
-        }
-
-        var data = await simReadSSEStream(response, function(evt) {
+        var data = await simRunJob(prompt, simCurrentMode, function(job) {
           usingRealProgress = true;
-          if (evt.type === 'status') {
+          if (job.status === 'running') {
             document.getElementById('simLoadMsg').textContent =
-              STAGE_LABEL[evt.stage] || evt.message || '';
-            var stagePct = STAGE_PCT[evt.stage];
-            if (stagePct != null) {
-              pct = Math.max(pct, stagePct);
-              document.getElementById('simProgFill').style.width = pct + '%';
-            }
-          } else if (evt.type === 'chunk') {
-            // Real model tokens are streaming in — creep the bar forward
-            // so it visibly keeps moving for the whole generation instead
-            // of sitting still at 42% until the very end.
-            pct = Math.min(pct + 0.35, 92);
+              STAGE_LABEL[job.stage] || job.message || 'Generating…';
+            var stagePct = STAGE_PCT[job.stage];
+            if (stagePct != null) pct = Math.max(pct, stagePct);
+            // Nudge forward as chunks arrive so the bar keeps visibly
+            // moving through however long the generation actually takes,
+            // instead of parking at one stage's percentage.
+            if (job.chunks_received) pct = Math.min(42 + job.chunks_received * 0.3, 92);
             document.getElementById('simProgFill').style.width = pct + '%';
           }
         });
