@@ -10938,13 +10938,69 @@ function amShowSuccess() {
 .aam-action-btn.share{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25);}
 .aam-action-btn.share::before{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.06));}
 .aam-action-btn.share:hover{border-color:rgba(16,185,129,.55);box-shadow:0 8px 28px rgba(16,185,129,.22);}
+.aam-action-btn.results{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.22);}
+.aam-action-btn.results::before{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(217,119,6,.06));}
+.aam-action-btn.results:hover{border-color:rgba(245,158,11,.55);box-shadow:0 8px 28px rgba(245,158,11,.2);}
 .aam-action-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
 .aam-action-btn.view .aam-action-icon{background:rgba(99,102,241,.2);}
 .aam-action-btn.share .aam-action-icon{background:rgba(16,185,129,.2);}
+.aam-action-btn.results .aam-action-icon{background:rgba(245,158,11,.18);}
 .aam-action-text-wrap{display:flex;flex-direction:column;gap:4px;padding-top:2px;}
 .aam-action-title{font-size:15px;font-weight:800;color:#f1f5f9;}
 .aam-action-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.4;}
 @media(max-width:560px){.aam-body{flex-direction:column;}.aam-thumb-col{width:100%;min-height:140px;border-right:none;border-bottom:1px solid rgba(255,255,255,.06);padding:20px;}.aam-thumb-img,.aam-thumb-placeholder{width:100px;height:70px;}}
+
+/* ============================================================
+   VIEW RESULTS MODAL
+============================================================ */
+#viewResultsOverlay{position:fixed;inset:0;z-index:3200;display:flex;align-items:center;justify-content:center;background:rgba(4,4,13,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);opacity:0;pointer-events:none;transition:opacity .25s ease;padding:20px;box-sizing:border-box;}
+#viewResultsOverlay.open{opacity:1;pointer-events:all;}
+.vr-modal{background:linear-gradient(160deg,#0d1117 0%,#0f172a 60%,#160b2e 100%);border:1.5px solid rgba(245,158,11,.28);border-radius:28px;box-shadow:0 40px 100px rgba(0,0,0,.72),0 0 60px rgba(245,158,11,.08);width:100%;max-width:860px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;transform:scale(.88) translateY(24px);transition:transform .38s cubic-bezier(.34,1.56,.64,1);}
+#viewResultsOverlay.open .vr-modal{transform:scale(1) translateY(0);}
+.vr-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;gap:12px;}
+.vr-header-left{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.vr-header-title{font-size:17px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px;}
+.vr-header-badge{font-size:11px;font-weight:700;padding:3px 10px;background:rgba(245,158,11,.18);color:#fcd34d;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;}
+.vr-header-sub{font-size:12px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vr-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.vr-refresh-btn{height:34px;padding:0 14px;border-radius:10px;border:1.5px solid rgba(245,158,11,.3);background:rgba(245,158,11,.1);color:#fcd34d;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;}
+.vr-refresh-btn:hover{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.55);}
+.vr-close-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.vr-close-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+.vr-body{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+.vr-body::-webkit-scrollbar{width:6px;}
+.vr-body::-webkit-scrollbar-track{background:rgba(255,255,255,.04);}
+.vr-body::-webkit-scrollbar-thumb{background:rgba(245,158,11,.3);border-radius:3px;}
+.vr-stats-row{display:flex;gap:12px;flex-wrap:wrap;}
+.vr-stat-chip{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;}
+.vr-stat-num{font-size:20px;font-weight:800;color:#fcd34d;font-family:var(--font-display,sans-serif);}
+.vr-stat-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;}
+.vr-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:48px;}
+.vr-spinner{width:44px;height:44px;border:3px solid rgba(245,158,11,.2);border-top-color:#f59e0b;border-radius:50%;animation:vrSpin .8s linear infinite;}
+@keyframes vrSpin{to{transform:rotate(360deg);}}
+.vr-loading-text{font-size:13px;color:rgba(255,255,255,.45);font-family:var(--font-mono,monospace);}
+.vr-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:48px 24px;text-align:center;}
+.vr-empty-icon{font-size:48px;opacity:.6;}
+.vr-empty-title{font-size:16px;font-weight:700;color:rgba(255,255,255,.6);}
+.vr-empty-msg{font-size:13px;color:rgba(255,255,255,.35);max-width:360px;line-height:1.6;}
+.vr-table-wrap{overflow-x:auto;border-radius:16px;border:1px solid rgba(255,255,255,.07);}
+.vr-table{width:100%;border-collapse:collapse;font-size:13px;}
+.vr-table thead tr{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07);}
+.vr-table thead th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.vr-table tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;}
+.vr-table tbody tr:last-child{border-bottom:none;}
+.vr-table tbody tr:hover{background:rgba(245,158,11,.06);}
+.vr-table td{padding:12px 16px;color:#e2e8f0;vertical-align:middle;}
+.vr-td-name{font-weight:700;color:#f1f5f9;}
+.vr-td-roll{font-family:var(--font-mono,monospace);color:#a5b4fc;font-size:12px;}
+.vr-td-uid{font-size:11px;color:rgba(255,255,255,.45);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vr-td-score{font-weight:800;font-size:14px;}
+.vr-score-done{color:#34d399;}
+.vr-score-pending{color:rgba(255,255,255,.35);font-weight:500;font-size:12px;}
+.vr-td-time{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;font-family:var(--font-mono,monospace);}
+.vr-error-msg{display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;color:#fca5a5;font-size:13px;}
+@media(max-width:640px){.vr-modal{border-radius:20px;}.vr-table thead th:nth-child(3){display:none;}.vr-table td:nth-child(3){display:none;}}
+
 
 /* ============================================================
    ASSESSMENT SHARE MODAL - Kahoot-style PIN screen
@@ -13873,7 +13929,7 @@ function amShowSuccess() {
           <iframe id="assessViewerIframe"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             title="Assessment Content"
-            onload="if (window.assessIframeLoaded) assessIframeLoaded()">
+            onload="assessIframeLoaded()">
           </iframe>
           <!-- Side code panel -->
           <div class="assess-code-panel" id="assessCodePanel">
@@ -14673,56 +14729,6 @@ function amShowSuccess() {
       }
     }
 
-    // ── Poll helper for /generate-simulation-job ────────────────────────
-    // Starts a background job, then polls its status every couple of
-    // seconds until it's "done" or "error". Every individual request here
-    // (the start call, each poll) finishes in milliseconds, so this is
-    // immune to both gateway inactivity timeouts AND hard max-request-
-    // duration caps -- neither can fire on a request that's already over.
-    function simSleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
-
-    async function simRunJob(topic, mode, onProgress) {
-      var startRes = await fetch(BACKEND_URL + '/generate-simulation-job', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic, mode: mode })
-      });
-      if (!startRes.ok) {
-        var errBody = {};
-        try { errBody = await startRes.json(); } catch (_) {}
-        throw new Error(errBody.detail || ('Backend error: ' + startRes.status));
-      }
-      var startData = await startRes.json();
-      var jobId = startData.job_id;
-      if (!jobId) throw new Error('Server did not return a job id.');
-
-      var pollDelay = 1500;      // start fast, back off a little for long jobs
-      var maxPollDelay = 4000;
-      var maxWaitMs = 5 * 60 * 1000; // 5 minutes of polling before giving up client-side
-      var waited = 0;
-
-      while (true) {
-        await simSleep(pollDelay);
-        waited += pollDelay;
-        pollDelay = Math.min(pollDelay + 250, maxPollDelay);
-
-        var pollRes = await fetch(BACKEND_URL + '/generate-simulation-job/' + jobId);
-        if (!pollRes.ok) {
-          if (pollRes.status === 404) throw new Error('Generation job expired or was lost. Please try again.');
-          throw new Error('Backend error while checking progress: ' + pollRes.status);
-        }
-        var job = await pollRes.json();
-        if (onProgress) onProgress(job);
-
-        if (job.status === 'done' || job.status === 'error') {
-          return job.result;
-        }
-        if (waited >= maxWaitMs) {
-          throw new Error('Still generating after 5 minutes — please try a shorter or more specific topic.');
-        }
-      }
-    }
-
     // ── AI Generate Simulation (preserved) ─────────────────────────────
     async function generateSimulation() {
       var prompt = (document.getElementById('simPrompt').value || '').trim();
@@ -14746,44 +14752,29 @@ function amShowSuccess() {
       document.getElementById('simLoadMsg').textContent = '📂 Checking library…';
       document.getElementById('simPreviewTitle').textContent = 'Generating simulation…';
 
-      // Fake progress runs only until the first real status comes back from
-      // a poll (covers the brief gap before the job starts). Once real
-      // progress starts arriving, it drives the bar and message instead —
-      // real progress, not a guess, and it keeps moving for however long
-      // the job actually takes (no more stalling at some fixed percentage).
       var pct = 0;
       var msgIdx = 0;
-      var usingRealProgress = false;
-      var STAGE_PCT = { classify: 15, image_refs: 28, generating: 42 };
-      var STAGE_LABEL = {
-        classify:    '🔎 Classifying topic…',
-        image_refs:  '🖼️ Gathering visual references…',
-        generating:  '⚙️ Generating simulation…'
-      };
       simProgTimer = setInterval(function() {
-        if (usingRealProgress) return;
-        pct = Math.min(pct + (Math.random() * 6 + 2), 40);
+        pct = Math.min(pct + (Math.random() * 6 + 2), 88);
         document.getElementById('simProgFill').style.width = pct + '%';
-        if (msgIdx < SIM_LOADING_MSGS.length - 1) {
+        if (!simProgTimer._cacheHit && msgIdx < SIM_LOADING_MSGS.length - 1) {
           document.getElementById('simLoadMsg').textContent = SIM_LOADING_MSGS[msgIdx++];
         }
       }, 1800);
 
       try {
-        var data = await simRunJob(prompt, simCurrentMode, function(job) {
-          usingRealProgress = true;
-          if (job.status === 'running') {
-            document.getElementById('simLoadMsg').textContent =
-              STAGE_LABEL[job.stage] || job.message || 'Generating…';
-            var stagePct = STAGE_PCT[job.stage];
-            if (stagePct != null) pct = Math.max(pct, stagePct);
-            // Nudge forward as chunks arrive so the bar keeps visibly
-            // moving through however long the generation actually takes,
-            // instead of parking at one stage's percentage.
-            if (job.chunks_received) pct = Math.min(42 + job.chunks_received * 0.3, 92);
-            document.getElementById('simProgFill').style.width = pct + '%';
-          }
+        var response = await fetch(BACKEND_URL + '/generate-simulation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: prompt, mode: simCurrentMode })
         });
+
+        if (!response.ok) {
+          var errBody = {};
+          try { errBody = await response.json(); } catch (_) {}
+          throw new Error(errBody.detail || ('Backend error: ' + response.status));
+        }
+        var data = await response.json();
 
         if (data.render_status === 'error') {
           throw new Error(data.error_reason || 'Simulation generation failed on the server.');
@@ -20296,91 +20287,185 @@ window.assessViewerReload = function () {
       }
     };
 
-    // ------------------------------------------------
-    // ASSESSMENT SHARE MODAL - PIN + URL display
-    // ------------------------------------------------
-    let _asmPin       = null;
-    let _asmUrl       = null;
-    let _asmExpires   = null;
-    let _asmSessionId = null;
-    let _asmTimerInt  = null;
-    let _asmJoinInt   = null;
-
-    function _openAssessShareModal(data) {
-      _asmPin       = data.pin || '......';
-      _asmSessionId = data.session_id || null;
-      _asmExpires   = data.expires_at ? new Date(data.expires_at) : null;
-      _asmUrl       = data.slug ? (window.location.origin + '/student.html?session=' + data.slug) : null;
-      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
-      const bc = document.getElementById('asmBreadcrumb');
-      if (bc) bc.textContent = subjectLabel + ' › ' + (_assessCurrentTopicTitle || '') + ' › Assessment ' + _aamCurrentNum;
-      const pinDigits = document.getElementById('asmPinDigits');
-      if (pinDigits) {
-        const digits = String(_asmPin).padStart(6, '0').split('');
-        pinDigits.innerHTML = digits.map(function(d, i) {
-          return '<div class="asm-pin-digit" style="animation-delay:' + (0.05 + i * 0.05) + 's">' + d + '</div>';
-        }).join('');
-      }
-      const urlEl = document.getElementById('asmUrlText');
-      if (urlEl) urlEl.textContent = _asmUrl || 'Generating…';
-      const jc = document.getElementById('asmJoinCount');
-      if (jc) jc.textContent = '0';
-      const overlay = document.getElementById('assessShareOverlay');
-      if (overlay) overlay.classList.add('open');
-      _startAsmTimer();
-      clearInterval(_asmJoinInt);
-      if (_asmSessionId) { _asmJoinInt = setInterval(_pollAsmJoinCount, 10000); }
-    }
-
-    window.closeAssessShareModal = function () {
-      const overlay = document.getElementById('assessShareOverlay');
-      if (overlay) overlay.classList.remove('open');
-      clearInterval(_asmTimerInt); clearInterval(_asmJoinInt);
-      _asmTimerInt = null; _asmJoinInt = null;
-    };
-
-    function _startAsmTimer() {
-      clearInterval(_asmTimerInt);
-      function tick() {
-        const el = document.getElementById('asmTimerText');
-        if (!el || !_asmExpires) return;
-        var ms = _asmExpires - Date.now();
-        if (ms <= 0) { el.textContent = 'Expired'; clearInterval(_asmTimerInt); return; }
-        var h = Math.floor(ms / 3600000);
-        var m = Math.floor((ms % 3600000) / 60000);
-        var s = Math.floor((ms % 60000) / 1000);
-        el.textContent = h > 0 ? (h + 'h ' + m + 'm left') : (m + 'm ' + s + 's left');
-      }
-      tick();
-      _asmTimerInt = setInterval(tick, 1000);
-    }
-
-    async function _pollAsmJoinCount() {
-      if (!_asmPin || _asmPin === '......') return;
-      try {
-        const r = await fetch(BACKEND_URL + '/sync/assessment-session/by-pin/' + _asmPin);
-        if (!r.ok) return;
-        const d = await r.json();
-        const jc = document.getElementById('asmJoinCount');
-        if (jc && d.join_count != null) jc.textContent = d.join_count;
-      } catch (_) {}
-    }
-
-    window.asmCopyPin = function () {
-      if (!_asmPin || _asmPin === '......') return;
-      navigator.clipboard.writeText(_asmPin).then(function() {
-        const btn = document.getElementById('asmCopyPinBtn');
-        if (btn) { var t = btn.innerHTML; btn.innerHTML = '✓ Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
-      }).catch(function(){});
-    };
-
     window.asmCopyUrl = function () {
       if (!_asmUrl) return;
       navigator.clipboard.writeText(_asmUrl).then(function() {
         const btn = document.getElementById('asmCopyUrlBtn');
-        if (btn) { var t = btn.innerHTML; btn.innerHTML = '✓ Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
+        if (btn) { var t = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; setTimeout(function(){btn.innerHTML=t;},1500); }
       }).catch(function(){});
     };
+
+
+    // ================================================
+    // VIEW RESULTS MODAL
+    // ================================================
+    window.aamClickViewResults = async function () {
+      closeAssessActionModal();
+
+      // Resolve token
+      const token = window.authToken || localStorage.getItem('haezet_jwt') || '';
+      if (!token) {
+        _vrShowError('Please log in to view results.');
+        _openVrModal();
+        return;
+      }
+
+      _openVrModal();
+      _vrShowLoading(true);
+
+      // Try by cached session ID first, then by PIN, then by assessment metadata
+      try {
+        let data = null;
+
+        if (_asmSessionId) {
+          // Prefer the session we already have open
+          const r = await fetch(BACKEND_URL + '/sync/test-students/by-session/' + _asmSessionId, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (r.ok) { data = await r.json(); }
+          else if (r.status === 401 || r.status === 403) { _vrShowError('Access denied — this session belongs to another teacher.'); _vrShowLoading(false); return; }
+        }
+
+        if (!data && _asmPin && _asmPin !== '......') {
+          const r = await fetch(BACKEND_URL + '/sync/test-students/by-pin/' + _asmPin, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (r.ok) { data = await r.json(); }
+          else if (r.status === 403) { _vrShowError('Access denied — this session belongs to another teacher.'); _vrShowLoading(false); return; }
+        }
+
+        if (!data && _assessCurrentSubject && _assessCurrentTopicTitle && _aamCurrentNum) {
+          const params = new URLSearchParams({
+            subject:        _assessCurrentSubject,
+            topic_title:    _assessCurrentTopicTitle,
+            assessment_num: _aamCurrentNum,
+          });
+          const r = await fetch(BACKEND_URL + '/sync/test-students/by-assessment?' + params.toString(), {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (r.ok) { data = await r.json(); }
+        }
+
+        _vrShowLoading(false);
+        if (!data) {
+          _vrShowEmpty('No data found', 'Share this assessment with students first, then check results after they complete it.');
+          return;
+        }
+        if (data.message) {
+          _vrShowEmpty('No shared session yet', data.message);
+          return;
+        }
+        _vrRenderTable(data.students || []);
+
+      } catch(err) {
+        console.error('[VR]', err);
+        _vrShowLoading(false);
+        _vrShowError('Failed to load results: ' + (err.message || 'Unknown error'));
+      }
+    };
+
+    // ── Open the modal shell ──
+    function _openVrModal() {
+      const subjectLabel = { science:'Science', maths:'Mathematics', social:'Social Science' }[_assessCurrentSubject] || 'Assessment';
+      const titleEl = document.getElementById('vrBreadcrumb');
+      if (titleEl) titleEl.textContent = subjectLabel + ' › ' + (_assessCurrentTopicTitle || '') + ' › Assessment ' + _aamCurrentNum;
+      const overlay = document.getElementById('viewResultsOverlay');
+      if (overlay) overlay.classList.add('open');
+    }
+
+    window.closeViewResultsModal = function () {
+      const overlay = document.getElementById('viewResultsOverlay');
+      if (overlay) overlay.classList.remove('open');
+    };
+
+    function _vrShowLoading(show) {
+      const loadEl  = document.getElementById('vrLoading');
+      const tableEl = document.getElementById('vrTableWrap');
+      const emptyEl = document.getElementById('vrEmpty');
+      const errEl   = document.getElementById('vrErrorMsg');
+      const statsEl = document.getElementById('vrStats');
+      if (loadEl)  loadEl.style.display  = show ? 'flex' : 'none';
+      if (tableEl) tableEl.style.display = show ? 'none' : '';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (errEl)   errEl.style.display   = 'none';
+      if (statsEl) statsEl.style.display = show ? 'none' : '';
+    }
+
+    function _vrShowEmpty(title, msg) {
+      const emptyEl = document.getElementById('vrEmpty');
+      const tableEl = document.getElementById('vrTableWrap');
+      const statsEl = document.getElementById('vrStats');
+      if (emptyEl) {
+        const t = emptyEl.querySelector('.vr-empty-title');
+        const m = emptyEl.querySelector('.vr-empty-msg');
+        if (t) t.textContent = title;
+        if (m) m.textContent = msg;
+        emptyEl.style.display = 'flex';
+      }
+      if (tableEl) tableEl.style.display = 'none';
+      if (statsEl) statsEl.style.display = 'none';
+    }
+
+    function _vrShowError(msg) {
+      const errEl  = document.getElementById('vrErrorMsg');
+      const loadEl = document.getElementById('vrLoading');
+      if (errEl) { errEl.querySelector('span:last-child').textContent = msg; errEl.style.display = 'flex'; }
+      if (loadEl) loadEl.style.display = 'none';
+    }
+
+    function _vrRenderTable(students) {
+      const tableEl  = document.getElementById('vrTableWrap');
+      const tableBody = document.getElementById('vrTableBody');
+      const statsEl  = document.getElementById('vrStats');
+      const countEl  = document.getElementById('vrCountNum');
+      const doneEl   = document.getElementById('vrDoneNum');
+
+      if (!tableBody) return;
+
+      if (!students.length) {
+        _vrShowEmpty('No students yet', 'No students have completed the registration for this assessment yet. Share the PIN and check back soon.');
+        return;
+      }
+
+      const doneCount = students.filter(s => s.result && s.result !== 'Pending').length;
+      if (countEl) countEl.textContent = students.length;
+      if (doneEl)  doneEl.textContent  = doneCount;
+      if (statsEl) statsEl.style.display = 'flex';
+
+      tableBody.innerHTML = students.map(function(s, idx) {
+        const ts = s.timestamp ? new Date(s.timestamp) : null;
+        const dateStr = ts ? ts.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+          ts.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true }) : '—';
+        const isPending = !s.result || s.result === 'Pending';
+        const scoreHtml = isPending
+          ? '<span class="vr-score-pending">Pending</span>'
+          : '<span class="vr-score-done">' + (s.result || '—') + '</span>';
+        return '<tr>' +
+          '<td class="vr-td-name">' + _vrEscape(s.student_name || '—') + '</td>' +
+          '<td class="vr-td-roll">' + _vrEscape(s.roll_number || '—') + '</td>' +
+          '<td><div class="vr-td-uid" title="' + _vrEscape(s.user_id || '') + '">' + _vrEscape(s.user_id || '—') + '</div></td>' +
+          '<td class="vr-td-score">' + scoreHtml + '</td>' +
+          '<td class="vr-td-time">' + dateStr + '</td>' +
+          '</tr>';
+      }).join('');
+
+      if (tableEl) tableEl.style.display = '';
+    }
+
+    function _vrEscape(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    window.vrRefresh = function() {
+      aamClickViewResults();
+    };
+
+    // Alias for Refresh button in modal
+    window.loadViewResults = function() {
+      aamClickViewResults();
+    };
+
+    // ── END VIEW RESULTS JS ──
 
 
     // ══ END ASSESSMENT MODE JS ══
@@ -21287,6 +21372,13 @@ window.assessViewerReload = function () {
               <div class="aam-action-desc">Generate a 6-digit PIN &amp; shareable link for students to join live</div>
             </div>
           </button>
+          <button class="aam-action-btn results" onclick="aamClickViewResults()">
+            <div class="aam-action-icon">&#128202;</div>
+            <div class="aam-action-text-wrap">
+              <div class="aam-action-title">View Results</div>
+              <div class="aam-action-desc">See all student submissions &amp; scores for this assessment</div>
+            </div>
+          </button>
         </div>
       </div>
     </div>
@@ -21339,6 +21431,50 @@ window.assessViewerReload = function () {
         </div>
       </div>
     </div>
+
+<!-- VIEW RESULTS MODAL -->
+<div id="viewResultsOverlay" role="dialog" aria-modal="true" aria-labelledby="vrTitle">
+  <div class="vr-modal">
+    <div class="vr-header">
+      <div class="vr-header-left">
+        <div class="vr-header-title">
+          <span>&#128202;</span> <span id="vrTitle">Assessment Results</span>
+          <span class="vr-header-badge" id="vrBadge">Live</span>
+        </div>
+        <div class="vr-header-sub" id="vrBreadcrumb">Loading...</div>
+      </div>
+      <div class="vr-header-actions">
+        <button class="vr-refresh-btn" onclick="loadViewResults()" id="vrRefreshBtn">&#8635; Refresh</button>
+        <button class="vr-close-btn" onclick="closeViewResultsModal()" aria-label="Close">&#x2715;</button>
+      </div>
+    </div>
+    <div class="vr-body" id="vrBody">
+      <div class="vr-loading" id="vrLoading">
+        <div class="vr-spinner"></div>
+        <div class="vr-loading-text">Loading submissions...</div>
+      </div>
+      <div class="vr-error-msg" id="vrErrorMsg">
+        <span>&#9888;&#65039;</span><span id="vrErrorText">Failed to load results.</span>
+      </div>
+      <div class="vr-stats-row" id="vrStats" style="display:none;">
+        <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrCountNum">0</div><div class="vr-stat-label">Submissions</div></div></div>
+        <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrDoneNum">0</div><div class="vr-stat-label">Scored</div></div></div>
+        <div class="vr-stat-chip"><div><div class="vr-stat-num" id="vrStatAvg">&#8212;</div><div class="vr-stat-label">Avg Score</div></div></div>
+      </div>
+      <div class="vr-table-wrap" id="vrTableWrap" style="display:none;">
+        <table class="vr-table" aria-label="Submissions table">
+          <thead><tr><th>#</th><th>Student</th><th>Roll No.</th><th>Score</th><th>Submitted</th></tr></thead>
+          <tbody id="vrTableBody"></tbody>
+        </table>
+      </div>
+      <div class="vr-empty" id="vrEmpty">
+        <div class="vr-empty-icon">&#128237;</div>
+        <div class="vr-empty-title">No Submissions Yet</div>
+        <div class="vr-empty-msg">Share the assessment with students. Results will appear here once they submit.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
