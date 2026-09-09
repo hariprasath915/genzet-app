@@ -7469,6 +7469,79 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
       cursor: pointer; font-family: 'Sora', sans-serif; transition: all .2s;
     }
     .sim-save-btn:hover { background: var(--blue-md); transform: translateY(-1px); }
+    /* ── Save in File button (shared across all Creator sub-modes) ── */
+    .am-save-file-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 2px solid #16a34a;
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      color: #15803d;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+      margin-bottom: 6px;
+    }
+    .am-save-file-btn:hover {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      border-color: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(22,163,74,.2);
+    }
+    .am-save-file-btn.saved {
+      background: linear-gradient(135deg, #bbf7d0, #86efac);
+      border-color: #15803d;
+      color: #14532d;
+    }
+    .sim-save-file-btn { margin-bottom: 0; }
+    /* ── Save in File modal ── */
+    .sif-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; margin-top: 10px; }
+    .sif-item-btn {
+      padding: 14px 10px;
+      border-radius: 11px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      text-align: center;
+      transition: all 0.18s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .sif-item-btn:hover { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .sif-item-btn.sif-selected { border-color: #16a34a; background: linear-gradient(135deg,#f0fdf4,#dcfce7); color: #15803d; box-shadow: 0 2px 10px rgba(22,163,74,.18); }
+    .sif-item-icon { font-size: 22px; }
+    /* ── AI items in unit detail ── */
+    .fm-ai-item-card {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 11px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.18s;
+      position: relative;
+    }
+    .fm-ai-item-card:hover { border-color: #16a34a; box-shadow: 0 3px 14px rgba(22,163,74,.13); transform: translateY(-1px); }
+    .fm-ai-item-badge { font-size: 10px; font-weight: 800; color: #15803d; background: #dcfce7; border: 1px solid #86efac; border-radius: 20px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; width: fit-content; }
+    .fm-ai-item-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.35; }
+    .fm-ai-item-meta { font-size: 11px; color: var(--text3); }
+    .fm-ai-item-remove { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 6px; border: 1.5px solid var(--red); background: var(--red-lt); color: var(--red); font-size: 10px; font-weight: 700; cursor: pointer; display: none; }
+    .fm-ai-item-card:hover .fm-ai-item-remove { display: block; }
     .sim-dl-btn {
       width: 100%; padding: 10px; border-radius: 9px;
       border: 2px solid var(--border2); background: var(--bg);
@@ -12854,8 +12927,7 @@ function amShowSuccess() {
                   <!-- ══ Shared Save/Download (shown after any generation) ══ -->
                   <div class="am-section" id="amSaveSection" style="display:none;">
                     <div class="am-section-label">Save Options</div>
-                    <button class="am-save-btn" id="amSaveBtn" onclick="openSaveModal()">📚 Save to Library</button>
-                    <button class="am-save-co-btn" onclick="openSaveToCOModal()">📁 Save in Engineering Courses</button>
+                    <button class="am-save-file-btn" id="amSaveFileBtn" onclick="openSaveInFileModal('animind')">📂 Save in File</button>
                   </div>
                   <div class="am-section" id="amDlSection" style="display:none;">
                     <button onclick="downloadAnimation()"
@@ -12974,9 +13046,7 @@ function amShowSuccess() {
                   </div>
                   <div class="am-section" id="qaSaveSection" style="display:none;">
                     <div class="am-section-label">Save Options</div>
-                    <button class="am-save-btn" id="qaSaveBtn" onclick="openQASaveModal()">📚 Save to Library</button>
-                    <button class="am-save-co-btn" onclick="openQASaveToCOModal()">📁 Save in Engineering
-                      Courses</button>
+                    <button class="am-save-file-btn" id="qaSaveFileBtn" onclick="openSaveInFileModal('question')">&#128194; Save in File</button>
                   </div>
                   <div class="am-section" id="qaDlSection" style="display:none;">
                     <button onclick="downloadQuestionAnim()"
@@ -13085,7 +13155,7 @@ function amShowSuccess() {
 
                     <!-- Save / Download (shown after generation) -->
                     <div class="sim-save-section" id="simSaveSection" style="display:none;">
-                      <button class="sim-save-btn" onclick="saveSimulation()">📚 Save to Library</button>
+                      <button class="am-save-file-btn sim-save-file-btn" id="simSaveFileBtn" onclick="openSaveInFileModal('simulation')">&#128194; Save in File</button>
                       <button class="sim-dl-btn" onclick="downloadSimulation()">⬇️ Download HTML</button>
                     </div>
                   </div>
@@ -13507,6 +13577,18 @@ function amShowSuccess() {
 
   <!-- ══ MODALS ══ -->
 
+
+  <!-- ══ SAVE IN FILE MODAL ══ -->
+  <div class="modal-overlay" id="saveInFileModal">
+    <div class="modal-box wide" style="max-width:520px;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-bottom:2px solid #86efac;">
+        <h3 style="color:#16a34a;">&#128194; Save in File</h3>
+        <button class="modal-close-btn" onclick="closeSaveInFileModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body" id="saveInFileBody" style="min-height:120px;"></div>
+      <div class="modal-footer" id="saveInFileFooter"></div>
+    </div>
+  </div>
 
   <!-- Save to Library -->
   <div class="modal-overlay" id="saveModal">
@@ -14335,7 +14417,7 @@ function amShowSuccess() {
 
     async function updateStorageBadge() {
       try {
-        const animCount = (typeof animindLibrary !== 'undefined') ? animindLibrary.length : 0;
+        const animCount = (typeof animindLibrary !== 'undefined') ? animindLibrary.filter(function(a){return a.playlist!=='__file_unit__';}).length : 0;
         const coCount   = getTotalCOTopics ? getTotalCOTopics() : 0;
         const syncEl    = document.getElementById('storageText');
         if (syncEl) syncEl.textContent = '☁ Cloud';
@@ -14449,7 +14531,7 @@ function amShowSuccess() {
       if ((e.ctrlKey || e.metaKey) && e.key === '4') switchMode('file');
     }
     function closeAllModals() {
-      ['saveModal', 'saveToCOModal', 'createSubjectModal', 'modifySubjectModal', 'createCOModal', 'htmlUploadModal'].forEach(id => {
+      ['saveModal', 'saveToCOModal', 'createSubjectModal', 'modifySubjectModal', 'createCOModal', 'htmlUploadModal', 'saveInFileModal'].forEach(id => {
         document.getElementById(id).classList.remove('show');
       });
     }
@@ -14924,7 +15006,7 @@ function amShowSuccess() {
     function syncLibraryToFolders() {
       questions = questions.filter(q => !q.isAI && !q.isCO);
       animindLibrary.forEach(a => {
-        if (a.playlist === '__co_topic__') return;
+        if (a.playlist === '__co_topic__' || a.playlist === '__file_unit__') return;
         questions.push({
           id: 'ai_' + a.id, title: a.title, text: a.explanation || a.prompt,
           subject: 'AI Generated', classNum: '', lessonNum: '',
@@ -15139,8 +15221,7 @@ function amShowSuccess() {
         const iframe = document.getElementById('amIframe'); iframe.srcdoc = patchedCode; iframe.style.display = 'block';
         document.getElementById('amSaveSection').style.display = 'block';
         document.getElementById('amDlSection').style.display = 'block';
-        document.getElementById('amSaveBtn').className = 'am-save-btn';
-        document.getElementById('amSaveBtn').textContent = '📚 Save to Library';
+        
       } catch (e) {
         clearInterval(pt); clearInterval(mt);
         document.getElementById('amLoading').style.display = 'none'; document.getElementById('amEmpty').style.display = 'flex';
@@ -15342,8 +15423,7 @@ function amShowSuccess() {
         // Show save/download
         document.getElementById('amSaveSection').style.display = 'block';
         document.getElementById('amDlSection').style.display = 'block';
-        document.getElementById('amSaveBtn').className = 'am-save-btn';
-        document.getElementById('amSaveBtn').textContent = '📚 Save to Library';
+        
 
         notify('✅ Book-mode generation complete!');
 
@@ -15388,9 +15468,11 @@ function amShowSuccess() {
         catch (e) { console.warn('[SYNC] cloud push error:', e.message); }
       }
       syncLibraryToFolders(); showFolders(); closeSaveModal();
-      document.getElementById('amSaveBtn').className = 'am-save-btn saved';
-      document.getElementById('amSaveBtn').textContent = '✅ Saved!';
-      setTimeout(() => { document.getElementById('amSaveBtn').className = 'am-save-btn'; document.getElementById('amSaveBtn').textContent = '📚 Save to Library'; }, 3000);
+        // amSaveBtn removed — Save in File button
+
+        // amSaveBtn removed — Save in File button
+
+      setTimeout(() => {  }, 3000);
       notify('✅ "' + currentAnimation.title + '" saved to "' + pl + '"!');
       updateActiveCount(); updateStorageBadge();
     }
@@ -15527,12 +15609,228 @@ function amShowSuccess() {
     // LIBRARY
     // ═══════════════════════════════════════════════
     // Global animations loaded from backend (visible to all users)
+    // ═══════════════════════════════════════════════
+    // SAVE IN FILE — Creator with AI
+    // ═══════════════════════════════════════════════
+    var _sifStep        = 1;          // 1=pick subject, 2=pick unit
+    var _sifSubjectId   = null;
+    var _sifUnitId      = null;
+    var _sifSourceMode  = null;       // 'animind' | 'question' | 'simulation'
+
+    function openSaveInFileModal(mode) {
+      var anim = _sifGetCurrentOutput(mode);
+      if (!anim) { notify('Generate content first!', 'error'); return; }
+      _sifSourceMode = mode;
+      _sifStep = 1;
+      _sifSubjectId = null;
+      _sifUnitId = null;
+      renderSaveInFileStep();
+      document.getElementById('saveInFileModal').classList.add('show');
+    }
+
+    function closeSaveInFileModal() {
+      document.getElementById('saveInFileModal').classList.remove('show');
+    }
+
+    function _sifGetCurrentOutput(mode) {
+      if (mode === 'animind')    return currentAnimation;
+      if (mode === 'question')   return currentQuestionAnim;
+      if (mode === 'simulation') return simCurrentAnimation;
+      return null;
+    }
+
+    function renderSaveInFileStep() {
+      var body   = document.getElementById('saveInFileBody');
+      var footer = document.getElementById('saveInFileFooter');
+      if (!body || !footer) return;
+
+      if (_sifStep === 1) {
+        // Show subjects
+        if (!engineeringCourses || engineeringCourses.length === 0) {
+          body.innerHTML = '<div style="text-align:center;padding:32px 20px;color:var(--text3);">'
+            + '<div style="font-size:40px;margin-bottom:12px;">&#128193;</div>'
+            + '<p style="font-size:14px;font-weight:700;color:var(--text);">No subjects yet</p>'
+            + '<p style="font-size:12px;margin-top:6px;">Go to <strong>File Mode</strong> to create a subject and units first.</p>'
+            + '</div>';
+          footer.innerHTML = '<button class="modal-cancel-btn" onclick="closeSaveInFileModal()">Close</button>';
+          return;
+        }
+        var subjectBtns = engineeringCourses.map(function(s) {
+          var color = s.color || '#6366f1';
+          var icon  = s.icon  || '&#128193;';
+          return '<button class="sif-item-btn' + (_sifSubjectId === s.id ? ' sif-selected' : '') + '" onclick="sifSelectSubject('' + s.id + '')">'
+            + '<span class="sif-item-icon" style="background:' + color + '22;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">' + icon + '</span>'
+            + '<span>' + esc(s.name) + '</span>'
+            + '</button>';
+        }).join('');
+        body.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">Step 1 of 2 &mdash; Choose Subject</div>'
+          + '<div class="sif-item-grid">' + subjectBtns + '</div>';
+        footer.innerHTML = '<button class="modal-cancel-btn" onclick="closeSaveInFileModal()">Cancel</button>'
+          + '<button class="modal-save-btn" style="background:linear-gradient(135deg,#16a34a,#15803d);border-color:transparent;" onclick="sifNext()" '
+          + (!_sifSubjectId ? 'disabled' : '') + ' id="sifNextBtn1">Next &#8594;</button>';
+
+      } else if (_sifStep === 2) {
+        // Show units of selected subject
+        var subj = engineeringCourses.find(function(s) { return s.id === _sifSubjectId; });
+        var units = (subj && Array.isArray(subj.units)) ? subj.units : [];
+        if (units.length === 0) {
+          body.innerHTML = '<div style="text-align:center;padding:32px 20px;color:var(--text3);">'
+            + '<div style="font-size:40px;margin-bottom:12px;">&#128230;</div>'
+            + '<p style="font-size:14px;font-weight:700;color:var(--text);">No units in ' + esc(subj ? subj.name : '') + '</p>'
+            + '<p style="font-size:12px;margin-top:6px;">Go to <strong>File Mode &rarr; ' + esc(subj ? subj.name : '') + '</strong> to create a unit first.</p>'
+            + '</div>';
+          footer.innerHTML = '<button class="modal-cancel-btn" onclick="_sifStep=1;renderSaveInFileStep()">&#8592; Back</button>'
+            + '<button class="modal-cancel-btn" onclick="closeSaveInFileModal()">Close</button>';
+          return;
+        }
+        var unitBtns = units.map(function(u) {
+          var isLesson = u.unit_type === 'lesson';
+          var icon = isLesson ? '&#128214;' : '&#128230;';
+          var count = (u.lesson_ids || []).length;
+          return '<button class="sif-item-btn' + (_sifUnitId === u.id ? ' sif-selected' : '') + '" onclick="sifSelectUnit('' + u.id + '')">'
+            + '<span class="sif-item-icon">' + icon + '</span>'
+            + '<span>' + esc(u.name) + '</span>'
+            + '<span style="font-size:10px;color:var(--text3);">' + count + ' topic' + (count !== 1 ? 's' : '') + '</span>'
+            + '</button>';
+        }).join('');
+        var subjIcon = subj ? (subj.icon || '&#128193;') : '';
+        body.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Step 2 of 2 &mdash; Choose Unit</div>'
+          + '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;">in <strong>' + subjIcon + ' ' + esc(subj ? subj.name : '') + '</strong></div>'
+          + '<div class="sif-item-grid">' + unitBtns + '</div>';
+        footer.innerHTML = '<button class="modal-cancel-btn" onclick="_sifStep=1;renderSaveInFileStep()">&#8592; Back</button>'
+          + '<button class="modal-save-btn" style="background:linear-gradient(135deg,#16a34a,#15803d);border-color:transparent;" onclick="sifFinish()" '
+          + (!_sifUnitId ? 'disabled' : '') + ' id="sifSaveBtn">&#128190; Save Here</button>';
+      }
+    }
+
+    function sifSelectSubject(id) {
+      _sifSubjectId = id;
+      _sifUnitId = null;
+      renderSaveInFileStep();
+    }
+
+    function sifSelectUnit(id) {
+      _sifUnitId = id;
+      renderSaveInFileStep();
+    }
+
+    function sifNext() {
+      _sifStep = 2;
+      renderSaveInFileStep();
+    }
+
+    async function sifFinish() {
+      if (!_sifSubjectId || !_sifUnitId) { notify('Please select a unit!', 'error'); return; }
+      var output = _sifGetCurrentOutput(_sifSourceMode);
+      if (!output) { notify('No content to save!', 'error'); return; }
+
+      // Determine content fields
+      var html        = output.animation_code || output.html || '';
+      var title       = output.title   || output.prompt || 'Untitled';
+      var prompt      = output.prompt  || '';
+      var explanation = output.explanation || '';
+      var contentType = _sifSourceMode === 'simulation' ? 'simulation' : 'animation';
+
+      // Update button to show saving state
+      var saveBtn = document.getElementById('sifSaveBtn');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      try {
+        var res = await fetch(BACKEND_URL + '/sync/save-to-unit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (window.authToken || '')
+          },
+          body: JSON.stringify({
+            unit_id:      _sifUnitId,
+            subject_id:   _sifSubjectId,
+            title:        title.slice(0, 500),
+            html:         html,
+            prompt:       prompt,
+            explanation:  explanation,
+            content_type: contentType
+          })
+        });
+
+        if (!res.ok) {
+          var err = {};
+          try { err = await res.json(); } catch(_) {}
+          throw new Error(err.detail || 'Server error ' + res.status);
+        }
+
+        var data = await res.json();
+        var newItemId = data.id;
+
+        // ── Update in-memory state ────────────────────────────────
+        // 1. Add to animindLibrary so fmRenderUnitTopics can show it
+        if (newItemId) {
+          var newItem = {
+            id:             newItemId,
+            title:          title,
+            prompt:         prompt,
+            explanation:    explanation,
+            animation_code: html,
+            playlist:       '__file_unit__',
+            created_at:     new Date().toISOString(),
+            item_type:      'ai_creator',
+            unit_id:        _sifUnitId
+          };
+          if (typeof animindLibrary !== 'undefined') {
+            animindLibrary.unshift(newItem);
+          }
+
+          // 2. Update the unit's lesson_ids in memory
+          var subj = engineeringCourses.find(function(s) { return s.id === _sifSubjectId; });
+          var unit = subj && Array.isArray(subj.units)
+            ? subj.units.find(function(u) { return u.id === _sifUnitId; })
+            : null;
+          if (unit) {
+            if (!Array.isArray(unit.lesson_ids)) unit.lesson_ids = [];
+            unit.lesson_ids.push(newItemId);
+          }
+        }
+
+        // ── Mark Save in File button as done ──────────────────────
+        var fileBtn = document.getElementById(
+          _sifSourceMode === 'animind' ? 'amSaveFileBtn' :
+          _sifSourceMode === 'question' ? 'qaSaveFileBtn' : 'simSaveFileBtn'
+        );
+        if (fileBtn) {
+          fileBtn.classList.add('saved');
+          fileBtn.textContent = '&#10003; Saved!';
+          setTimeout(function() {
+            fileBtn.classList.remove('saved');
+            fileBtn.textContent = '&#128194; Save in File';
+          }, 3000);
+        }
+
+        // ── Find subject and unit names for toast ─────────────────
+        var subj2 = engineeringCourses.find(function(s) { return s.id === _sifSubjectId; });
+        var unit2 = subj2 && Array.isArray(subj2.units)
+          ? subj2.units.find(function(u) { return u.id === _sifUnitId; })
+          : null;
+        var subjName = subj2 ? subj2.name : 'subject';
+        var unitName = unit2 ? unit2.name : 'unit';
+
+        closeSaveInFileModal();
+        notify('Saved "' + title.slice(0,40) + '" to ' + subjName + ' > ' + unitName + '!', 'success');
+        if (typeof updateActiveCount === 'function') updateActiveCount();
+        if (typeof updateStorageBadge === 'function') updateStorageBadge();
+
+      } catch(err) {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '&#128190; Save Here'; }
+        notify('Save failed: ' + err.message, 'error');
+        console.error('[SIF]', err);
+      }
+    }
+
     var globalAnimations = [];
 
     async function renderLibrary() {
       // animindLibrary is already in-memory from cloud pull — no IDB read needed
       const isGlobalTab = activeLibTab === 'global';
-      const sourceLib = isGlobalTab ? globalAnimations : animindLibrary;
+      const sourceLib = isGlobalTab ? globalAnimations : animindLibrary.filter(a => a.playlist !== '__file_unit__');
 
       const aP = sourceLib.map(a => a.playlist || (isGlobalTab ? 'Global' : 'General'));
       const allPl = ['all', ...new Set(aP)];
@@ -15543,7 +15841,7 @@ function amShowSuccess() {
       const showA = activeLibTab === 'all' || activeLibTab === 'animations';
       let fA = isGlobalTab
         ? globalAnimations.filter(a => activePlaylist === 'all' || (a.playlist || 'Global') === activePlaylist)
-        : (showA ? animindLibrary.filter(a => activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist) : []);
+        : (showA ? animindLibrary.filter(a => a.playlist !== '__file_unit__' && (activePlaylist === 'all' || (a.playlist || 'General') === activePlaylist)) : []);
 
       // ── Search: filter + sort by relevance ──────────────────────────────
       const sq = (libSearchQuery || '').toLowerCase().trim();
@@ -16081,10 +16379,14 @@ function amShowSuccess() {
       const cache = (window.lessonsAPI && typeof window.lessonsAPI.getCache === 'function')
         ? (window.lessonsAPI.getCache() || []) : [];
       const lessons = lessonIds.map(id => cache.find(l => l.id === id)).filter(Boolean);
+      // Also pull AI items saved via "Save in File" from animindLibrary
+      const aiItems = (typeof animindLibrary !== 'undefined' ? animindLibrary : [])
+        .filter(function(a) { return a.unit_id === unitId; });
 
-      if (countEl) countEl.textContent = lessons.length + ' topic' + (lessons.length !== 1 ? 's' : '');
+      var totalCount = lessons.length + (typeof aiItems !== 'undefined' ? aiItems.length : 0);
+      if (countEl) countEl.textContent = totalCount + ' topic' + (totalCount !== 1 ? 's' : '');
 
-      if (!lessons.length) {
+      if (!lessons.length && !aiItems.length) {
         grid.innerHTML = `
           <div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text3);">
             <div style="font-size:44px;margin-bottom:12px;">📚</div>
@@ -16119,6 +16421,52 @@ function amShowSuccess() {
             </div>
           </div>`;
       }).join('');
+
+      // ── Render AI items saved via "Save in File" ─────────────────
+      if (aiItems && aiItems.length > 0) {
+        var aiHtml = aiItems.map(function(item) {
+          var typeLabel = item.item_type === 'simulation' ? '&#9889; Simulation' : '&#127916; Animation';
+          var dateStr = typeof fmtDate === 'function' ? fmtDate(item.created_at) : '';
+          return '<div class="fm-ai-item-card" onclick="fmOpenAiItem(' + JSON.stringify(item.id) + ')">' +
+            '<div class="fm-ai-item-badge">&#129302; AI Generated</div>' +
+            '<div class="fm-ai-item-title">' + esc(item.title || 'Untitled') + '</div>' +
+            '<div class="fm-ai-item-meta">' + dateStr + '</div>' +
+            '<button class="fm-ai-item-remove" onclick="event.stopPropagation();fmRemoveAiItemFromUnit(' + JSON.stringify(item.id) + ',' + JSON.stringify(unitId) + ')">' +
+            'x Remove</button>' +
+            '</div>';
+        }).join('');
+        grid.innerHTML += aiHtml;
+      }
+    }
+
+    function fmOpenAiItem(itemId) {
+      var item = (typeof animindLibrary !== 'undefined' ? animindLibrary : [])
+        .find(function(a) { return a.id === itemId; });
+      if (!item) { notify('Item not found', 'error'); return; }
+      if (typeof openPresentMode === 'function') {
+        openPresentMode(item.animation_code, item.title, 'AI Generated');
+      }
+    }
+
+    async function fmRemoveAiItemFromUnit(itemId, unitId) {
+      if (!confirm('Remove this AI item from this unit?')) return;
+      // Remove from unit_lessons via existing sync
+      var subj = engineeringCourses.find(function(s) { return s.id === _fmCurrentSubjectId; });
+      var u = subj && Array.isArray(subj.units)
+        ? subj.units.find(function(u) { return u.id === unitId; }) : null;
+      if (u) {
+        u.lesson_ids = (u.lesson_ids || []).filter(function(id) { return id !== itemId; });
+        if (typeof window.syncSaveUnitLessons === 'function') {
+          try { await window.syncSaveUnitLessons(unitId, u.lesson_ids); } catch(e) {}
+        }
+      }
+      // Remove unit_id from animindLibrary item in memory
+      if (typeof animindLibrary !== 'undefined') {
+        var libItem = animindLibrary.find(function(a) { return a.id === itemId; });
+        if (libItem) libItem.unit_id = null;
+      }
+      fmRenderUnitTopics(unitId);
+      notify('AI item removed from unit');
     }
 
     async function fmRemoveTopicFromUnit(unitId, lessonId) {
@@ -17846,8 +18194,10 @@ ${text.substring(0, 4500)}`
         iframe.srcdoc = patchedCode; iframe.style.display = 'block';
         document.getElementById('qaSaveSection').style.display = 'block';
         document.getElementById('qaDlSection').style.display = 'block';
-        document.getElementById('qaSaveBtn').className = 'am-save-btn';
-        document.getElementById('qaSaveBtn').textContent = '📚 Save to Library';
+        // qaSaveBtn removed — Save in File button doesn't need state reset
+
+        // qaSaveBtn removed — no textContent reset needed
+
 
       } catch (e) {
         clearInterval(pt); clearInterval(mt);
@@ -17923,9 +18273,12 @@ ${text.substring(0, 4500)}`
         // ✅ CLOUD SYNC — push to Supabase (source of truth)
         if (typeof window.syncPushToCloud === 'function') await window.syncPushToCloud(currentQuestionAnim);
         syncLibraryToFolders(); showFolders(); closeSaveModal();
-        document.getElementById('qaSaveBtn').className = 'am-save-btn saved';
-        document.getElementById('qaSaveBtn').textContent = '✅ Saved!';
-        setTimeout(() => { document.getElementById('qaSaveBtn').className = 'am-save-btn'; document.getElementById('qaSaveBtn').textContent = '📚 Save to Library'; }, 3000);
+        // qaSaveBtn removed (Save to Library removed from QA mode)
+
+        // qaSaveBtn removed
+
+        // qaSaveBtn setTimeout removed
+
         notify('✅ "' + currentQuestionAnim.title + '" saved to "' + pl + '"!');
         updateActiveCount(); updateStorageBadge();
         return;
