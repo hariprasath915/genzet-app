@@ -333,6 +333,7 @@
       playlist:       item.playlist   || 'General',
       created_at:     item.created_at,
       item_type:      item.item_type,           // extra — safe to keep
+      unit_id:        item.unit_id    || null,  // File-Mode unit link
     }));
 
     // Cloud REPLACES local — no merge needed on login
