@@ -1,28 +1,47 @@
 /* ============================================================================
-   cloud_sync_v3.js  —  GenZet / Animind  v3.0
+   cloud_sync_v3.js  —  GenZet / Animind  v3.1
    ============================================================================
-   REPLACES:  genzet_auth_override.js  +  auth_sync.js  +  cloud_sync.js
-              (remove ALL three old script tags — use this ONE file instead)
+   Single script replacing genzet_auth_override.js + auth_sync.js + cloud_sync.js
 
    ADD as the LAST <script> tag before </body> in index.html:
      <script src="cloud_sync_v3.js"></script>
 
-   WHAT'S NEW vs v2 (genzet_auth_override.js / cloud_sync.js):
-     ✅ Single GET /sync/all on login  — one round-trip loads everything
-     ✅ POST /sync/items               — typed save (ai_creator/book_mode/question_anim/topic_content)
-     ✅ POST /sync/subjects + /cos + /topics  — per-row normalized writes
-     ✅ POST /sync/vault/entries       — per-row vault entries (no more full-blob PUT)
-     ✅ Legacy /sync/animations + /sync/courses + /sync/vault kept as fallback
-     ✅ window.* API surface IDENTICAL to v2 — zero changes needed in index.html
-        (except replacing the script filename)
+   ACTIVE ENDPOINTS (all require JWT unless noted):
+     GET  /sync/all                  — full data pull on login (no legacy fallback)
+     POST /sync/items                — save generated item
+     GET  /sync/items                — list saved items
+     PUT  /sync/items/{id}           — update item
+     DELETE /sync/items/{id}         — soft-delete item
+     GET  /sync/subjects             — subjects + COs + topics tree
+     POST /sync/subjects             — create subject
+     PUT  /sync/subjects/{id}        — update subject
+     DELETE /sync/subjects/{id}      — delete subject
+     POST /sync/cos                  — create CO
+     PUT  /sync/cos/{id}             — update CO
+     DELETE /sync/cos/{id}           — delete CO
+     GET  /sync/units                — list units
+     POST /sync/units                — create unit
+     PUT  /sync/units/{id}           — update unit
+     DELETE /sync/units/{id}         — delete unit
+     GET  /sync/unit-lessons/{id}    — lessons in a unit
+     POST /sync/unit-lessons         — add lesson to unit
+     POST /sync/topics               — create topic
+     PUT  /sync/topics/{id}          — update topic
+     DELETE /sync/topics/{id}        — delete topic
+     GET  /sync/vault/entries        — list vault entries
+     POST /sync/vault/entries        — add vault entry
+     DELETE /sync/vault/entries/{id} — delete vault entry
+     POST /sync/files/upload         — upload to Supabase Storage
+     DELETE /sync/files/delete       — delete from Supabase Storage
 
    LOCALSTORAGE POLICY:
      ONLY  haezet_jwt      — auth token (needed for pre-paint gate)
      ONLY  haezet_user     — cached name/email for offline display
      ONLY  genzet_theme    — dark/light preference  (UI state, fine)
      ONLY  genzet_searches — search autocomplete history  (UI state, fine)
-     ALL   app data (animations, courses, vault) comes from cloud only.
+     ALL   app data comes from cloud only — no localStorage mirroring.
    ============================================================================ */
+
 
 (function () {
   'use strict';
@@ -469,21 +488,16 @@
       setTimeout(() => _setSyncStatus(''), 3000);
       return r;
     }
-
-    // New endpoint failed — fall back to legacy
-    console.warn('[SYNC] /sync/items failed, falling back to legacy:', r.error);
-    await _legacySaveAnimation(item);
+    console.warn('[SYNC] /sync/items failed:', r.error);
+    _setSyncStatus('');
     return r;
   }
 
   // ── Delete item (tries new endpoint first, falls back to legacy) ─────────
   async function _deleteItem(id) {
-    // id may be a UUID (_cloud_id) or a legacy timestamp string
+    // id is the UUID stored as _cloud_id at save time
     const r = await _api('DELETE', `/sync/items/${encodeURIComponent(id)}`);
-    if (!r.ok) {
-      // Fall back to legacy /sync/animations/{id}
-      await _legacyDeleteAnimation(id);
-    }
+    if (!r.ok) console.warn('[SYNC] deleteItem failed:', r.error);
     _setSyncStatus('');
   }
 
