@@ -14016,7 +14016,7 @@ function amShowSuccess() {
           <iframe id="assessViewerIframe"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             title="Assessment Content"
-            onload="assessIframeLoaded()">
+            onload="if(typeof assessIframeLoaded==='function') assessIframeLoaded();">
           </iframe>
           <!-- Side code panel -->
           <div class="assess-code-panel" id="assessCodePanel">
@@ -15658,7 +15658,7 @@ function amShowSuccess() {
         var subjectBtns = engineeringCourses.map(function(s) {
           var color = s.color || '#6366f1';
           var icon  = s.icon  || '&#128193;';
-          return '<button class="sif-item-btn' + (_sifSubjectId === s.id ? ' sif-selected' : '') + '" onclick="sifSelectSubject('' + s.id + '')">'
+          return '<button class="sif-item-btn' + (_sifSubjectId === s.id ? ' sif-selected' : '') + '" onclick="sifSelectSubject(' + "'" + s.id + "'" + ')">'
             + '<span class="sif-item-icon" style="background:' + color + '22;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">' + icon + '</span>'
             + '<span>' + esc(s.name) + '</span>'
             + '</button>';
@@ -15687,7 +15687,7 @@ function amShowSuccess() {
           var isLesson = u.unit_type === 'lesson';
           var icon = isLesson ? '&#128214;' : '&#128230;';
           var count = (u.lesson_ids || []).length;
-          return '<button class="sif-item-btn' + (_sifUnitId === u.id ? ' sif-selected' : '') + '" onclick="sifSelectUnit('' + u.id + '')">'
+          return '<button class="sif-item-btn' + (_sifUnitId === u.id ? ' sif-selected' : '') + '" onclick="sifSelectUnit(\'' + u.id + '\')">'
             + '<span class="sif-item-icon">' + icon + '</span>'
             + '<span>' + esc(u.name) + '</span>'
             + '<span style="font-size:10px;color:var(--text3);">' + count + ' topic' + (count !== 1 ? 's' : '') + '</span>'
