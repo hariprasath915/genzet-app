@@ -291,7 +291,26 @@
       _fetchPublicConfig();
       return true;
     }
-    // /sync/all not available yet (pre-deploy) — fall back to legacy
+
+    // ── 5xx errors: the backend endpoint exists but the DB call failed.
+    // The legacy fallback endpoints (/animations, /courses, /vault) query the
+    // same DB and will fail for the same reason — calling them just floods the
+    // network tab with more 500s and leaves the user with a blank screen.
+    // Instead, hydrate with empty arrays so the UI renders its empty-state.
+    if (r.status && r.status >= 500) {
+      console.warn(
+        `[SYNC] /sync/all returned ${r.status} — skipping legacy fallback ` +
+        `(same DB, same failure). Rendering empty state. Check Supabase keys & migrations.`
+      );
+      _hydrateItems([]);
+      _hydrateCourses([]);
+      _hydrateVault([]);
+      _fetchPublicConfig();
+      return false;
+    }
+
+    // 404 / network failure / pre-deploy: endpoint truly doesn't exist yet —
+    // fall back to the legacy 3-call approach.
     console.warn('[SYNC] /sync/all unavailable — using legacy 3-call fallback');
     await _legacyLoadAll();
     _fetchPublicConfig();
@@ -322,8 +341,10 @@
      *   { id, item_type, title, prompt, explanation, html_code, playlist, created_at }
      * We map them to the shape index.html expects:
      *   { id, title, prompt, explanation, animation_code, playlist, created_at }
+     *
+     * NOTE: do NOT early-return when items is empty — we must still call the
+     * render functions so the library shows its empty-state instead of a blank panel.
      */
-    if (!items.length) return;
     const mapped = items.map(item => ({
       id:             item.id,
       title:          item.title      || 'Untitled',
@@ -336,13 +357,15 @@
       unit_id:        item.unit_id    || null,  // File-Mode unit link
     }));
 
-    // Cloud REPLACES local — no merge needed on login
+    // Cloud REPLACES local — no merge needed on login (even if empty)
     if (typeof animindLibrary !== 'undefined') {
       animindLibrary = mapped;
     }
+    // Always refresh UI — shows empty-state for new users rather than blank
     if (typeof syncLibraryToFolders === 'function') syncLibraryToFolders();
     if (typeof showFolders          === 'function') showFolders();
     if (typeof updateActiveCount    === 'function') updateActiveCount();
+    if (typeof renderLibrary        === 'function') renderLibrary();
     if (items.length && typeof notify === 'function') {
       notify(`✅ ${items.length} saved items loaded from cloud.`);
     }
@@ -353,8 +376,10 @@
      * subjects from /sync/all is already in engineeringCourses shape:
      * [{ id, name, description, cos: [{ id, coNum, description, topics: [...] }], units: [...] }]
      * Topics now include: type, pptUrl, pptStoragePath, fileName
+     *
+     * NOTE: do NOT early-return when subjects is empty — we must still call render
+     * functions so File Mode shows its empty-state rather than a blank white panel.
      */
-    if (!subjects.length) return;
     // Normalise each topic so the frontend always has the fields it expects
     subjects.forEach(s => {
       // Normalise topics inside COs
@@ -393,7 +418,8 @@
 
 
   function _hydrateVault(entries) {
-    if (!entries.length) return;
+    // NOTE: do NOT early-return when entries is empty — vault must still render
+    // its empty-state so users see the panel, not a blank white area.
     if (typeof vaultVideos !== 'undefined') {
       // Map new schema fields → legacy shape that vaultRenderGrid() expects
       vaultVideos = entries.map(e => ({
