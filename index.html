@@ -22115,13 +22115,15 @@ window.assessViewerReload = function () {
        How it works:
          • Every screen-changing function already in this file (switchMode,
            fmOpenSubject, fmOpenUnit, selectLibraryCategory,
-           selectLibraryContentType, openPresentMode, _openHTMLPreviewOverlay)
+           selectLibraryContentType, openPresentMode, _openHTMLPreviewOverlay,
+           openLesson, launchLessonMode)
            is wrapped (not modified) so that, right after it does its normal
            job, we record "this is what the user is looking at now" as a
            new browser history entry.
          • The in-app "← Back" buttons/functions (fmBackToSubjects,
            fmBackToUnits, backToLibraryCategories, backToLibraryContentTypes,
-           closePresentMode, closeHTMLPreview) are re-pointed to
+           closePresentMode, closeHTMLPreview, backToLessonDetail,
+           closeLessonViewer) are re-pointed to
            history.back(), so an in-app Back click and the browser's own
            Back button do the exact same thing and stay in sync.
          • The real screen-restoring logic is never duplicated: going back
@@ -22216,6 +22218,12 @@ window.assessViewerReload = function () {
     hzWrapScreen('selectLibraryContentType');
     hzWrapScreen('openPresentMode');
     hzWrapScreen('_openHTMLPreviewOverlay');
+    // Lesson Library viewer: opening a lesson (→ Detail/"Choose a Mode"
+    // screen) and launching a mode (→ Animation/Theory/Real-World content)
+    // are both meaningful screen changes and get their own history entry,
+    // exactly like the dashboard's subject/unit/category screens above.
+    hzWrapScreen('openLesson');
+    hzWrapScreen('launchLessonMode');
 
     // ── Back / close controls: re-point to history.back() ───────────────
     hzWrapBack('fmBackToSubjects');
@@ -22224,6 +22232,11 @@ window.assessViewerReload = function () {
     hzWrapBack('backToLibraryContentTypes');
     hzWrapBack('closePresentMode');
     hzWrapBack('closeHTMLPreview');
+    // Lesson Library viewer: content→detail ("← Back") and detail→grid
+    // ("← Lessons") both re-point to history.back(), so they land on
+    // whatever screen actually preceded them in the user's real journey.
+    hzWrapBack('backToLessonDetail');
+    hzWrapBack('closeLessonViewer');
 
     // ── popstate: replay whichever screen the browser has navigated to ──
     window.addEventListener('popstate', function (e) {
@@ -22266,3 +22279,4 @@ window.assessViewerReload = function () {
 
 </body>
 </html>
+  
