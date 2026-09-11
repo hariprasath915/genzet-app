@@ -22120,6 +22120,13 @@ window.assessViewerReload = function () {
            is wrapped (not modified) so that, right after it does its normal
            job, we record "this is what the user is looking at now" as a
            new browser history entry.
+         • A call that would land on the exact screen already on top of
+           the stack (same function, same arguments — e.g. re-clicking an
+           already-active tab, or a duplicate event binding firing twice)
+           is never pushed as a new entry. This is tracked centrally via
+           hzCurrentKey rather than per-function, so it can't quietly rot
+           out of sync with the real global state the way an earlier,
+           per-function version of this check did.
          • The in-app "← Back" buttons/functions (fmBackToSubjects,
            fmBackToUnits, backToLibraryCategories, backToLibraryContentTypes,
            closePresentMode, closeHTMLPreview, backToLessonDetail,
@@ -22160,6 +22167,33 @@ window.assessViewerReload = function () {
     var hzNextId = 1;
     var hzRestoring = false; // true while we're replaying a popstate
 
+    // ── Duplicate-entry guard ────────────────────────────────────────────
+    // hzCurrentKey identifies "what screen is currently on top of the
+    // history stack" as `<fn>|<JSON of its args>`. A screen-changing call
+    // only earns a new history entry when it would actually change what's
+    // showing. Without this, any function that fires more than once for
+    // the same screen — a re-clicked already-active tab, a duplicate event
+    // binding after a re-render, a programmatic call that lands on the
+    // screen the user is already viewing — silently pushes a junk entry.
+    // Those junk entries are invisible (the screen doesn't change when
+    // they're created) but very visible on the way out: each one eats a
+    // Back press without visibly doing anything, which is exactly the
+    // "Back doesn't return to what I actually did" symptom. Keying off
+    // the real fn+args (rather than the previous per-function, ad hoc
+    // "is this a no-op" checks) makes the guard work the same way for
+    // every wrapped function, including ones added later.
+    var hzCurrentKey = null;
+    function hzKeyFor(name, args) {
+      try {
+        return name + '|' + JSON.stringify(args);
+      } catch (err) {
+        // Non-serializable args (shouldn't happen for our screen fns) —
+        // never treat as a duplicate rather than risk swallowing a real
+        // navigation.
+        return null;
+      }
+    }
+
     function hzStoreArgs(args) {
       var id = 'a' + (hzNextId++);
       hzArgsStore[id] = args;
@@ -22193,22 +22227,21 @@ window.assessViewerReload = function () {
 
     // Wrap a screen-changing function so that calling it normally records
     // a new "current screen" history entry, while leaving its original
-    // behavior completely untouched.
-    //   shouldRecord(args, before) — optional; return false to skip
-    //   recording this particular call (used for switchMode so re-clicking
-    //   the already-active tab doesn't add a redundant history entry).
-    function hzWrapScreen(name, shouldRecord) {
+    // behavior completely untouched. A call that lands on the same screen
+    // that's already current (same fn, same args) is a no-op for history
+    // purposes — see the hzCurrentKey guard above.
+    function hzWrapScreen(name) {
       var orig = window[name];
       if (typeof orig !== 'function') return;
       window[name] = function () {
         var args = Array.prototype.slice.call(arguments);
-        var before = window.currentMode;
         var ret = orig.apply(this, args);
         if (!hzRestoring) {
-          var record = shouldRecord ? shouldRecord(args, before) : true;
-          if (record) {
+          var key = hzKeyFor(name, args);
+          if (key === null || key !== hzCurrentKey) {
             var argId = hzStoreArgs(args);
             history.pushState({ __hzNav: true, fn: name, argId: argId }, '', location.href);
+            hzCurrentKey = key;
           }
         }
         return ret;
@@ -22239,12 +22272,7 @@ window.assessViewerReload = function () {
     }
 
     // ── Forward navigation: wrap once every relevant function exists ────
-    // currentMode is a top-level `let` from the main dashboard script and
-    // is readable here (shared global lexical scope), even though it's
-    // never attached to window.
-    hzWrapScreen('switchMode', function (args, before) {
-      return args[0] !== before; // skip no-op re-clicks of the active tab
-    });
+    hzWrapScreen('switchMode');
     hzWrapScreen('fmOpenSubject');
     hzWrapScreen('fmOpenUnit');
     hzWrapScreen('selectLibraryCategory');
@@ -22317,6 +22345,7 @@ window.assessViewerReload = function () {
       hzRestoring = true;
       try {
         window[st.fn].apply(null, args);
+        hzCurrentKey = hzKeyFor(st.fn, args); // keep the guard in sync with where we actually landed
       } catch (err) {
         console.error('[hzNav] error replaying "' + st.fn + '":', err);
         // Same graceful fallback as the missing-args case above, so a
@@ -22337,8 +22366,10 @@ window.assessViewerReload = function () {
     // the browser should show if the user backs all the way up to it.
     function hzInitRoot() {
       var startMode = (typeof currentMode !== 'undefined' && currentMode) ? currentMode : 'animind';
-      var argId = hzStoreArgs([startMode]);
+      var rootArgs = [startMode];
+      var argId = hzStoreArgs(rootArgs);
       history.replaceState({ __hzNav: true, fn: 'switchMode', argId: argId }, '', location.href);
+      hzCurrentKey = hzKeyFor('switchMode', rootArgs);
     }
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       hzInitRoot();
