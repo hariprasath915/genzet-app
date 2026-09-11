@@ -22101,6 +22101,168 @@ window.assessViewerReload = function () {
   </div>
 </div>
 
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       HAEZE NAVIGATION / BROWSER-HISTORY BRIDGE
+       ═══════════════════════════════════════════════════════════════════
+       Purpose: make the browser Back button walk backwards through the
+       app's OWN screens (mode tabs → subject → unit, category → content
+       type → grid, present/preview overlays) instead of immediately
+       leaving the page. Uses the real History API (pushState/popstate) —
+       no fake Back button, no disabling of the native Back button, no
+       change to how any screen looks or renders.
+
+       How it works:
+         • Every screen-changing function already in this file (switchMode,
+           fmOpenSubject, fmOpenUnit, selectLibraryCategory,
+           selectLibraryContentType, openPresentMode, _openHTMLPreviewOverlay)
+           is wrapped (not modified) so that, right after it does its normal
+           job, we record "this is what the user is looking at now" as a
+           new browser history entry.
+         • The in-app "← Back" buttons/functions (fmBackToSubjects,
+           fmBackToUnits, backToLibraryCategories, backToLibraryContentTypes,
+           closePresentMode, closeHTMLPreview) are re-pointed to
+           history.back(), so an in-app Back click and the browser's own
+           Back button do the exact same thing and stay in sync.
+         • The real screen-restoring logic is never duplicated: going back
+           simply re-invokes the original screen function for whatever the
+           previous entry was, so it renders exactly the way it always has.
+         • Only when the app's own history is exhausted does a further
+           Back press fall through to the browser's normal behavior (e.g.
+           returning to haeze_intro_final_standalone.html, or wherever the
+           user came from) — that page is never touched by this script.
+       ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+
+    // Guard against double-injection if this file is ever concatenated twice.
+    if (window.__hzNavBridgeInstalled) return;
+    window.__hzNavBridgeInstalled = true;
+
+    // ── In-memory store for the (sometimes large, e.g. generated HTML)
+    //    arguments behind each history entry. Keeping these out of
+    //    history.state avoids any History API payload-size limits and
+    //    keeps pushState/popstate fast. This is intentionally per-session
+    //    (in-memory): a full page reload always falls back to the normal
+    //    default screen, exactly like it does today. ──────────────────────
+    var hzArgsStore = Object.create(null);
+    var hzNextId = 1;
+    var hzRestoring = false; // true while we're replaying a popstate
+
+    function hzStoreArgs(args) {
+      var id = 'a' + (hzNextId++);
+      hzArgsStore[id] = args;
+      return id;
+    }
+
+    // Wrap a screen-changing function so that calling it normally records
+    // a new "current screen" history entry, while leaving its original
+    // behavior completely untouched.
+    //   shouldRecord(args, before) — optional; return false to skip
+    //   recording this particular call (used for switchMode so re-clicking
+    //   the already-active tab doesn't add a redundant history entry).
+    function hzWrapScreen(name, shouldRecord) {
+      var orig = window[name];
+      if (typeof orig !== 'function') return;
+      window[name] = function () {
+        var args = Array.prototype.slice.call(arguments);
+        var before = window.currentMode;
+        var ret = orig.apply(this, args);
+        if (!hzRestoring) {
+          var record = shouldRecord ? shouldRecord(args, before) : true;
+          if (record) {
+            var argId = hzStoreArgs(args);
+            history.pushState({ __hzNav: true, fn: name, argId: argId }, '', location.href);
+          }
+        }
+        return ret;
+      };
+    }
+
+    // Re-point an in-app "← Back" / "close" control to the browser's own
+    // history.back(). The popstate handler below then replays whichever
+    // screen the browser lands on, using that screen's own (unmodified)
+    // function — so the visual result is identical to what the original
+    // back/close function used to draw directly.
+    function hzWrapBack(name) {
+      var orig = window[name];
+      if (typeof orig !== 'function') return;
+      window['__hzOriginal_' + name] = orig; // kept, unused, purely for safety/debugging
+      window[name] = function () {
+        if (hzRestoring) { return orig.apply(this, arguments); }
+        // If, for some reason, there's nowhere for the browser to go back
+        // to (e.g. this function was reached in a way our bridge never
+        // recorded), fall back to running the original close/back logic
+        // directly so the button never silently does nothing.
+        if (history.state && history.state.__hzNav) {
+          history.back();
+        } else {
+          orig.apply(this, arguments);
+        }
+      };
+    }
+
+    // ── Forward navigation: wrap once every relevant function exists ────
+    // currentMode is a top-level `let` from the main dashboard script and
+    // is readable here (shared global lexical scope), even though it's
+    // never attached to window.
+    hzWrapScreen('switchMode', function (args, before) {
+      return args[0] !== before; // skip no-op re-clicks of the active tab
+    });
+    hzWrapScreen('fmOpenSubject');
+    hzWrapScreen('fmOpenUnit');
+    hzWrapScreen('selectLibraryCategory');
+    hzWrapScreen('selectLibraryContentType');
+    hzWrapScreen('openPresentMode');
+    hzWrapScreen('_openHTMLPreviewOverlay');
+
+    // ── Back / close controls: re-point to history.back() ───────────────
+    hzWrapBack('fmBackToSubjects');
+    hzWrapBack('fmBackToUnits');
+    hzWrapBack('backToLibraryCategories');
+    hzWrapBack('backToLibraryContentTypes');
+    hzWrapBack('closePresentMode');
+    hzWrapBack('closeHTMLPreview');
+
+    // ── popstate: replay whichever screen the browser has navigated to ──
+    window.addEventListener('popstate', function (e) {
+      var st = e.state;
+      if (!st || !st.__hzNav || typeof window[st.fn] !== 'function') {
+        // Nothing of ours at this history position — this is the entry
+        // that existed before our bridge started recording (i.e. the app's
+        // own history is exhausted). We deliberately do nothing here and
+        // let the browser's default behavior stand; the *next* Back press
+        // (if any) will leave the document normally.
+        return;
+      }
+      var args = hzArgsStore[st.argId] || [];
+      hzRestoring = true;
+      try {
+        window[st.fn].apply(null, args);
+      } finally {
+        hzRestoring = false;
+      }
+    });
+
+    // ── Establish the root entry ─────────────────────────────────────────
+    // Tags the history entry that already exists at load time (the one the
+    // browser created when it navigated to this app, e.g. from
+    // haeze_intro_final_standalone.html) as "showing the default tab".
+    // Nothing about the page's appearance changes — this only records what
+    // the browser should show if the user backs all the way up to it.
+    function hzInitRoot() {
+      var startMode = (typeof currentMode !== 'undefined' && currentMode) ? currentMode : 'animind';
+      var argId = hzStoreArgs([startMode]);
+      history.replaceState({ __hzNav: true, fn: 'switchMode', argId: argId }, '', location.href);
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      hzInitRoot();
+    } else {
+      document.addEventListener('DOMContentLoaded', hzInitRoot);
+    }
+  })();
+  </script>
+
 </body>
 </html>
-  
