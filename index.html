@@ -22293,11 +22293,47 @@ window.assessViewerReload = function () {
     hzWrapBack('backToLibraryContentTypes');
     hzWrapBack('closePresentMode');
     hzWrapBack('closeHTMLPreview');
-    // Lesson Library viewer: content→detail ("← Back") and detail→grid
-    // ("← Lessons") both re-point to history.back(), so they land on
-    // whatever screen actually preceded them in the user's real journey.
+    // Lesson Library viewer: content→detail ("← Back") re-points to
+    // history.back() so the browser and in-app buttons stay in sync.
+    // closeLessonViewer ("← Lessons") is intentionally NOT wrapped as a
+    // hzWrapBack — see the popstate handler below for why.
     hzWrapBack('backToLessonDetail');
-    hzWrapBack('closeLessonViewer');
+
+    // ── Helper: close the lesson-viewer overlay without touching history ──
+    // Called by popstate whenever the destination entry is a screen that
+    // lives *behind* the overlay (e.g. switchMode, selectLibraryCategory).
+    // We call the original (unwrapped) function so neither the hzWrapBack
+    // nor the hzWrapScreen wrapper fires and the history stack is untouched.
+    function hzCloseLessonOverlayIfOpen() {
+      var overlay = document.getElementById('lessonViewerOverlay');
+      if (!overlay || !overlay.classList.contains('open')) return;
+      var origClose = window['__hzOriginal_closeLessonViewer'] || window.closeLessonViewer;
+      if (typeof origClose === 'function') {
+        hzRestoring = true;
+        try { origClose(); } catch (e2) {} finally { hzRestoring = false; }
+      }
+    }
+
+    // Save the original closeLessonViewer before any wrapping so that
+    // hzCloseLessonOverlayIfOpen can always reach it even after the
+    // function is later replaced by a hzWrapBack or hzWrapScreen call.
+    window['__hzOriginal_closeLessonViewer'] = window.closeLessonViewer;
+
+    // Re-point the "← Lessons" button to history.back() so it walks back
+    // through the real history stack (lesson detail → lesson list) instead
+    // of always jumping straight to the grid regardless of journey.
+    (function () {
+      var orig = window.closeLessonViewer;
+      if (typeof orig !== 'function') return;
+      window.closeLessonViewer = function () {
+        if (hzRestoring) { return orig.apply(this, arguments); }
+        if (history.state && history.state.__hzNav) {
+          history.back();
+        } else {
+          orig.apply(this, arguments);
+        }
+      };
+    })();
 
     // Screen functions that require at least one real argument to render
     // correctly (as opposed to switchMode, which has a safe built-in
@@ -22326,6 +22362,20 @@ window.assessViewerReload = function () {
         // (if any) will leave the document normally.
         return;
       }
+
+      // ── Overlay safety: close the lesson viewer overlay whenever we are
+      // navigating back to a screen that sits *behind* it. Without this,
+      // pressing Back from the Detail page (openLesson entry) replays
+      // switchMode / selectLibraryCategory / etc. which re-draws the
+      // background panel but leaves the overlay visible on top of it —
+      // making the app appear stuck. The overlay is only correct to leave
+      // open when the destination itself is an overlay screen (openLesson
+      // or launchLessonMode).
+      var OVERLAY_SCREENS = { openLesson: true, launchLessonMode: true };
+      if (!OVERLAY_SCREENS[st.fn]) {
+        hzCloseLessonOverlayIfOpen();
+      }
+
       var args = hzGetArgs(st.argId);
       if (args === undefined) {
         if (HZ_REQUIRES_ARGS[st.fn]) {
@@ -22336,7 +22386,7 @@ window.assessViewerReload = function () {
           // screen instead, so Back/Forward never leaves the user on a
           // broken or blank page.
           console.warn('[hzNav] no stored args for "' + st.fn + '" (likely after a refresh); falling back to default screen.');
-          if (typeof window.closeLessonViewer === 'function') { hzRestoring = true; try { window.closeLessonViewer(); } finally { hzRestoring = false; } }
+          hzCloseLessonOverlayIfOpen();
           if (typeof window.closeHTMLPreview === 'function') { hzRestoring = true; try { window.closeHTMLPreview(); } finally { hzRestoring = false; } }
           return;
         }
@@ -22351,7 +22401,7 @@ window.assessViewerReload = function () {
         // Same graceful fallback as the missing-args case above, so a
         // rendering error never leaves the app on a dead screen with the
         // Back/Forward buttons unable to recover it.
-        if (typeof window.closeLessonViewer === 'function') { try { window.closeLessonViewer(); } catch (e2) {} }
+        hzCloseLessonOverlayIfOpen();
         if (typeof window.closeHTMLPreview === 'function') { try { window.closeHTMLPreview(); } catch (e2) {} }
       } finally {
         hzRestoring = false;
