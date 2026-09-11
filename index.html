@@ -22142,12 +22142,20 @@ window.assessViewerReload = function () {
     if (window.__hzNavBridgeInstalled) return;
     window.__hzNavBridgeInstalled = true;
 
-    // ── In-memory store for the (sometimes large, e.g. generated HTML)
-    //    arguments behind each history entry. Keeping these out of
-    //    history.state avoids any History API payload-size limits and
-    //    keeps pushState/popstate fast. This is intentionally per-session
-    //    (in-memory): a full page reload always falls back to the normal
-    //    default screen, exactly like it does today. ──────────────────────
+    // ── Store for the arguments behind each history entry. Kept out of
+    //    history.state (rather than inline) to avoid History API
+    //    payload-size limits and keep pushState/popstate fast.
+    //
+    //    Most args are tiny (a lesson id, a mode name) and are mirrored to
+    //    sessionStorage so they survive a page refresh — without this, a
+    //    refresh followed by Back/Forward would replay a screen function
+    //    with no arguments and throw (e.g. openLesson() with an undefined
+    //    lesson). A few args can be large (e.g. _openHTMLPreviewOverlay's
+    //    generated HTML document) — those are kept in-memory only, same as
+    //    before, so a refresh mid-preview still falls back to the default
+    //    screen instead of bloating sessionStorage. ─────────────────────────
+    var HZ_STORAGE_PREFIX = 'hzNavArgs:';
+    var HZ_MAX_PERSIST_BYTES = 8000; // small-arg heuristic; large payloads stay in-memory only
     var hzArgsStore = Object.create(null);
     var hzNextId = 1;
     var hzRestoring = false; // true while we're replaying a popstate
@@ -22155,7 +22163,32 @@ window.assessViewerReload = function () {
     function hzStoreArgs(args) {
       var id = 'a' + (hzNextId++);
       hzArgsStore[id] = args;
+      try {
+        var serialized = JSON.stringify(args);
+        if (serialized && serialized.length <= HZ_MAX_PERSIST_BYTES) {
+          sessionStorage.setItem(HZ_STORAGE_PREFIX + id, serialized);
+        }
+      } catch (err) {
+        // Non-serializable or storage unavailable/full — fine, this entry
+        // simply won't survive a refresh; in-memory copy still works for
+        // the current session.
+      }
       return id;
+    }
+
+    function hzGetArgs(id) {
+      if (hzArgsStore[id] !== undefined) return hzArgsStore[id];
+      try {
+        var raw = sessionStorage.getItem(HZ_STORAGE_PREFIX + id);
+        if (raw !== null) {
+          var parsed = JSON.parse(raw);
+          hzArgsStore[id] = parsed; // warm the in-memory cache
+          return parsed;
+        }
+      } catch (err) {
+        // fall through to "not found"
+      }
+      return undefined;
     }
 
     // Wrap a screen-changing function so that calling it normally records
@@ -22238,6 +22271,22 @@ window.assessViewerReload = function () {
     hzWrapBack('backToLessonDetail');
     hzWrapBack('closeLessonViewer');
 
+    // Screen functions that require at least one real argument to render
+    // correctly (as opposed to switchMode, which has a safe built-in
+    // default tab). If we land on one of these with no recoverable args
+    // (e.g. the user refreshed the page, so our in-memory/sessionStorage
+    // copy for a large-payload entry like _openHTMLPreviewOverlay is gone),
+    // calling it with nothing would throw. We recover instead of crashing.
+    var HZ_REQUIRES_ARGS = {
+      openLesson: true,
+      launchLessonMode: true,
+      fmOpenSubject: true,
+      fmOpenUnit: true,
+      selectLibraryCategory: true,
+      selectLibraryContentType: true,
+      _openHTMLPreviewOverlay: true
+    };
+
     // ── popstate: replay whichever screen the browser has navigated to ──
     window.addEventListener('popstate', function (e) {
       var st = e.state;
@@ -22249,10 +22298,32 @@ window.assessViewerReload = function () {
         // (if any) will leave the document normally.
         return;
       }
-      var args = hzArgsStore[st.argId] || [];
+      var args = hzGetArgs(st.argId);
+      if (args === undefined) {
+        if (HZ_REQUIRES_ARGS[st.fn]) {
+          // Args didn't survive (typically: a refresh cleared the
+          // in-memory-only copy of a large payload). Don't call the
+          // screen function with nothing — that's how a stale/blank
+          // lesson or preview used to throw. Fall back to a known-safe
+          // screen instead, so Back/Forward never leaves the user on a
+          // broken or blank page.
+          console.warn('[hzNav] no stored args for "' + st.fn + '" (likely after a refresh); falling back to default screen.');
+          if (typeof window.closeLessonViewer === 'function') { hzRestoring = true; try { window.closeLessonViewer(); } finally { hzRestoring = false; } }
+          if (typeof window.closeHTMLPreview === 'function') { hzRestoring = true; try { window.closeHTMLPreview(); } finally { hzRestoring = false; } }
+          return;
+        }
+        args = [];
+      }
       hzRestoring = true;
       try {
         window[st.fn].apply(null, args);
+      } catch (err) {
+        console.error('[hzNav] error replaying "' + st.fn + '":', err);
+        // Same graceful fallback as the missing-args case above, so a
+        // rendering error never leaves the app on a dead screen with the
+        // Back/Forward buttons unable to recover it.
+        if (typeof window.closeLessonViewer === 'function') { try { window.closeLessonViewer(); } catch (e2) {} }
+        if (typeof window.closeHTMLPreview === 'function') { try { window.closeHTMLPreview(); } catch (e2) {} }
       } finally {
         hzRestoring = false;
       }
@@ -22279,4 +22350,3 @@ window.assessViewerReload = function () {
 
 </body>
 </html>
-  
