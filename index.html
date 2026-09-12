@@ -13753,6 +13753,216 @@ function amShowSuccess() {
               </div>
             </div><!-- end assessmentPanel -->
 
+            <!-- ══════════════════════════════════════════════════════════
+                 PROFILE PANEL — "My Profile" (added)
+                 Reuses .lessons-page / .lessons-topbar layout so the page
+                 header matches every other section, and .panel/.panel.active
+                 for open/close animation exactly like the other panels.
+                 ══════════════════════════════════════════════════════════ -->
+            <style>
+              .profile-page-content{max-width:920px;margin:0 auto;padding:24px 28px 48px;}
+              .profile-back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;
+                color:var(--text2);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:6px 4px 6px 0;
+                margin-bottom:2px;border-radius:8px;}
+              .profile-back-btn:hover{color:var(--blue);}
+              .profile-back-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+              .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+                box-shadow:var(--shadow);padding:22px 24px;margin-bottom:18px;}
+              .profile-card-title{font-family:var(--font-title);font-size:15px;font-weight:800;color:var(--text);
+                margin:0 0 2px;}
+              .profile-card-sub{font-size:12.5px;color:var(--text3);margin:0 0 16px;}
+              .profile-card-title + .profile-field-grid{margin-top:16px;}
+
+              /* Overview card */
+              .profile-overview-card{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+              .profile-overview-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg2);
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;
+                border:1.5px solid var(--border);}
+              .profile-overview-info{flex:1;min-width:160px;}
+              .profile-overview-name{font-family:var(--font-title);font-size:18px;font-weight:800;color:var(--text);
+                line-height:1.3;}
+              .profile-overview-role{display:inline-block;margin:2px 0 4px;font-size:11px;font-weight:700;
+                letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:var(--blue-lt);
+                border:1px solid var(--blue-md);border-radius:20px;padding:2px 10px;}
+              .profile-overview-email{font-size:13px;color:var(--text3);overflow-wrap:anywhere;}
+              .profile-edit-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;
+                background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;border:none;border-radius:12px;
+                font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;
+                box-shadow:0 4px 16px rgba(13,148,136,.3);white-space:nowrap;}
+              .profile-edit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,148,136,.4);}
+              .profile-edit-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+              /* Two-column grid: Personal / Academic info cards */
+              .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+              .profile-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+              .profile-field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+              .profile-field label{font-size:11.5px;font-weight:700;color:var(--text3);text-transform:uppercase;
+                letter-spacing:.03em;}
+              .profile-field-value{font-size:14px;font-weight:600;color:var(--text);overflow-wrap:anywhere;}
+              .profile-field-value.profile-empty{color:var(--text3);font-weight:500;font-style:italic;}
+              .profile-input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+                background:var(--bg2);color:var(--text);font:inherit;font-size:13.5px;outline:none;
+                transition:border-color .2s,box-shadow .2s;box-sizing:border-box;}
+              .profile-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
+              .profile-input:disabled{opacity:.65;cursor:not-allowed;}
+
+              /* Learning overview */
+              .profile-stats-row{display:flex;gap:14px;flex-wrap:wrap;}
+              .profile-stat{flex:1 1 160px;background:var(--bg2);border:1px solid var(--border);
+                border-radius:var(--radius-sm);padding:14px 16px;text-align:left;}
+              .profile-stat-val{display:block;font-family:var(--font-title);font-size:22px;font-weight:800;
+                color:var(--text);}
+              .profile-stat-label{display:block;font-size:11.5px;color:var(--text3);margin-top:2px;
+                font-weight:600;}
+              .profile-stat-soon{opacity:.7;}
+              .profile-stat-soon .profile-stat-val{color:var(--text3);}
+
+              /* Edit actions */
+              .profile-edit-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:2px;}
+              .profile-btn-primary{padding:10px 22px;background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;
+                border:none;border-radius:var(--radius-sm);font:inherit;font-size:13px;font-weight:700;
+                cursor:pointer;box-shadow:0 4px 16px rgba(13,148,136,.3);}
+              .profile-btn-primary:hover{transform:translateY(-1px);}
+              .profile-btn-secondary{padding:10px 22px;background:var(--bg2);color:var(--text2);
+                border:1.5px solid var(--border);border-radius:var(--radius-sm);font:inherit;font-size:13px;
+                font-weight:700;cursor:pointer;}
+              .profile-btn-primary:focus-visible,.profile-btn-secondary:focus-visible{outline:2px solid var(--blue);
+                outline-offset:2px;}
+
+              @media(max-width:768px){
+                .profile-page-content{padding:18px 16px 40px;}
+                .profile-grid{grid-template-columns:1fr;}
+              }
+              @media(max-width:480px){
+                .profile-field-grid{grid-template-columns:1fr;}
+                .profile-overview-card{flex-direction:column;align-items:flex-start;}
+                .profile-edit-btn{width:100%;justify-content:center;}
+                .profile-edit-actions{flex-direction:column-reverse;}
+                .profile-btn-primary,.profile-btn-secondary{width:100%;text-align:center;}
+              }
+            </style>
+            <div class="panel" id="profilePanel">
+              <div class="lessons-page">
+                <div class="lessons-topbar-sticky">
+                  <div class="lessons-topbar">
+                    <div class="lessons-topbar-left">
+                      <button type="button" class="profile-back-btn" onclick="profileGoBack()">← Back</button>
+                      <h2>My Profile</h2>
+                      <p>Manage your personal information and learning details.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-page-content">
+
+                  <!-- Overview card -->
+                  <div class="profile-card profile-overview-card">
+                    <div class="profile-overview-avatar" aria-hidden="true">
+                      <svg viewBox="0 0 64 64" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                          <linearGradient id="haezetProfileBirdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6B4FFF"/>
+                            <stop offset="100%" stop-color="#00D4FF"/>
+                          </linearGradient>
+                        </defs>
+                        <path d="M6 46 C16 40,26 40,32 46 C38 40,48 40,58 46 L58 50 C48 44,38 44,32 50 C26 44,16 44,6 50 Z" fill="var(--text)" opacity="0.85"/>
+                        <path d="M32 44 C30 34,30 26,34 18" stroke="url(#haezetProfileBirdGrad)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                        <path d="M34 24 C30 19,23 17,18 19 C25 19,29 23,32 27 C34 23,38 19,45 19 C40 17,36 19,34 24 Z" fill="url(#haezetProfileBirdGrad)"/>
+                        <g>
+                          <rect x="29" y="12" width="2" height="4" fill="#1E2338"/>
+                          <path d="M30 4 L41 9 L30 14 L19 9 Z" fill="#1E2338"/>
+                          <circle cx="30" cy="9" r="1.3" fill="#1E2338"/>
+                        </g>
+                      </svg>
+                    </div>
+                    <div class="profile-overview-info">
+                      <div class="profile-overview-name" id="profileOverviewName">Student</div>
+                      <span class="profile-overview-role">Student</span>
+                      <div class="profile-overview-email" id="profileOverviewEmail"></div>
+                    </div>
+                    <button type="button" class="profile-edit-btn" id="profileEditToggleBtn" onclick="profileToggleEdit()">✎ Edit Profile</button>
+                  </div>
+
+                  <div class="profile-grid">
+                    <!-- Personal Information -->
+                    <section class="profile-card" aria-labelledby="profilePersonalTitle">
+                      <h3 class="profile-card-title" id="profilePersonalTitle">Personal Information</h3>
+                      <div class="profile-field-grid">
+                        <div class="profile-field">
+                          <label for="profileNameInput">Full Name</label>
+                          <span class="profile-field-value" id="profileNameView"></span>
+                          <input class="profile-input" id="profileNameInput" type="text" style="display:none;" maxlength="80" />
+                        </div>
+                        <div class="profile-field">
+                          <label id="profileEmailLabel">Email Address</label>
+                          <span class="profile-field-value" id="profileEmailView" aria-labelledby="profileEmailLabel"></span>
+                        </div>
+                        <div class="profile-field">
+                          <label id="profileRoleLabel">Role</label>
+                          <span class="profile-field-value" aria-labelledby="profileRoleLabel">Student</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <!-- Academic Information -->
+                    <section class="profile-card" aria-labelledby="profileAcademicTitle">
+                      <h3 class="profile-card-title" id="profileAcademicTitle">Academic Information</h3>
+                      <p class="profile-card-sub">Optional — helps personalize your learning experience.</p>
+                      <div class="profile-field-grid">
+                        <div class="profile-field">
+                          <label for="profileGradeInput">Class / Grade</label>
+                          <span class="profile-field-value profile-empty" id="profileGradeView">Not added yet</span>
+                          <input class="profile-input" id="profileGradeInput" type="text" placeholder="e.g. Grade 10" style="display:none;" maxlength="40" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileSchoolInput">School Name</label>
+                          <span class="profile-field-value profile-empty" id="profileSchoolView">Not added yet</span>
+                          <input class="profile-input" id="profileSchoolInput" type="text" placeholder="e.g. Delhi Public School" style="display:none;" maxlength="80" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileBoardInput">Board / Curriculum</label>
+                          <span class="profile-field-value profile-empty" id="profileBoardView">Not added yet</span>
+                          <input class="profile-input" id="profileBoardInput" type="text" placeholder="e.g. CBSE, ICSE, IB" style="display:none;" maxlength="40" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileLanguageInput">Preferred Learning Language</label>
+                          <span class="profile-field-value profile-empty" id="profileLanguageView">Not added yet</span>
+                          <input class="profile-input" id="profileLanguageInput" type="text" placeholder="e.g. English" style="display:none;" maxlength="40" />
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <!-- Learning Overview -->
+                  <section class="profile-card profile-learning-card" aria-labelledby="profileLearningTitle">
+                    <h3 class="profile-card-title" id="profileLearningTitle">Learning Overview</h3>
+                    <p class="profile-card-sub">A quick look at what you've built in Haezet so far.</p>
+                    <div class="profile-stats-row">
+                      <div class="profile-stat">
+                        <span class="profile-stat-val" id="profileStatSaved">0</span>
+                        <span class="profile-stat-label">Lessons &amp; Animations Saved</span>
+                      </div>
+                      <div class="profile-stat">
+                        <span class="profile-stat-val" id="profileStatTopics">0</span>
+                        <span class="profile-stat-label">Topics in File Library</span>
+                      </div>
+                      <div class="profile-stat profile-stat-soon">
+                        <span class="profile-stat-val">—</span>
+                        <span class="profile-stat-label">Assessment Analytics · Coming soon</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <!-- Edit actions -->
+                  <div class="profile-edit-actions" id="profileEditActions" style="display:none;">
+                    <button type="button" class="profile-btn-secondary" onclick="profileCancelEdit()">Cancel</button>
+                    <button type="button" class="profile-btn-primary" onclick="profileSaveEdit()">Save Changes</button>
+                  </div>
+
+                </div>
+              </div>
+            </div><!-- end profilePanel -->
+
           </div>
         </div>
       </div>
@@ -14943,7 +15153,7 @@ function amShowSuccess() {
       const modeMap = ['animind', 'library', 'file', 'question', 'simulation', 'lessons', 'assessment'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel, vaultPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel', 'assessmentPanel'].forEach(id => {
+      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel', 'assessmentPanel', 'profilePanel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
@@ -14975,6 +15185,7 @@ function amShowSuccess() {
       if (mode === 'simulation') simInit();
       if (mode === 'lessons') initLessonsMode();
       if (mode === 'assessment') initAssessmentMode();
+      if (mode === 'profile') initProfileMode();
     }
 
     // ═══════════════════════════════════════════════
@@ -19237,13 +19448,144 @@ ${text.substring(0, 4500)}`
     }
     function pmViewProfile() {
       closeProfileMenu();
-      const name = (typeof authUser !== 'undefined' && authUser && authUser.name) || 'Student';
-      const email = (typeof authUser !== 'undefined' && authUser && authUser.email) || '';
-      notify(email ? `${name} · ${email}` : name, 'success');
+      // Remember where the user came from so the profile page's Back
+      // button (and any future close action) returns them there.
+      if (typeof currentMode !== 'undefined' && currentMode !== 'profile') {
+        window.profilePreviousMode = currentMode;
+      }
+      switchMode('profile');
     }
     function pmAccountSettings() {
       closeProfileMenu();
       notify('Account settings are coming soon!', 'success');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // PROFILE PAGE (added) — "My Profile"
+    // Data sources, by design:
+    //  • Name / email          → window.authUser (existing auth state),
+    //                             persisted back to localStorage['haezet_user']
+    //                             the same way the rest of the app already does.
+    //  • Academic fields        → localStorage['haezet_profile_academic'],
+    //                             a small, clearly-separated fallback store
+    //                             since no academic-info backend exists yet.
+    //                             Swap HZ_ACADEMIC_KEY's get/set for a real
+    //                             API/Supabase call here once one exists.
+    //  • Learning overview stats → animindLibrary.length / getTotalCOTopics(),
+    //                             the same real counts already shown as
+    //                             "Saved" in the sidebar — nothing fabricated.
+    // ══════════════════════════════════════════════════════════════════
+    const HZ_ACADEMIC_KEY = 'haezet_profile_academic';
+    function hzLoadAcademic() {
+      try { return JSON.parse(localStorage.getItem(HZ_ACADEMIC_KEY) || '{}'); }
+      catch (e) { return {}; }
+    }
+    function hzSaveAcademic(data) {
+      try { localStorage.setItem(HZ_ACADEMIC_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function profileGoBack() {
+      switchMode(window.profilePreviousMode || 'lessons');
+    }
+
+    // Populate the page each time it's opened, so it always reflects the
+    // latest auth/library state (mirrors how initLessonsMode/initAssessmentMode work).
+    function initProfileMode() {
+      const name = (typeof authUser !== 'undefined' && authUser && authUser.name) || 'Student';
+      const email = (typeof authUser !== 'undefined' && authUser && authUser.email) || '';
+      const academic = hzLoadAcademic();
+
+      setText('profileOverviewName', name);
+      setText('profileOverviewEmail', email);
+      setText('profileNameView', name);
+      setText('profileEmailView', email || 'Not available');
+
+      profileFillField('Grade', academic.grade);
+      profileFillField('School', academic.school);
+      profileFillField('Board', academic.board);
+      profileFillField('Language', academic.language);
+
+      // Learning overview — only ever real, existing counts.
+      const savedCount = (typeof animindLibrary !== 'undefined' ? animindLibrary.length : 0)
+        + (typeof getTotalCOTopics === 'function' ? getTotalCOTopics() : 0);
+      setText('profileStatSaved', String((typeof animindLibrary !== 'undefined' ? animindLibrary.length : 0)));
+      setText('profileStatTopics', String((typeof getTotalCOTopics === 'function' ? getTotalCOTopics() : 0)));
+
+      // Make sure we always land on the page in "view" (not edit) mode.
+      profileSetEditing(false);
+    }
+
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+    function profileFillField(key, value) {
+      const view = document.getElementById('profile' + key + 'View');
+      const input = document.getElementById('profile' + key + 'Input');
+      const has = value && String(value).trim().length > 0;
+      if (view) {
+        view.textContent = has ? value : 'Not added yet';
+        view.classList.toggle('profile-empty', !has);
+      }
+      if (input) input.value = has ? value : '';
+    }
+
+    function profileSetEditing(editing) {
+      ['Name', 'Grade', 'School', 'Board', 'Language'].forEach(key => {
+        const view = document.getElementById('profile' + key + 'View');
+        const input = document.getElementById('profile' + key + 'Input');
+        if (view) view.style.display = editing ? 'none' : '';
+        if (input) input.style.display = editing ? '' : 'none';
+      });
+      const actions = document.getElementById('profileEditActions');
+      if (actions) actions.style.display = editing ? 'flex' : 'none';
+      const editBtn = document.getElementById('profileEditToggleBtn');
+      if (editBtn) editBtn.style.display = editing ? 'none' : '';
+    }
+
+    function profileToggleEdit() {
+      profileSetEditing(true);
+      const nameInput = document.getElementById('profileNameInput');
+      if (nameInput) nameInput.focus();
+    }
+
+    function profileCancelEdit() {
+      // Re-populate inputs from saved state, discarding unsaved edits.
+      initProfileMode();
+    }
+
+    function profileSaveEdit() {
+      const nameInput = document.getElementById('profileNameInput');
+      const newName = (nameInput && nameInput.value || '').trim();
+      if (!newName) {
+        notify('Full name cannot be empty.', 'error');
+        nameInput && nameInput.focus();
+        return;
+      }
+
+      // Persist name via the existing auth/localStorage mechanism.
+      if (typeof authUser !== 'undefined' && authUser) authUser.name = newName;
+      try {
+        const stored = JSON.parse(localStorage.getItem('haezet_user') || '{}');
+        stored.name = newName;
+        localStorage.setItem('haezet_user', JSON.stringify(stored));
+      } catch (e) {}
+
+      // Persist academic fields to their dedicated fallback store.
+      const academic = {
+        grade: (document.getElementById('profileGradeInput') || {}).value?.trim() || '',
+        school: (document.getElementById('profileSchoolInput') || {}).value?.trim() || '',
+        board: (document.getElementById('profileBoardInput') || {}).value?.trim() || '',
+        language: (document.getElementById('profileLanguageInput') || {}).value?.trim() || ''
+      };
+      hzSaveAcademic(academic);
+
+      // Reflect the new name everywhere it's already shown in the topbar/dropdown.
+      if (typeof authUpdateStatusBar === 'function') authUpdateStatusBar();
+
+      initProfileMode();
+      notify('Profile updated.', 'success');
     }
 
     // ── Logout handler — called by the Sign Out button in the topbar ──────
