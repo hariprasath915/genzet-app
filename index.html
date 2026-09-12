@@ -12932,7 +12932,11 @@ function amShowSuccess() {
       </div>
       <div class="sidebar-nav-label">Navigation</div>
       <div class="sidebar-nav">
-        <button class="sidebar-nav-item active" id="sideAicreator" onclick="switchMode('lessons')">
+        <button class="sidebar-nav-item active" id="sideHome" onclick="switchMode('home')">
+          <div class="nav-icon">&#127968;</div>
+          <span class="nav-item-text">Home</span>
+        </button>
+        <button class="sidebar-nav-item" id="sideAicreator" onclick="switchMode('lessons')">
           <div class="nav-icon">&#10024;</div>
           <span class="nav-item-text">Library Mode</span>
           <span class="nav-item-tag">AI</span>
@@ -13012,6 +13016,126 @@ function amShowSuccess() {
           <div class="stream-inner">
 
             <!-- REMOVED: TEACHER PANEL (Teacher Mode fully removed) -->
+
+            <!-- ══════════════════════════════════════════════════════════
+                 HOME PANEL — dashboard landing screen (added)
+                 Reuses .lessons-page/.lessons-topbar for the header and
+                 .profile-card/.profile-stats-row for card styling (same
+                 classes as the Profile page) so it matches the rest of
+                 the app instead of introducing a new visual language.
+                 Only ever shows real data (animindLibrary /
+                 engineeringCourses) — no invented stats or progress.
+                 ══════════════════════════════════════════════════════════ -->
+            <style>
+              .home-page-content{max-width:920px;margin:0 auto;padding:24px 28px 48px;}
+              .home-quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+              .home-quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+                box-shadow:var(--shadow);padding:18px 14px;text-align:center;cursor:pointer;
+                transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;
+                align-items:center;gap:8px;font:inherit;color:inherit;}
+              .home-quick-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08);}
+              .home-quick-card:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+              .home-quick-icon{font-size:22px;line-height:1;}
+              .home-quick-label{font-size:13px;font-weight:700;color:var(--text);}
+              .home-continue-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+              .home-continue-info{flex:1;min-width:180px;}
+              .home-continue-title{font-family:var(--font-title);font-size:15px;font-weight:800;
+                color:var(--text);margin:0 0 3px;}
+              .home-continue-sub{font-size:12.5px;color:var(--text3);}
+              .home-empty-state{text-align:center;padding:28px 16px;}
+              .home-empty-icon{font-size:42px;margin-bottom:12px;}
+              .home-empty-title{font-family:var(--font-title);font-size:16px;font-weight:800;
+                color:var(--text);margin:0 0 6px;}
+              .home-empty-sub{font-size:13px;color:var(--text3);max-width:380px;margin:0 auto 18px;}
+              @media(max-width:768px){
+                .home-page-content{padding:18px 16px 40px;}
+                .home-quick-grid{grid-template-columns:repeat(2,1fr);}
+              }
+              @media(max-width:480px){
+                .home-continue-row{flex-direction:column;align-items:stretch;}
+                .home-continue-row .profile-btn-primary{width:100%;text-align:center;}
+              }
+            </style>
+            <div class="panel" id="homePanel">
+              <div class="lessons-page">
+                <div class="lessons-topbar-sticky">
+                  <div class="lessons-topbar">
+                    <div class="lessons-topbar-left">
+                      <h2 id="homeWelcomeTitle">Welcome back</h2>
+                      <p>Here's where you left off, and what to explore next.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="home-page-content">
+
+                  <!-- Quick access to the major sections -->
+                  <div class="home-quick-grid">
+                    <button type="button" class="home-quick-card" onclick="switchMode('lessons')">
+                      <span class="home-quick-icon" aria-hidden="true">&#10024;</span>
+                      <span class="home-quick-label">Library Mode</span>
+                    </button>
+                    <button type="button" class="home-quick-card" onclick="switchMode('file')">
+                      <span class="home-quick-icon" aria-hidden="true">&#128193;</span>
+                      <span class="home-quick-label">File</span>
+                    </button>
+                    <button type="button" class="home-quick-card" onclick="switchMode('assessment')">
+                      <span class="home-quick-icon" aria-hidden="true">&#128221;</span>
+                      <span class="home-quick-label">Assessment</span>
+                    </button>
+                    <button type="button" class="home-quick-card" onclick="switchMode('animind')">
+                      <span class="home-quick-icon" aria-hidden="true">&#128218;</span>
+                      <span class="home-quick-label">Creator with AI</span>
+                    </button>
+                  </div>
+
+                  <!-- Continue Learning — only rendered when a real saved item exists -->
+                  <section class="profile-card" id="homeContinueCard" style="display:none;"
+                    aria-labelledby="homeContinueTitleLabel">
+                    <h3 class="profile-card-title" id="homeContinueTitleLabel">Continue Learning</h3>
+                    <div class="home-continue-row">
+                      <div class="home-continue-info">
+                        <div class="home-continue-title" id="homeContinueTitle"></div>
+                        <div class="home-continue-sub" id="homeContinueSub"></div>
+                      </div>
+                      <button type="button" class="profile-btn-primary" id="homeContinueBtn">Continue &rarr;</button>
+                    </div>
+                  </section>
+
+                  <!-- New-student empty state — shown when there's no learning activity yet -->
+                  <section class="profile-card" id="homeEmptyCard" style="display:none;" aria-live="polite">
+                    <div class="home-empty-state">
+                      <div class="home-empty-icon" aria-hidden="true">&#128640;</div>
+                      <div class="home-empty-title">Ready to start learning?</div>
+                      <p class="home-empty-sub">Choose a subject and explore concepts through interactive lessons.</p>
+                      <button type="button" class="profile-btn-primary" onclick="switchMode('lessons')">Explore Subjects</button>
+                    </div>
+                  </section>
+
+                  <!-- Learning snapshot — real counts only, shown when there's something to count -->
+                  <section class="profile-card" id="homeSnapshotCard" style="display:none;"
+                    aria-labelledby="homeSnapshotTitle">
+                    <h3 class="profile-card-title" id="homeSnapshotTitle">Learning Snapshot</h3>
+                    <p class="profile-card-sub">A quick look at what you've built in Haezet so far.</p>
+                    <div class="profile-stats-row">
+                      <div class="profile-stat">
+                        <span class="profile-stat-val" id="homeStatSaved">0</span>
+                        <span class="profile-stat-label">Lessons &amp; Animations Saved</span>
+                      </div>
+                      <div class="profile-stat">
+                        <span class="profile-stat-val" id="homeStatSubjects">0</span>
+                        <span class="profile-stat-label">Subjects in File Library</span>
+                      </div>
+                      <div class="profile-stat">
+                        <span class="profile-stat-val" id="homeStatTopics">0</span>
+                        <span class="profile-stat-label">Topics in File Library</span>
+                      </div>
+                    </div>
+                  </section>
+
+                </div>
+              </div>
+            </div><!-- end homePanel -->
 
             <!-- ══ CREATOR WITH AI — SUB-MODE SWITCHER (AI Creator + QAnim combined) ══ -->
             <div class="create-submode-bar" id="createSubmodeBar">
@@ -14903,8 +15027,9 @@ function amShowSuccess() {
       ta.addEventListener('input', () => document.getElementById('amCharCount').textContent = ta.value.length + '/500');
       ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateAnimation(); } });
       document.addEventListener('keydown', globalKeyHandler);
-      // UPDATED: Library Mode (lessons) is default active panel
-      switchMode('lessons');
+      // UPDATED: Home is the default landing panel; Library Mode is
+      // reached from the sidebar / quick-access cards as before.
+      switchMode('home');
       // Kick off the lessons fetch immediately so Library Mode content
       // is ready (or nearly ready) before the user sees the skeleton state.
       // The _lessonsLoaded guard inside initLessonsMode prevents double-fetch.
@@ -15153,7 +15278,7 @@ function amShowSuccess() {
       const modeMap = ['animind', 'library', 'file', 'question', 'simulation', 'lessons', 'assessment'];
       document.querySelectorAll('.nav-tab').forEach((b, i) => b.classList.toggle('active', modeMap[i] === mode));
       // REMOVED: teacherPanel, vaultPanel
-      ['animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel', 'assessmentPanel', 'profilePanel'].forEach(id => {
+      ['homePanel', 'animindPanel', 'libraryPanel', 'filePanel', 'questionPanel', 'simulationPanel', 'lessonsPanel', 'assessmentPanel', 'profilePanel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('active', id === mode + 'Panel');
       });
@@ -15161,7 +15286,7 @@ function amShowSuccess() {
       // NOTE: 'question' (QAnim) lives inside the same "Creator with AI"
       // sidebar entry as 'animind' (AI Creator) — both highlight sideLessons.
       // 'lessons' mode is now under "Library Mode" — highlights sideAicreator.
-      const sideMap = { animind: 'sideLessons', question: 'sideLessons', simulation: 'sideLessons', library: 'sideLibrary', file: 'sideFile', lessons: 'sideAicreator', assessment: 'sideAssessment' };
+      const sideMap = { home: 'sideHome', animind: 'sideLessons', question: 'sideLessons', simulation: 'sideLessons', library: 'sideLibrary', file: 'sideFile', lessons: 'sideAicreator', assessment: 'sideAssessment' };
       document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
       if (sideMap[mode]) { const el = document.getElementById(sideMap[mode]); if (el) el.classList.add('active'); }
 
@@ -15186,6 +15311,7 @@ function amShowSuccess() {
       if (mode === 'lessons') initLessonsMode();
       if (mode === 'assessment') initAssessmentMode();
       if (mode === 'profile') initProfileMode();
+      if (mode === 'home') initHomeMode();
     }
 
     // ═══════════════════════════════════════════════
@@ -19485,7 +19611,50 @@ ${text.substring(0, 4500)}`
     }
 
     function profileGoBack() {
-      switchMode(window.profilePreviousMode || 'lessons');
+      switchMode(window.profilePreviousMode || 'home');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // HOME PANEL (added) — dashboard landing screen.
+    // Populated each time it's opened, same pattern as initProfileMode.
+    // Every value here comes from data the app already tracks
+    // (animindLibrary, engineeringCourses) — nothing is invented.
+    // ══════════════════════════════════════════════════════════════════
+    function initHomeMode() {
+      const name = (typeof authUser !== 'undefined' && authUser && authUser.name) || '';
+      setText('homeWelcomeTitle', name ? ('Welcome back, ' + name.split(' ')[0]) : 'Welcome back');
+
+      const lib = (typeof animindLibrary !== 'undefined' && animindLibrary) ? animindLibrary : [];
+      const subjects = (typeof engineeringCourses !== 'undefined' && engineeringCourses) ? engineeringCourses : [];
+      const topicCount = (typeof getTotalCOTopics === 'function') ? getTotalCOTopics() : 0;
+      const hasAnyActivity = lib.length > 0 || subjects.length > 0 || topicCount > 0;
+
+      const continueCard = document.getElementById('homeContinueCard');
+      const emptyCard = document.getElementById('homeEmptyCard');
+      const snapshotCard = document.getElementById('homeSnapshotCard');
+
+      if (lib.length > 0) {
+        // Most recently saved item — real history, not a guess.
+        const latest = lib.slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
+        setText('homeContinueTitle', latest.title || 'Untitled');
+        setText('homeContinueSub', (latest.playlist || 'General') + ' · ' + fmtDate(latest.created_at));
+        const btn = document.getElementById('homeContinueBtn');
+        if (btn) btn.onclick = function () { openLibAnim(latest.id); };
+        if (continueCard) continueCard.style.display = '';
+        if (emptyCard) emptyCard.style.display = 'none';
+      } else {
+        if (continueCard) continueCard.style.display = 'none';
+        if (emptyCard) emptyCard.style.display = '';
+      }
+
+      if (hasAnyActivity) {
+        setText('homeStatSaved', String(lib.length));
+        setText('homeStatSubjects', String(subjects.length));
+        setText('homeStatTopics', String(topicCount));
+        if (snapshotCard) snapshotCard.style.display = '';
+      } else {
+        if (snapshotCard) snapshotCard.style.display = 'none';
+      }
     }
 
     // Populate the page each time it's opened, so it always reflects the
