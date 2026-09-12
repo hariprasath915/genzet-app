@@ -12729,6 +12729,55 @@ function amShowSuccess() {
     }
   </style>
 
+  <!-- ═══ Profile menu button + dropdown (added: reuses existing topbar
+       user-chip avatar/name as the trigger; styling pulls from the same
+       --surface/--border/--shadow/--radius tokens used across the
+       dashboard so it reads as part of the original design) ═══ -->
+  <style>
+    .profile-menu-wrap{position:relative;}
+    /* Turn the existing .user-chip into an accessible, focusable trigger
+       without touching its visual styling (that stays inline, as before) */
+    .profile-trigger{appearance:none;-webkit-appearance:none;font:inherit;color:inherit;
+      text-align:left;transition:box-shadow .2s ease,border-color .2s ease,transform .15s ease;}
+    .profile-trigger:hover{border-color:var(--blue,#0D9488)!important;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+    .profile-trigger:active{transform:translateY(1px);}
+    .profile-trigger:focus-visible{outline:2px solid var(--blue,#0D9488);outline-offset:2px;}
+    .profile-trigger-chevron{display:inline-flex;align-items:center;justify-content:center;
+      margin-left:1px;color:var(--text3);transition:transform .2s ease;flex-shrink:0;}
+    .profile-trigger[aria-expanded="true"] .profile-trigger-chevron{transform:rotate(180deg);}
+
+    .profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;min-width:240px;
+      max-width:min(300px,calc(100vw - 24px));background:var(--surface,#fff);
+      border:1px solid var(--border,#E5E7EB);border-radius:var(--radius-sm,12px);
+      box-shadow:var(--shadow-lg,0 20px 60px rgba(0,0,0,.10));padding:8px;z-index:1200;
+      opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top right;
+      transition:opacity .16s ease,transform .16s ease,visibility .16s;}
+    .profile-dropdown.open{opacity:1;visibility:visible;transform:translateY(0) scale(1);}
+    .profile-dropdown-header{display:flex;flex-direction:column;padding:8px 10px 10px;
+      border-bottom:1px solid var(--border,#E5E7EB);margin-bottom:6px;}
+    .profile-dropdown-name{font-weight:700;color:var(--text,#111827);font-size:13.5px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .profile-dropdown-email{font-size:12px;color:var(--text3,#9CA3AF);margin-top:2px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .profile-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;
+      background:none;border:none;border-radius:8px;font:inherit;font-size:13px;font-weight:500;
+      color:var(--text2,#374151);cursor:pointer;text-align:left;text-decoration:none;
+      transition:background .15s ease;}
+    .profile-menu-item:hover,.profile-menu-item:focus-visible{background:var(--bg2,#F1F5F9);}
+    .profile-menu-item:focus-visible{outline:2px solid var(--blue,#0D9488);outline-offset:-2px;}
+    .profile-menu-item-icon{width:18px;text-align:center;flex-shrink:0;font-size:14px;}
+    .profile-menu-item-soon{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.04em;
+      text-transform:uppercase;color:var(--text3,#9CA3AF);background:var(--bg2,#F1F5F9);
+      border:1px solid var(--border,#E5E7EB);border-radius:20px;padding:2px 7px;flex-shrink:0;}
+    .profile-menu-divider{height:1px;background:var(--border,#E5E7EB);margin:6px 4px;}
+    .profile-menu-item.danger{color:#EF4444;}
+    .profile-menu-item.danger:hover,.profile-menu-item.danger:focus-visible{background:var(--red-lt,#FEF2F2);}
+
+    @media(max-width:480px){
+      .profile-dropdown{right:-6px;min-width:220px;}
+    }
+  </style>
+
   <!-- TOPBAR -->
   <div class="topbar">
     <button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Open navigation menu" title="Menu">☰</button>
@@ -12746,8 +12795,12 @@ function amShowSuccess() {
       <div id="topbarUserPill" style="display:none;align-items:center;gap:8px;">
 
         <!-- User avatar + name chip -->
-        <div class="user-chip" style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
-             background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;">
+        <div class="profile-menu-wrap">
+        <button type="button" id="profileMenuBtn" class="user-chip profile-trigger"
+          aria-haspopup="true" aria-expanded="false" aria-controls="profileDropdown"
+          aria-label="Open profile menu" onclick="toggleProfileMenu()"
+          style="display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;
+             background:var(--bg2);border:1.5px solid var(--border);border-radius:30px;font-size:13px;cursor:pointer;">
           <!-- Animated Haezet logo: bird flying out of the book, replaces the plain "U" avatar -->
           <div id="authUserAvatar" class="haezet-logo-anim" style="width:32px;height:32px;border-radius:50%;
                background:var(--bg2);
@@ -12788,6 +12841,34 @@ function amShowSuccess() {
           <!-- Green online dot -->
           <div style="width:7px;height:7px;border-radius:50%;background:#10b981;
                box-shadow:0 0 6px #10b981;flex-shrink:0;margin-left:2px;"></div>
+          <!-- Chevron: indicates the chip now opens a profile menu -->
+          <svg class="profile-trigger-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        <!-- Profile dropdown menu -->
+        <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Profile menu" aria-hidden="true">
+          <div class="profile-dropdown-header">
+            <span class="profile-dropdown-name" id="profileDropdownName">Student</span>
+            <span class="profile-dropdown-email" id="profileDropdownEmail"></span>
+          </div>
+          <button type="button" class="profile-menu-item" role="menuitem" onclick="pmViewProfile()">
+            <span class="profile-menu-item-icon">👤</span> View Profile
+          </button>
+          <button type="button" class="profile-menu-item" role="menuitem" onclick="pmAccountSettings()">
+            <span class="profile-menu-item-icon">⚙️</span> Account Settings
+            <span class="profile-menu-item-soon">Soon</span>
+          </button>
+          <a class="profile-menu-item" role="menuitem" href="mailto:haezet@gmail.com" onclick="closeProfileMenu()">
+            <span class="profile-menu-item-icon">❓</span> Help &amp; Support
+          </a>
+          <div class="profile-menu-divider"></div>
+          <button type="button" class="profile-menu-item danger" role="menuitem" onclick="closeProfileMenu();gzHandleLogout()">
+            <span class="profile-menu-item-icon">↩</span> Log Out
+          </button>
+        </div>
         </div>
 
         <!-- Sign Out button — prominent, always visible in top-right -->
@@ -19110,6 +19191,59 @@ ${text.substring(0, 4500)}`
       if (nameEl) nameEl.textContent = authUser.name;
       // Avatar now shows the animated Haezet logo (bird out of the book)
       // instead of a plain text initial — nothing to set here anymore.
+      // Keep the profile dropdown header in sync with the logged-in user
+      const pdName = document.getElementById('profileDropdownName');
+      const pdEmail = document.getElementById('profileDropdownEmail');
+      if (pdName) pdName.textContent = authUser.name || 'Student';
+      if (pdEmail) pdEmail.textContent = authUser.email || '';
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Profile menu (added): dropdown for the topbar avatar/name chip.
+    // Reuses existing auth state (window.authUser) and existing actions
+    // (gzHandleLogout, notify) rather than introducing new plumbing.
+    // ══════════════════════════════════════════════════════════════════
+    function openProfileMenu() {
+      const btn = document.getElementById('profileMenuBtn');
+      const menu = document.getElementById('profileDropdown');
+      if (!btn || !menu) return;
+      menu.classList.add('open');
+      menu.setAttribute('aria-hidden', 'false');
+      btn.setAttribute('aria-expanded', 'true');
+      document.addEventListener('click', pmOutsideClickHandler, true);
+      document.addEventListener('keydown', pmEscHandler, true);
+    }
+    function closeProfileMenu() {
+      const btn = document.getElementById('profileMenuBtn');
+      const menu = document.getElementById('profileDropdown');
+      if (!btn || !menu) return;
+      menu.classList.remove('open');
+      menu.setAttribute('aria-hidden', 'true');
+      btn.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', pmOutsideClickHandler, true);
+      document.removeEventListener('keydown', pmEscHandler, true);
+    }
+    function toggleProfileMenu() {
+      const menu = document.getElementById('profileDropdown');
+      if (menu && menu.classList.contains('open')) closeProfileMenu();
+      else openProfileMenu();
+    }
+    function pmOutsideClickHandler(e) {
+      const wrap = document.querySelector('.profile-menu-wrap');
+      if (wrap && !wrap.contains(e.target)) closeProfileMenu();
+    }
+    function pmEscHandler(e) {
+      if (e.key === 'Escape') { closeProfileMenu(); document.getElementById('profileMenuBtn')?.focus(); }
+    }
+    function pmViewProfile() {
+      closeProfileMenu();
+      const name = (typeof authUser !== 'undefined' && authUser && authUser.name) || 'Student';
+      const email = (typeof authUser !== 'undefined' && authUser && authUser.email) || '';
+      notify(email ? `${name} · ${email}` : name, 'success');
+    }
+    function pmAccountSettings() {
+      closeProfileMenu();
+      notify('Account settings are coming soon!', 'success');
     }
 
     // ── Logout handler — called by the Sign Out button in the topbar ──────
