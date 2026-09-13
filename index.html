@@ -6188,6 +6188,12 @@ footer{border-top:1px solid rgba(186,230,253,0.8);padding:60px 5% 40px;display:g
       transition: all .22s;
     }
 
+    .sidebar-nav-item .nav-icon svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
     .sidebar-nav-item.active .nav-icon {
       background: rgba(255, 255, 255, .2);
       box-shadow: none;
@@ -12903,26 +12909,26 @@ function amShowSuccess() {
       <div class="sidebar-nav-label">Navigation</div>
       <div class="sidebar-nav">
         <button class="sidebar-nav-item active" id="sideHome" onclick="switchMode('home')">
-          <div class="nav-icon">&#127968;</div>
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></div>
           <span class="nav-item-text">Home</span>
         </button>
         <button class="sidebar-nav-item" id="sideAicreator" onclick="switchMode('lessons')">
-          <div class="nav-icon">&#10024;</div>
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 4.5h5.5A3.5 3.5 0 0 1 11 8v12a2.8 2.8 0 0 0-2.8-2.8H2z"/><path d="M22 4.5h-5.5A3.5 3.5 0 0 0 13 8v12a2.8 2.8 0 0 1 2.8-2.8H22z"/></svg></div>
           <span class="nav-item-text">Library Mode</span>
           <span class="nav-item-tag">AI</span>
         </button>
         <button class="sidebar-nav-item" id="sideFile" onclick="switchMode('file')">
-          <div class="nav-icon">&#128193;</div>
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4.2a2 2 0 0 1 1.6.8l1.2 1.6a2 2 0 0 0 1.6.8H19a2 2 0 0 1 2 2v1"/><path d="m5 12.5 1.6-3.1a2 2 0 0 1 1.8-1.1H21a1.5 1.5 0 0 1 1.4 2.1l-2.2 5.4A2 2 0 0 1 18.3 17H4"/></svg></div>
           <span class="nav-item-text">File</span>
         </button>
         <!-- ASSESSMENT tab — always shown to all users -->
         <button class="sidebar-nav-item" id="sideAssessment" onclick="switchMode('assessment')">
-          <div class="nav-icon">📝</div>
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="2.5" width="8" height="4" rx="1"/><path d="M16 4.5h1.5a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2H8"/><path d="m9 13.5 2 2 4-4.5"/></svg></div>
           <span class="nav-item-text">Assessment</span>
         </button>
         <!-- LESSONS tab — always shown to all users -->
         <button class="sidebar-nav-item" id="sideLessons" onclick="switchMode('animind')">
-          <div class="nav-icon">📚</div>
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3 8.6 6.7a3 3 0 0 1-1.9 1.9L3 10l3.7 1.4a3 3 0 0 1 1.9 1.9L10 17l1.4-3.7a3 3 0 0 1 1.9-1.9L17 10l-3.7-1.4a3 3 0 0 1-1.9-1.9z"/><path d="M18 3.5v3"/><path d="M19.5 5h-3"/><path d="M17 15.5v2.5"/><path d="M18.3 16.75h-2.6"/></svg></div>
           <span class="nav-item-text">Creator with AI</span>
           <span class="nav-item-tag" style="background:linear-gradient(135deg,#0d9488,#6366f1);color:#fff;border-color:transparent;">Live</span>
         </button>
@@ -13000,12 +13006,16 @@ function amShowSuccess() {
               .home-page-content{max-width:920px;margin:0 auto;padding:24px 28px 48px;}
               .home-quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
               .home-quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-                box-shadow:var(--shadow);padding:18px 14px;text-align:center;cursor:pointer;
-                transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;
-                align-items:center;gap:8px;font:inherit;color:inherit;}
-              .home-quick-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08);}
+                box-shadow:var(--shadow);padding:20px 14px;text-align:center;cursor:pointer;
+                transition:transform .2s,box-shadow .2s,border-color .2s;display:flex;flex-direction:column;
+                align-items:center;gap:10px;font:inherit;color:inherit;}
+              .home-quick-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08);border-color:var(--icon-tint,var(--border2));}
               .home-quick-card:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-              .home-quick-icon{font-size:22px;line-height:1;}
+              .home-quick-icon{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;
+                justify-content:center;flex-shrink:0;background:var(--icon-tint-bg,var(--blue-lt));
+                color:var(--icon-tint,var(--blue));transition:transform .2s;}
+              .home-quick-icon svg{width:22px;height:22px;}
+              .home-quick-card:hover .home-quick-icon{transform:scale(1.06);}
               .home-quick-label{font-size:13px;font-weight:700;color:var(--text);}
               .home-continue-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
               .home-continue-info{flex:1;min-width:180px;}
@@ -13041,20 +13051,20 @@ function amShowSuccess() {
 
                   <!-- Quick access to the major sections -->
                   <div class="home-quick-grid">
-                    <button type="button" class="home-quick-card" onclick="switchMode('lessons')">
-                      <span class="home-quick-icon" aria-hidden="true">&#10024;</span>
+                    <button type="button" class="home-quick-card" onclick="switchMode('lessons')" aria-label="Library Mode">
+                      <span class="home-quick-icon" style="--icon-tint:var(--blue);--icon-tint-bg:var(--blue-lt);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 4.5h5.5A3.5 3.5 0 0 1 11 8v12a2.8 2.8 0 0 0-2.8-2.8H2z"/><path d="M22 4.5h-5.5A3.5 3.5 0 0 0 13 8v12a2.8 2.8 0 0 1 2.8-2.8H22z"/></svg></span>
                       <span class="home-quick-label">Library Mode</span>
                     </button>
-                    <button type="button" class="home-quick-card" onclick="switchMode('file')">
-                      <span class="home-quick-icon" aria-hidden="true">&#128193;</span>
+                    <button type="button" class="home-quick-card" onclick="switchMode('file')" aria-label="File">
+                      <span class="home-quick-icon" style="--icon-tint:var(--indigo);--icon-tint-bg:var(--indigo-lt);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4.2a2 2 0 0 1 1.6.8l1.2 1.6a2 2 0 0 0 1.6.8H19a2 2 0 0 1 2 2v1"/><path d="m5 12.5 1.6-3.1a2 2 0 0 1 1.8-1.1H21a1.5 1.5 0 0 1 1.4 2.1l-2.2 5.4A2 2 0 0 1 18.3 17H4"/></svg></span>
                       <span class="home-quick-label">File</span>
                     </button>
-                    <button type="button" class="home-quick-card" onclick="switchMode('assessment')">
-                      <span class="home-quick-icon" aria-hidden="true">&#128221;</span>
+                    <button type="button" class="home-quick-card" onclick="switchMode('assessment')" aria-label="Assessment">
+                      <span class="home-quick-icon" style="--icon-tint:var(--orange);--icon-tint-bg:var(--orange-lt);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="2.5" width="8" height="4" rx="1"/><path d="M16 4.5h1.5a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2H8"/><path d="m9 13.5 2 2 4-4.5"/></svg></span>
                       <span class="home-quick-label">Assessment</span>
                     </button>
-                    <button type="button" class="home-quick-card" onclick="switchMode('animind')">
-                      <span class="home-quick-icon" aria-hidden="true">&#128218;</span>
+                    <button type="button" class="home-quick-card" onclick="switchMode('animind')" aria-label="Creator with AI">
+                      <span class="home-quick-icon" style="--icon-tint:var(--purple);--icon-tint-bg:var(--purple-lt);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3 8.6 6.7a3 3 0 0 1-1.9 1.9L3 10l3.7 1.4a3 3 0 0 1 1.9 1.9L10 17l1.4-3.7a3 3 0 0 1 1.9-1.9L17 10l-3.7-1.4a3 3 0 0 1-1.9-1.9z"/><path d="M18 3.5v3"/><path d="M19.5 5h-3"/><path d="M17 15.5v2.5"/><path d="M18.3 16.75h-2.6"/></svg></span>
                       <span class="home-quick-label">Creator with AI</span>
                     </button>
                   </div>
