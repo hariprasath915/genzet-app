@@ -9485,7 +9485,7 @@ function showDashboard() {
   }
   try {
     var u = JSON.parse(localStorage.getItem('haezet_user')||'null');
-    if (u) { window.authUser={user_id:null,email:u.email||'',name:u.name||(u.email||'').split('@')[0]||'Student'}; window.authToken=null; }
+    if (u) { window.authUser={user_id:null,email:u.email||'',name:u.name||(u.email||'').split('@')[0]||'Student',role:u.role||null}; window.authToken=null; }
   } catch(e){}
   // Promote the one-shot post-login flag into a durable local session so
   // a refresh later doesn't log the user back out (this used to be the
@@ -14001,7 +14001,7 @@ function amShowSuccess() {
                     </div>
                     <div class="profile-overview-info">
                       <div class="profile-overview-name" id="profileOverviewName">Student</div>
-                      <span class="profile-overview-role">Student</span>
+                      <span class="profile-overview-role" id="profileOverviewRoleBadge">Student</span>
                       <div class="profile-overview-email" id="profileOverviewEmail"></div>
                     </div>
                     <button type="button" class="profile-edit-btn" id="profileEditToggleBtn" onclick="profileToggleEdit()">✎ Edit Profile</button>
@@ -14023,13 +14023,13 @@ function amShowSuccess() {
                         </div>
                         <div class="profile-field">
                           <label id="profileRoleLabel">Role</label>
-                          <span class="profile-field-value" aria-labelledby="profileRoleLabel">Student</span>
+                          <span class="profile-field-value" id="profileRoleValue" aria-labelledby="profileRoleLabel">Student</span>
                         </div>
                       </div>
                     </section>
 
-                    <!-- Academic Information -->
-                    <section class="profile-card" aria-labelledby="profileAcademicTitle">
+                    <!-- Academic Information — STUDENT ONLY (toggled by profile-role.js) -->
+                    <section class="profile-card" id="profileAcademicCard" aria-labelledby="profileAcademicTitle">
                       <h3 class="profile-card-title" id="profileAcademicTitle">Academic Information</h3>
                       <p class="profile-card-sub">Optional — helps personalize your learning experience.</p>
                       <div class="profile-field-grid">
@@ -14055,24 +14055,62 @@ function amShowSuccess() {
                         </div>
                       </div>
                     </section>
+
+                    <!-- Professional Information — TEACHER ONLY (toggled by profile-role.js) -->
+                    <section class="profile-card" id="profileProfessionalCard" style="display:none;" aria-labelledby="profileProfessionalTitle">
+                      <h3 class="profile-card-title" id="profileProfessionalTitle">Professional Information</h3>
+                      <p class="profile-card-sub">Optional — helps personalize your teaching workspace.</p>
+                      <div class="profile-field-grid">
+                        <div class="profile-field">
+                          <label for="profileTSchoolInput">School / Institution</label>
+                          <span class="profile-field-value profile-empty" id="profileTSchoolView">Not added yet</span>
+                          <input class="profile-input" id="profileTSchoolInput" type="text" placeholder="e.g. Delhi Public School" style="display:none;" maxlength="80" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileTSubjectsInput">Subject(s) Taught</label>
+                          <span class="profile-field-value profile-empty" id="profileTSubjectsView">Not added yet</span>
+                          <input class="profile-input" id="profileTSubjectsInput" type="text" placeholder="e.g. Physics, Mathematics" style="display:none;" maxlength="120" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileTClassesInput">Classes / Grades Handled</label>
+                          <span class="profile-field-value profile-empty" id="profileTClassesView">Not added yet</span>
+                          <input class="profile-input" id="profileTClassesInput" type="text" placeholder="e.g. Grades 9-10" style="display:none;" maxlength="80" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileTBoardInput">Board / Curriculum</label>
+                          <span class="profile-field-value profile-empty" id="profileTBoardView">Not added yet</span>
+                          <input class="profile-input" id="profileTBoardInput" type="text" placeholder="e.g. CBSE, ICSE, IB" style="display:none;" maxlength="40" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileTExperienceInput">Years of Teaching Experience</label>
+                          <span class="profile-field-value profile-empty" id="profileTExperienceView">Not added yet</span>
+                          <input class="profile-input" id="profileTExperienceInput" type="text" placeholder="e.g. 6" style="display:none;" maxlength="10" />
+                        </div>
+                        <div class="profile-field">
+                          <label for="profileTLanguageInput">Preferred Teaching Language</label>
+                          <span class="profile-field-value profile-empty" id="profileTLanguageView">Not added yet</span>
+                          <input class="profile-input" id="profileTLanguageInput" type="text" placeholder="e.g. English" style="display:none;" maxlength="40" />
+                        </div>
+                      </div>
+                    </section>
                   </div>
 
-                  <!-- Learning Overview -->
+                  <!-- Learning / Teaching Overview — labels swapped by role at runtime -->
                   <section class="profile-card profile-learning-card" aria-labelledby="profileLearningTitle">
                     <h3 class="profile-card-title" id="profileLearningTitle">Learning Overview</h3>
-                    <p class="profile-card-sub">A quick look at what you've built in Haezet so far.</p>
+                    <p class="profile-card-sub" id="profileLearningSub">A quick look at what you've built in Haezet so far.</p>
                     <div class="profile-stats-row">
                       <div class="profile-stat">
                         <span class="profile-stat-val" id="profileStatSaved">0</span>
-                        <span class="profile-stat-label">Lessons &amp; Animations Saved</span>
+                        <span class="profile-stat-label" id="profileStatLabelSaved">Lessons &amp; Animations Saved</span>
                       </div>
                       <div class="profile-stat">
                         <span class="profile-stat-val" id="profileStatTopics">0</span>
-                        <span class="profile-stat-label">Topics in File Library</span>
+                        <span class="profile-stat-label" id="profileStatLabelTopics">Topics in File Library</span>
                       </div>
                       <div class="profile-stat profile-stat-soon">
                         <span class="profile-stat-val">—</span>
-                        <span class="profile-stat-label">Assessment Analytics · Coming soon</span>
+                        <span class="profile-stat-label" id="profileStatLabelAssess">Assessment Analytics · Coming soon</span>
                       </div>
                     </div>
                   </section>
@@ -19240,7 +19278,12 @@ ${text.substring(0, 4500)}`
         if (res.ok) {
           const profile = await res.json();
           window.authToken = storedToken;
-          window.authUser = { user_id: profile.user_id, email: profile.email, name: profile.name };
+          // `role` comes from the backend, which derives it from whether
+          // the user has a row in `student_login` or a claimed row in
+          // `teacher_pincode` (see auth_utils.get_user_role() server-side).
+          // See getUserRole() in the Profile page code below for the
+          // frontend fallback behavior.
+          window.authUser = { user_id: profile.user_id, email: profile.email, name: profile.name, role: profile.role };
           localStorage.setItem(USER_KEY, JSON.stringify(window.authUser));
 
           // Token valid — show dashboard
@@ -19587,27 +19630,73 @@ ${text.substring(0, 4500)}`
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // PROFILE PAGE (added) — "My Profile"
+    // PROFILE PAGE (added) — "My Profile" — ROLE-AWARE (student / teacher)
     // Data sources, by design:
-    //  • Name / email          → window.authUser (existing auth state),
+    //  • Name / email / role    → window.authUser (existing auth state),
     //                             persisted back to localStorage['haezet_user']
     //                             the same way the rest of the app already does.
-    //  • Academic fields        → localStorage['haezet_profile_academic'],
+    //                             `role` comes from the Supabase `profiles`
+    //                             table via the backend's /auth/verify
+    //                             response (see getUserRole() below — the
+    //                             backend needs to include a `role` field
+    //                             in that JSON; see notes there).
+    //  • Academic fields (student) → localStorage['haezet_profile_academic'],
     //                             a small, clearly-separated fallback store
     //                             since no academic-info backend exists yet.
     //                             Swap HZ_ACADEMIC_KEY's get/set for a real
     //                             API/Supabase call here once one exists.
-    //  • Learning overview stats → animindLibrary.length / getTotalCOTopics(),
-    //                             the same real counts already shown as
-    //                             "Saved" in the sidebar — nothing fabricated.
+    //  • Professional fields (teacher) → localStorage['haezet_profile_teacher'],
+    //                             same fallback pattern as academic fields,
+    //                             pending a real teacher-profile backend.
+    //  • Learning/Teaching overview stats → animindLibrary.length /
+    //                             getTotalCOTopics(), the same real counts
+    //                             already shown as "Saved" in the sidebar —
+    //                             nothing fabricated. Assessment count has
+    //                             no reliable single total yet, so it stays
+    //                             "Coming soon" for both roles.
     // ══════════════════════════════════════════════════════════════════
     const HZ_ACADEMIC_KEY = 'haezet_profile_academic';
+    const HZ_TEACHER_KEY  = 'haezet_profile_teacher';
     function hzLoadAcademic() {
       try { return JSON.parse(localStorage.getItem(HZ_ACADEMIC_KEY) || '{}'); }
       catch (e) { return {}; }
     }
     function hzSaveAcademic(data) {
       try { localStorage.setItem(HZ_ACADEMIC_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    function hzLoadTeacherProfile() {
+      try { return JSON.parse(localStorage.getItem(HZ_TEACHER_KEY) || '{}'); }
+      catch (e) { return {}; }
+    }
+    function hzSaveTeacherProfile(data) {
+      try { localStorage.setItem(HZ_TEACHER_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    // ── Role detection ──────────────────────────────────────────────────
+    // Reads role off window.authUser first (populated in authInit() from
+    // the backend's /auth/verify response — profile.role, derived server-side
+    // from a student_login / teacher_pincode row, not a single column).
+    // Falls back to the cached localStorage user object for the brief
+    // window before authInit() resolves, or for offline mode. Defaults to
+    // 'student' only when no role signal exists at all — this covers both
+    // "role not sent yet" and "user hasn't finished onboarding", matching
+    // current behavior (every account today already shows the student page).
+    function getUserRole() {
+      let role = (typeof authUser !== 'undefined' && authUser && authUser.role) || null;
+      if (!role) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('haezet_user') || '{}');
+          role = stored.role || null;
+        } catch (e) {}
+      }
+      role = String(role || '').trim().toLowerCase();
+      if (role !== 'teacher' && role !== 'student') {
+        console.warn('[PROFILE] No role found on authUser/localStorage — defaulting to "student". ' +
+          'This is expected if /auth/verify has not deployed the `role` field yet, or if this ' +
+          'user has not completed onboarding (no student_login/teacher_pincode row).');
+        role = 'student';
+      }
+      return role;
     }
 
     function profileGoBack() {
@@ -19657,26 +19746,59 @@ ${text.substring(0, 4500)}`
       }
     }
 
+    // Field-key lists per role, used by fill / edit-toggle / save below.
+    // "Name" is common to both and handled separately since it lives in
+    // the Personal Information card, not the role-specific card.
+    const PROFILE_STUDENT_KEYS = ['Grade', 'School', 'Board', 'Language'];
+    const PROFILE_TEACHER_KEYS = ['TSchool', 'TSubjects', 'TClasses', 'TBoard', 'TExperience', 'TLanguage'];
+
     // Populate the page each time it's opened, so it always reflects the
     // latest auth/library state (mirrors how initLessonsMode/initAssessmentMode work).
     function initProfileMode() {
       const name = (typeof authUser !== 'undefined' && authUser && authUser.name) || 'Student';
       const email = (typeof authUser !== 'undefined' && authUser && authUser.email) || '';
-      const academic = hzLoadAcademic();
+      const role = getUserRole(); // 'teacher' | 'student'
+      const isTeacher = role === 'teacher';
 
       setText('profileOverviewName', name);
       setText('profileOverviewEmail', email);
       setText('profileNameView', name);
       setText('profileEmailView', email || 'Not available');
+      setText('profileOverviewRoleBadge', isTeacher ? 'Teacher' : 'Student');
+      setText('profileRoleValue', isTeacher ? 'Teacher' : 'Student');
 
-      profileFillField('Grade', academic.grade);
-      profileFillField('School', academic.school);
-      profileFillField('Board', academic.board);
-      profileFillField('Language', academic.language);
+      // Toggle Academic (student) vs Professional (teacher) card.
+      const academicCard = document.getElementById('profileAcademicCard');
+      const professionalCard = document.getElementById('profileProfessionalCard');
+      if (academicCard) academicCard.style.display = isTeacher ? 'none' : '';
+      if (professionalCard) professionalCard.style.display = isTeacher ? '' : 'none';
 
-      // Learning overview — only ever real, existing counts.
-      const savedCount = (typeof animindLibrary !== 'undefined' ? animindLibrary.length : 0)
-        + (typeof getTotalCOTopics === 'function' ? getTotalCOTopics() : 0);
+      if (isTeacher) {
+        const teacherProfile = hzLoadTeacherProfile();
+        profileFillField('TSchool', teacherProfile.school);
+        profileFillField('TSubjects', teacherProfile.subjects);
+        profileFillField('TClasses', teacherProfile.classes);
+        profileFillField('TBoard', teacherProfile.board);
+        profileFillField('TExperience', teacherProfile.experience);
+        profileFillField('TLanguage', teacherProfile.language);
+      } else {
+        const academic = hzLoadAcademic();
+        profileFillField('Grade', academic.grade);
+        profileFillField('School', academic.school);
+        profileFillField('Board', academic.board);
+        profileFillField('Language', academic.language);
+      }
+
+      // Learning / Teaching overview — only ever real, existing counts.
+      // Assessment total has no reliable single number yet for either role,
+      // so it stays "Coming soon" rather than showing a fabricated figure.
+      setText('profileLearningTitle', isTeacher ? 'Teaching Overview' : 'Learning Overview');
+      setText('profileLearningSub', isTeacher
+        ? "A quick look at what you've created in Haezet so far."
+        : "A quick look at what you've built in Haezet so far.");
+      setText('profileStatLabelSaved', isTeacher ? 'Lessons & Animations Created' : 'Lessons & Animations Saved');
+      setText('profileStatLabelTopics', isTeacher ? 'Resources in File Library' : 'Topics in File Library');
+      setText('profileStatLabelAssess', isTeacher ? 'Assessments Generated · Coming soon' : 'Assessment Analytics · Coming soon');
       setText('profileStatSaved', String((typeof animindLibrary !== 'undefined' ? animindLibrary.length : 0)));
       setText('profileStatTopics', String((typeof getTotalCOTopics === 'function' ? getTotalCOTopics() : 0)));
 
@@ -19701,7 +19823,9 @@ ${text.substring(0, 4500)}`
     }
 
     function profileSetEditing(editing) {
-      ['Name', 'Grade', 'School', 'Board', 'Language'].forEach(key => {
+      const role = getUserRole();
+      const keys = ['Name'].concat(role === 'teacher' ? PROFILE_TEACHER_KEYS : PROFILE_STUDENT_KEYS);
+      keys.forEach(key => {
         const view = document.getElementById('profile' + key + 'View');
         const input = document.getElementById('profile' + key + 'Input');
         if (view) view.style.display = editing ? 'none' : '';
@@ -19741,14 +19865,26 @@ ${text.substring(0, 4500)}`
         localStorage.setItem('haezet_user', JSON.stringify(stored));
       } catch (e) {}
 
-      // Persist academic fields to their dedicated fallback store.
-      const academic = {
-        grade: (document.getElementById('profileGradeInput') || {}).value?.trim() || '',
-        school: (document.getElementById('profileSchoolInput') || {}).value?.trim() || '',
-        board: (document.getElementById('profileBoardInput') || {}).value?.trim() || '',
-        language: (document.getElementById('profileLanguageInput') || {}).value?.trim() || ''
-      };
-      hzSaveAcademic(academic);
+      // Persist role-specific fields to their dedicated fallback store.
+      if (getUserRole() === 'teacher') {
+        const teacherProfile = {
+          school: (document.getElementById('profileTSchoolInput') || {}).value?.trim() || '',
+          subjects: (document.getElementById('profileTSubjectsInput') || {}).value?.trim() || '',
+          classes: (document.getElementById('profileTClassesInput') || {}).value?.trim() || '',
+          board: (document.getElementById('profileTBoardInput') || {}).value?.trim() || '',
+          experience: (document.getElementById('profileTExperienceInput') || {}).value?.trim() || '',
+          language: (document.getElementById('profileTLanguageInput') || {}).value?.trim() || ''
+        };
+        hzSaveTeacherProfile(teacherProfile);
+      } else {
+        const academic = {
+          grade: (document.getElementById('profileGradeInput') || {}).value?.trim() || '',
+          school: (document.getElementById('profileSchoolInput') || {}).value?.trim() || '',
+          board: (document.getElementById('profileBoardInput') || {}).value?.trim() || '',
+          language: (document.getElementById('profileLanguageInput') || {}).value?.trim() || ''
+        };
+        hzSaveAcademic(academic);
+      }
 
       // Reflect the new name everywhere it's already shown in the topbar/dropdown.
       if (typeof authUpdateStatusBar === 'function') authUpdateStatusBar();
@@ -23076,3 +23212,4 @@ window.assessViewerReload = function () {
 
 </body>
 </html>
+  
