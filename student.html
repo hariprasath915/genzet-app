@@ -3103,6 +3103,96 @@
     }
 
     /* ══════════════════════════════════════════════════════════════════
+       SHARED HTML-IN-IFRAME LOADER
+       Fetches an HTML file from Supabase Storage and renders it inside
+       a Blob-URL iframe so that:
+         1. Relative asset paths (<script src>, <link href>) resolve
+            correctly to the bucket folder via an injected <base> tag.
+         2. localStorage / sessionStorage calls don't throw SecurityError
+            (null-origin restriction) — replaced with an in-memory polyfill.
+         3. X-Frame-Options / Content-Type headers are bypassed because
+            we fetch the text ourselves and create a Blob URL.
+       ══════════════════════════════════════════════════════════════════ */
+    async function loadHtmlIntoIframe(url, area, errorTitle, fallbackUrl) {
+      // Loading state
+      area.innerHTML = `
+        <div class="empty-state" style="height:100%">
+          <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
+          <div class="empty-state-title">Loading…</div>
+        </div>`;
+
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`HTTP ${r.status} — could not load file.`);
+        let html = await r.text();
+
+        // ── 1. Inject <base> so relative URLs resolve to the bucket folder ──
+        const baseHref = url.substring(0, url.lastIndexOf('/') + 1);
+        const baseTag  = `<base href="${baseHref}">`;
+
+        // ── 2. Inject localStorage / sessionStorage in-memory polyfill ──────
+        //    srcdoc & blob iframes have an opaque (null) origin; any call to
+        //    window.localStorage throws SecurityError.  This polyfill swaps
+        //    both APIs with a plain object so button handlers keep working.
+        const storagePoly = `<script>
+(function(){
+  function MemStorage(){
+    var _s={};
+    return {
+      getItem:function(k){return k in _s?_s[k]:null;},
+      setItem:function(k,v){_s[k]=String(v);},
+      removeItem:function(k){delete _s[k];},
+      clear:function(){_s={};},
+      key:function(i){return Object.keys(_s)[i]??null;},
+      get length(){return Object.keys(_s).length;}
+    };
+  }
+  try{ localStorage.getItem('_chk'); }
+  catch(e){
+    try{ Object.defineProperty(window,'localStorage',{value:MemStorage(),writable:false,configurable:false}); }catch(_){}
+    try{ Object.defineProperty(window,'sessionStorage',{value:MemStorage(),writable:false,configurable:false}); }catch(_){}
+  }
+})();
+<\/script>`;
+
+        // ── 3. Inject into <head> (or prepend if no <head>) ─────────────────
+        if (/<head(\s[^>]*)?>/.test(html)) {
+          html = html.replace(/(<head(\s[^>]*)?>)/i, `$1${baseTag}${storagePoly}`);
+        } else {
+          html = baseTag + storagePoly + html;
+        }
+
+        // ── 4. Build Blob URL — gives iframe a real non-null origin ──────────
+        const blob    = new Blob([html], { type: 'text/html; charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        area.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.className = 'content-iframe';
+        iframe.allow    = 'fullscreen; autoplay';
+        iframe.src      = blobUrl;
+        // Revoke the blob URL once the iframe has finished loading
+        iframe.onload = () => URL.revokeObjectURL(blobUrl);
+        area.appendChild(iframe);
+
+      } catch (err) {
+        console.error('[loadHtmlIntoIframe]', err);
+        area.innerHTML = `
+          <div class="empty-state" style="height:100%">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">${errorTitle}</div>
+            <div class="empty-state-msg">
+              ${err.message}<br><br>
+              <a href="${fallbackUrl}" target="_blank"
+                 style="color:var(--brand-blue-light);text-decoration:underline">
+                Open in new tab ↗
+              </a>
+            </div>
+          </div>`;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
        QUIZ LAUNCHER
        ══════════════════════════════════════════════════════════════════ */
     function launchQuiz() {
@@ -3113,26 +3203,12 @@
       if (!area) return;
 
       if (t.quiz_html_url && t.quiz_html_url.startsWith('http')) {
-        // Fetch the HTML then inject via srcdoc to bypass Supabase
-        // Content-Type:text/plain and X-Frame-Options:DENY restrictions.
-        area.innerHTML = `
-          <div class="empty-state" style="height:100%">
-            <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
-            <div class="empty-state-title">Loading Quiz…</div>
-          </div>`;
-        fetch(t.quiz_html_url)
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-          .then(html => {
-            area.innerHTML = '';
-            const iframe = document.createElement('iframe');
-            iframe.className = 'content-iframe';
-            iframe.allow = 'fullscreen; autoplay';
-            iframe.srcdoc = html;
-            area.appendChild(iframe);
-          })
-          .catch(err => {
-            area.innerHTML = `<div class="empty-state" style="height:100%"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Failed to Load Quiz</div><div class="empty-state-msg">${err.message}<br><br><a href="${t.quiz_html_url}" target="_blank" style="color:var(--brand-blue-light);text-decoration:underline">Open in new tab ↗</a></div></div>`;
-          });
+        loadHtmlIntoIframe(
+          t.quiz_html_url,
+          area,
+          'Failed to Load Quiz',
+          t.quiz_html_url
+        );
         return;
       }
 
@@ -3251,26 +3327,12 @@
       if (!area) return;
 
       if (t.flashcard_html_url && t.flashcard_html_url.startsWith('http')) {
-        // Fetch the HTML then inject via srcdoc to bypass Supabase
-        // Content-Type:text/plain and X-Frame-Options:DENY restrictions.
-        area.innerHTML = `
-          <div class="empty-state" style="height:100%">
-            <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
-            <div class="empty-state-title">Loading Flashcards…</div>
-          </div>`;
-        fetch(t.flashcard_html_url)
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-          .then(html => {
-            area.innerHTML = '';
-            const iframe = document.createElement('iframe');
-            iframe.className = 'content-iframe';
-            iframe.allow = 'fullscreen; autoplay';
-            iframe.srcdoc = html;
-            area.appendChild(iframe);
-          })
-          .catch(err => {
-            area.innerHTML = `<div class="empty-state" style="height:100%"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Failed to Load Flashcards</div><div class="empty-state-msg">${err.message}<br><br><a href="${t.flashcard_html_url}" target="_blank" style="color:var(--brand-blue-light);text-decoration:underline">Open in new tab ↗</a></div></div>`;
-          });
+        loadHtmlIntoIframe(
+          t.flashcard_html_url,
+          area,
+          'Failed to Load Flashcards',
+          t.flashcard_html_url
+        );
         return;
       }
 
