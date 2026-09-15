@@ -3113,7 +3113,26 @@
       if (!area) return;
 
       if (t.quiz_html_url && t.quiz_html_url.startsWith('http')) {
-        area.innerHTML = `<iframe class="content-iframe" src="${t.quiz_html_url}"></iframe>`;
+        // Fetch the HTML then inject via srcdoc to bypass Supabase
+        // Content-Type:text/plain and X-Frame-Options:DENY restrictions.
+        area.innerHTML = `
+          <div class="empty-state" style="height:100%">
+            <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
+            <div class="empty-state-title">Loading Quiz…</div>
+          </div>`;
+        fetch(t.quiz_html_url)
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+          .then(html => {
+            area.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.className = 'content-iframe';
+            iframe.allow = 'fullscreen; autoplay';
+            iframe.srcdoc = html;
+            area.appendChild(iframe);
+          })
+          .catch(err => {
+            area.innerHTML = `<div class="empty-state" style="height:100%"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Failed to Load Quiz</div><div class="empty-state-msg">${err.message}<br><br><a href="${t.quiz_html_url}" target="_blank" style="color:var(--brand-blue-light);text-decoration:underline">Open in new tab ↗</a></div></div>`;
+          });
         return;
       }
 
@@ -3232,7 +3251,26 @@
       if (!area) return;
 
       if (t.flashcard_html_url && t.flashcard_html_url.startsWith('http')) {
-        area.innerHTML = `<iframe class="content-iframe" src="${t.flashcard_html_url}"></iframe>`;
+        // Fetch the HTML then inject via srcdoc to bypass Supabase
+        // Content-Type:text/plain and X-Frame-Options:DENY restrictions.
+        area.innerHTML = `
+          <div class="empty-state" style="height:100%">
+            <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
+            <div class="empty-state-title">Loading Flashcards…</div>
+          </div>`;
+        fetch(t.flashcard_html_url)
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+          .then(html => {
+            area.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.className = 'content-iframe';
+            iframe.allow = 'fullscreen; autoplay';
+            iframe.srcdoc = html;
+            area.appendChild(iframe);
+          })
+          .catch(err => {
+            area.innerHTML = `<div class="empty-state" style="height:100%"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Failed to Load Flashcards</div><div class="empty-state-msg">${err.message}<br><br><a href="${t.flashcard_html_url}" target="_blank" style="color:var(--brand-blue-light);text-decoration:underline">Open in new tab ↗</a></div></div>`;
+          });
         return;
       }
 
