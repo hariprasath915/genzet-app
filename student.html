@@ -3013,7 +3013,7 @@
         card.innerHTML = `
           <div class="topic-thumb-wrapper">
             <img class="topic-thumb"
-              src="${t.thumbnail_image || fallback}"
+              src="${t.thumbnail_url || fallback}"
               alt="${t.topic_name}"
               onerror="this.src='${fallback}'"
             />
@@ -3022,9 +3022,9 @@
           <div class="topic-card-body">
             <div class="topic-card-name">${t.topic_name}</div>
             <div class="topic-modes-row">
-              ${t.quiz_url       ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>' : ''}
-              ${t.animation_url  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
-              ${t.flashcards_url ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
+              ${t.quiz_html_url       ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>' : ''}
+              ${t.animation_mp4_url  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
+              ${t.flashcard_html_url ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
             </div>
             <button class="topic-select-btn">Open Topic →</button>
           </div>
@@ -3072,7 +3072,7 @@
       const bImg = document.getElementById('bannerImg');
       const bTitle = document.getElementById('bannerTitle');
       const bSub = document.getElementById('bannerSubject');
-      if (bImg) bImg.src = t.thumbnail_image || fallback;
+      if (bImg) bImg.src = t.thumbnail_url || fallback;
       if (bTitle) bTitle.textContent = t.topic_name;
       if (bSub) bSub.textContent = `${app.subject.charAt(0).toUpperCase() + app.subject.slice(1)} • 3 Learning Modes`;
       showScreen('screenLearn');
@@ -3112,8 +3112,8 @@
       const area = document.getElementById('modalContent');
       if (!area) return;
 
-      if (t.quiz_url && t.quiz_url.startsWith('http')) {
-        area.innerHTML = `<iframe class="content-iframe" src="${t.quiz_url}"></iframe>`;
+      if (t.quiz_html_url && t.quiz_html_url.startsWith('http')) {
+        area.innerHTML = `<iframe class="content-iframe" src="${t.quiz_html_url}"></iframe>`;
         return;
       }
 
@@ -3213,9 +3213,9 @@
       openModal(`Animation — ${t.topic_name}`, 'badge-video', 'VIDEO');
       const area = document.getElementById('modalContent');
       if (!area) return;
-      const url = t.animation_url;
+      const url = t.animation_mp4_url;
       if (!url) {
-        area.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">No Video Available</div><div class="empty-state-msg">Upload an MP4 animation URL to this topic's <strong>animation_url</strong> field in Supabase.</div></div>`;
+        area.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">No Video Available</div><div class="empty-state-msg">Upload an MP4 animation URL to this topic's <strong>animation_mp4_url</strong> field in Supabase.</div></div>`;
         return;
       }
       area.innerHTML = `<video class="video-player" src="${url}" controls autoplay playsinline></video>`;
@@ -3231,8 +3231,8 @@
       const area = document.getElementById('modalContent');
       if (!area) return;
 
-      if (t.flashcards_url && t.flashcards_url.startsWith('http')) {
-        area.innerHTML = `<iframe class="content-iframe" src="${t.flashcards_url}"></iframe>`;
+      if (t.flashcard_html_url && t.flashcard_html_url.startsWith('http')) {
+        area.innerHTML = `<iframe class="content-iframe" src="${t.flashcard_html_url}"></iframe>`;
         return;
       }
 
