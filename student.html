@@ -3104,55 +3104,73 @@
 
     /* ══════════════════════════════════════════════════════════════════
        SHARED HTML-IN-IFRAME LOADER
-       Mirrors exactly how index.html loads Theory content:
-         • Sets iframe.src directly to the Supabase Storage URL
-         • Uses sandbox="allow-scripts allow-same-origin allow-forms
-           allow-popups allow-modals" so scripts run with a real origin,
-           localStorage works, button events fire, and Supabase calls succeed.
-         • Shows a loading skeleton, then replaces it with the iframe.
-         • Falls back to an error card with an "Open in new tab" link.
+       Problem: Supabase Storage serves .html files with two blocking headers:
+         • Content-Type: text/plain  → direct iframe src shows raw source text
+         • X-Frame-Options: DENY    → direct iframe src shows broken image
+       Solution (combined approach):
+         1. fetch() the HTML as text → bypasses both server-side headers
+         2. Inject <base href="..."> → relative <script>/<link> paths resolve
+            to the correct Supabase bucket folder
+         3. Set as iframe.srcdoc    → browser renders it as HTML
+         4. sandbox="allow-scripts allow-same-origin ..." → srcdoc iframe
+            inherits the parent page's origin so localStorage, button events,
+            and all JavaScript work correctly (same as index.html theory mode)
        ══════════════════════════════════════════════════════════════════ */
-    function loadHtmlIntoIframe(url, area, errorTitle, fallbackUrl) {
-      // Show loading state first
+    async function loadHtmlIntoIframe(url, area, errorTitle, fallbackUrl) {
+      // Show loading skeleton immediately
       area.innerHTML = `
         <div class="empty-state" style="height:100%">
           <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
           <div class="empty-state-title">Loading…</div>
         </div>`;
 
-      // Build iframe — same sandbox flags as index.html's #lvTheoryIframe
-      const iframe = document.createElement('iframe');
-      iframe.className = 'content-iframe';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads');
-      iframe.setAttribute('allow', 'fullscreen; autoplay');
-      iframe.setAttribute('title', errorTitle);
+      try {
+        // Step 1 — fetch bypasses Content-Type:text/plain & X-Frame-Options:DENY
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let html = await res.text();
 
-      iframe.onload = function () {
-        // Iframe loaded — remove the loading skeleton
-        const skeleton = area.querySelector('.empty-state');
-        if (skeleton) skeleton.remove();
-      };
+        // Step 2 — inject <base> so relative asset paths (js/css/img) resolve
+        //          to the Supabase bucket folder, not to student.html's folder
+        const baseHref = url.substring(0, url.lastIndexOf('/') + 1);
+        const inject   = `<base href="${baseHref}">`;
+        if (/<head(\s[^>]*)?>/.test(html)) {
+          html = html.replace(/(<head(\s[^>]*)?>)/i, `$1${inject}`);
+        } else {
+          html = inject + html;
+        }
 
-      iframe.onerror = function () {
+        // Step 3 + 4 — srcdoc + sandbox with allow-same-origin
+        //   • srcdoc renders the fetched HTML directly (no server headers)
+        //   • allow-same-origin makes the srcdoc inherit the parent page's
+        //     origin → localStorage works, scripts run, Supabase JS works
+        area.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.className = 'content-iframe';
+        iframe.setAttribute('sandbox',
+          'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'
+        );
+        iframe.setAttribute('allow', 'fullscreen; autoplay');
+        iframe.srcdoc = html;
+        area.appendChild(iframe);
+
+      } catch (err) {
+        console.error('[loadHtmlIntoIframe]', err);
         area.innerHTML = `
           <div class="empty-state" style="height:100%">
             <div class="empty-state-icon">⚠️</div>
             <div class="empty-state-title">${errorTitle}</div>
             <div class="empty-state-msg">
-              Could not load the file.<br><br>
+              ${err.message}<br><br>
               <a href="${fallbackUrl}" target="_blank"
                  style="color:var(--brand-blue-light);text-decoration:underline">
                 Open in new tab ↗
               </a>
             </div>
           </div>`;
-      };
-
-      // Set src AFTER attaching to DOM (mirrors index.html pattern)
-      area.innerHTML = '';
-      area.appendChild(iframe);
-      iframe.src = url;
+      }
     }
+
 
     /* ══════════════════════════════════════════════════════════════════
        QUIZ LAUNCHER
