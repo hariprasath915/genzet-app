@@ -3104,92 +3104,54 @@
 
     /* ══════════════════════════════════════════════════════════════════
        SHARED HTML-IN-IFRAME LOADER
-       Fetches an HTML file from Supabase Storage and renders it inside
-       a Blob-URL iframe so that:
-         1. Relative asset paths (<script src>, <link href>) resolve
-            correctly to the bucket folder via an injected <base> tag.
-         2. localStorage / sessionStorage calls don't throw SecurityError
-            (null-origin restriction) — replaced with an in-memory polyfill.
-         3. X-Frame-Options / Content-Type headers are bypassed because
-            we fetch the text ourselves and create a Blob URL.
+       Mirrors exactly how index.html loads Theory content:
+         • Sets iframe.src directly to the Supabase Storage URL
+         • Uses sandbox="allow-scripts allow-same-origin allow-forms
+           allow-popups allow-modals" so scripts run with a real origin,
+           localStorage works, button events fire, and Supabase calls succeed.
+         • Shows a loading skeleton, then replaces it with the iframe.
+         • Falls back to an error card with an "Open in new tab" link.
        ══════════════════════════════════════════════════════════════════ */
-    async function loadHtmlIntoIframe(url, area, errorTitle, fallbackUrl) {
-      // Loading state
+    function loadHtmlIntoIframe(url, area, errorTitle, fallbackUrl) {
+      // Show loading state first
       area.innerHTML = `
         <div class="empty-state" style="height:100%">
           <div class="empty-state-icon" style="font-size:2.5rem">⏳</div>
           <div class="empty-state-title">Loading…</div>
         </div>`;
 
-      try {
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(`HTTP ${r.status} — could not load file.`);
-        let html = await r.text();
+      // Build iframe — same sandbox flags as index.html's #lvTheoryIframe
+      const iframe = document.createElement('iframe');
+      iframe.className = 'content-iframe';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads');
+      iframe.setAttribute('allow', 'fullscreen; autoplay');
+      iframe.setAttribute('title', errorTitle);
 
-        // ── 1. Inject <base> so relative URLs resolve to the bucket folder ──
-        const baseHref = url.substring(0, url.lastIndexOf('/') + 1);
-        const baseTag  = `<base href="${baseHref}">`;
+      iframe.onload = function () {
+        // Iframe loaded — remove the loading skeleton
+        const skeleton = area.querySelector('.empty-state');
+        if (skeleton) skeleton.remove();
+      };
 
-        // ── 2. Inject localStorage / sessionStorage in-memory polyfill ──────
-        //    srcdoc & blob iframes have an opaque (null) origin; any call to
-        //    window.localStorage throws SecurityError.  This polyfill swaps
-        //    both APIs with a plain object so button handlers keep working.
-        const storagePoly = `<script>
-(function(){
-  function MemStorage(){
-    var _s={};
-    return {
-      getItem:function(k){return k in _s?_s[k]:null;},
-      setItem:function(k,v){_s[k]=String(v);},
-      removeItem:function(k){delete _s[k];},
-      clear:function(){_s={};},
-      key:function(i){return Object.keys(_s)[i]??null;},
-      get length(){return Object.keys(_s).length;}
-    };
-  }
-  try{ localStorage.getItem('_chk'); }
-  catch(e){
-    try{ Object.defineProperty(window,'localStorage',{value:MemStorage(),writable:false,configurable:false}); }catch(_){}
-    try{ Object.defineProperty(window,'sessionStorage',{value:MemStorage(),writable:false,configurable:false}); }catch(_){}
-  }
-})();
-<\/script>`;
-
-        // ── 3. Inject into <head> (or prepend if no <head>) ─────────────────
-        if (/<head(\s[^>]*)?>/.test(html)) {
-          html = html.replace(/(<head(\s[^>]*)?>)/i, `$1${baseTag}${storagePoly}`);
-        } else {
-          html = baseTag + storagePoly + html;
-        }
-
-        // ── 4. Build Blob URL — gives iframe a real non-null origin ──────────
-        const blob    = new Blob([html], { type: 'text/html; charset=utf-8' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        area.innerHTML = '';
-        const iframe = document.createElement('iframe');
-        iframe.className = 'content-iframe';
-        iframe.allow    = 'fullscreen; autoplay';
-        iframe.src      = blobUrl;
-        // Revoke the blob URL once the iframe has finished loading
-        iframe.onload = () => URL.revokeObjectURL(blobUrl);
-        area.appendChild(iframe);
-
-      } catch (err) {
-        console.error('[loadHtmlIntoIframe]', err);
+      iframe.onerror = function () {
         area.innerHTML = `
           <div class="empty-state" style="height:100%">
             <div class="empty-state-icon">⚠️</div>
             <div class="empty-state-title">${errorTitle}</div>
             <div class="empty-state-msg">
-              ${err.message}<br><br>
+              Could not load the file.<br><br>
               <a href="${fallbackUrl}" target="_blank"
                  style="color:var(--brand-blue-light);text-decoration:underline">
                 Open in new tab ↗
               </a>
             </div>
           </div>`;
-      }
+      };
+
+      // Set src AFTER attaching to DOM (mirrors index.html pattern)
+      area.innerHTML = '';
+      area.appendChild(iframe);
+      iframe.src = url;
     }
 
     /* ══════════════════════════════════════════════════════════════════
