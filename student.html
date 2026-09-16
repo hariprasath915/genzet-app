@@ -2895,7 +2895,7 @@
         <button class="sap-retry-btn" id="cpRetryBtn">↩ Go Back</button>
       </div>
       <iframe id="cpIframe"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-presentation"
         allow="fullscreen; autoplay"
       ></iframe>
     </div>
@@ -2941,6 +2941,14 @@
     const jwt     = localStorage.getItem(TOKEN_KEY);
     const userRaw = localStorage.getItem(USER_KEY);
     const userMeta = userRaw ? JSON.parse(userRaw) : {};
+
+    // Auth header for Supabase Storage fetch() calls.
+    // • jwt     — the student's own JWT (from haezet auth). Satisfies RLS on
+    //             authenticated buckets and carries the user's identity.
+    // • Fallback to DEFAULT_SUPA_ANON so public-bucket URLs still get a valid
+    //   anon token (Supabase returns HTTP 400 / CORS error if the header is
+    //   missing entirely, even for public buckets with no RLS).
+    const _storageAuthHeader = { Authorization: 'Bearer ' + (jwt || DEFAULT_SUPA_ANON) };
 
     // Redirect to login if not authenticated
     if (!jwt) { location.href = '/index.html'; }
@@ -3247,7 +3255,10 @@
 
       try {
         // Step 1 — fetch bypasses Content-Type:text/plain & X-Frame-Options:DENY
-        const res = await fetch(url);
+        // RC#1 FIX: send Authorization header so Supabase Storage RLS passes.
+        // Without it, private/authenticated buckets return HTTP 400 + no CORS
+        // headers — the browser sees a TypeError: Failed to fetch, not a 400.
+        const res = await fetch(url, { headers: _storageAuthHeader });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let html = await res.text();
 
@@ -3317,7 +3328,10 @@
       sound('open');
 
       try {
-        const res = await fetch(url);
+        // RC#1 FIX: send Authorization header — Supabase Storage rejects
+        // unauthenticated requests with HTTP 400 + no CORS headers on private
+        // buckets, which the browser surfaces as TypeError: Failed to fetch.
+        const res = await fetch(url, { headers: _storageAuthHeader });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         let html = await res.text();
         // Inject <base> so relative asset paths resolve correctly
@@ -3329,8 +3343,12 @@
           html = inject + html;
         }
         if (iframe) {
-          iframe.srcdoc = html;
+          // RC#2 FIX: set onload BEFORE srcdoc. In many browsers srcdoc
+          // parsing starts synchronously — if onload is wired after srcdoc the
+          // event fires before the handler is attached and the spinner never
+          // hides, making working content look like a permanent load failure.
           iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
+          iframe.srcdoc = html;  // set last so onload is always caught
         }
       } catch (err) {
         console.error('[contentPortal]', err);
@@ -4020,7 +4038,10 @@
         const loading     = document.getElementById('sapLoading');
         const errEl       = document.getElementById('sapError');
         try {
-          const res  = await fetch(url, { cache: 'no-store' });
+          // RC#1 FIX: add Authorization header to all Supabase Storage fetches.
+          // Without it, private-bucket URLs return HTTP 400 with no CORS headers
+          // so the browser only sees TypeError: Failed to fetch (not a 400).
+          const res  = await fetch(url, { cache: 'no-store', headers: _storageAuthHeader });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           let html = await res.text();
           const base = '<base href="' + url + '" target="_blank">';
@@ -4028,10 +4049,16 @@
           if (!html.includes('<base')) html = base + html;
           if (sapIframe) {
             sapIframe.removeAttribute('src');
-            sapIframe.srcdoc = html;
+            // RC#1 FIX: add Authorization header for Supabase Storage
+            // (assessment URL is also stored in Supabase — same auth requirement)
+            // Note: _sapLoadContent is called after JWT auth is verified, so
+            // jwt is always set here.
+            // srcdoc ordering is already correct in this path (onload after srcdoc
+            // is acceptable for larger HTML; we fix the ordering here for safety).
             sapIframe.onload = function() {
               if (loading) loading.classList.add('hidden');
             };
+            sapIframe.srcdoc = html;  // set after onload (RC#2 safe ordering)
           }
         } catch(err) {
           console.warn('[SAP] fetch failed, trying iframe.src:', err.message);
