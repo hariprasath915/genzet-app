@@ -21006,7 +21006,7 @@ ${text.substring(0, 4500)}`
           topics = rows.map(r => ({
             id:            r.topic_title,   // use topic_title as stable identifier
             title:         r.topic_title,
-            thumbnail_url: null,
+            thumbnail_url: r.topic_thumbnail_url || null,
             _hasContent:   [1,2,3,4,5,6,7,8,9,10].some(i => r[`assessment_${i}`]),
           }));
         }
@@ -21506,7 +21506,25 @@ window.assessViewerReload = function () {
         }
       }
 
-      let html = '';
+      // Existing topic-level thumbnail (shown on the topic card itself, not per-assessment)
+      let existingTopicThumb = '';
+      if (window.assessmentAPI) {
+        const rows = window.assessmentAPI.getCache(_assessCurrentSubject) || [];
+        const row  = rows.find(r => r.topic_title === _assessCurrentTopicTitle) || {};
+        existingTopicThumb = row.topic_thumbnail_url || '';
+      }
+
+      let html = `
+        <div style="margin-bottom:16px;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;">🖼 Topic Thumbnail URL</label>
+            <input type="url" id="amcTopicThumb"
+              style="flex:1;background:var(--surface2,#1e293b);border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);outline:none;"
+              placeholder="https://… (image shown on the topic card in the list)"
+              value="${existingTopicThumb}" />
+          </div>
+        </div>
+      `;
       for (let i = 1; i <= 10; i++) {
         const key      = `assessment_${i}`;
         const thumbKey = `thumbnail_url_${i}`;
@@ -21560,8 +21578,10 @@ window.assessViewerReload = function () {
         const el = document.getElementById(`amcThumb_${i + 1}`);
         return el && el.value.trim();
       }).some(Boolean);
+      const topicThumbEl = document.getElementById('amcTopicThumb');
+      const topicThumbVal = topicThumbEl && topicThumbEl.value.trim();
 
-      if (!hasFiles && !anyThumb) {
+      if (!hasFiles && !anyThumb && !topicThumbVal) {
         alert('Nothing to save. Please upload an HTML file or enter a thumbnail URL for at least one assessment.');
         return;
       }
@@ -21605,6 +21625,9 @@ window.assessViewerReload = function () {
           const thumbEl = document.getElementById(`amcThumb_${i}`);
           payload[`thumbnail_url_${i}`] = (thumbEl && thumbEl.value.trim()) || null;
         }
+
+        // Topic-level thumbnail (shown on the topic card in the topics grid)
+        payload.topic_thumbnail_url = topicThumbVal || null;
 
         // Persist to database
         if (window.assessmentAPI) {
