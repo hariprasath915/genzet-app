@@ -2895,7 +2895,7 @@
         <button class="sap-retry-btn" id="cpRetryBtn">↩ Go Back</button>
       </div>
       <iframe id="cpIframe"
-        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-presentation"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
         allow="fullscreen; autoplay"
       ></iframe>
     </div>
@@ -3343,6 +3343,7 @@
           html = inject + html;
         }
         if (iframe) {
+          iframe.removeAttribute('src');
           // RC#2 FIX: set onload BEFORE srcdoc. In many browsers srcdoc
           // parsing starts synchronously — if onload is wired after srcdoc the
           // event fires before the handler is attached and the spinner never
@@ -3351,7 +3352,15 @@
           iframe.srcdoc = html;  // set last so onload is always caught
         }
       } catch (err) {
-        console.error('[contentPortal]', err);
+        console.warn('[contentPortal] fetch failed, trying iframe.src:', err);
+        try {
+          if (iframe) {
+            iframe.removeAttribute('srcdoc');
+            iframe.src = url;
+            iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
+            return;
+          }
+        } catch (_) {}
         if (loading) loading.classList.add('hidden');
         if (errEl) {
           const eTitle = document.getElementById('cpErrorTitle');
