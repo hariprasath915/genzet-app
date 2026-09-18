@@ -3143,14 +3143,18 @@
       topics.forEach((t, i) => {
         const card = document.createElement('div');
         card.className = 'topic-card';
+        // Normalise field names: Supabase table may use either naming convention
+        const _quizUrl      = t.quiz_html_url      || t.quiz_url       || '';
+        const _animUrl      = t.animation_mp4_url  || t.animation_url  || '';
+        const _flashUrl     = t.flashcard_html_url || t.flashcards_url || '';
         card.innerHTML = `
           <div class="topic-card-body">
             <div class="topic-number-badge-inline"># ${i + 1}</div>
             <div class="topic-card-name">${t.topic_name}</div>
             <div class="topic-modes-row">
-              ${t.quiz_html_url       ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>' : ''}
-              ${t.animation_mp4_url  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
-              ${t.flashcard_html_url ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
+              ${_quizUrl  ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>'  : ''}
+              ${_animUrl  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
+              ${_flashUrl ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
             </div>
             <button class="topic-select-btn">Open Topic →</button>
           </div>
@@ -3404,7 +3408,8 @@
       openModal(`Animation — ${t.topic_name}`, 'badge-video', 'VIDEO');
       const area = document.getElementById('modalContent');
       if (!area) return;
-      const url = t.animation_mp4_url;
+      // Support both column name conventions used across Supabase tables
+      const url = t.animation_mp4_url || t.animation_url || '';
       if (!url) {
         area.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">No Video Available</div><div class="empty-state-msg">Upload an MP4 animation URL to this topic's <strong>animation_mp4_url</strong> field in Supabase.</div></div>`;
         return;
@@ -3419,10 +3424,15 @@
       const t = app.topic;
       if (!t) return;
 
+      // Support both column name conventions:
+      //   flashcard_html_url  — new naming used in student.html
+      //   flashcards_url      — original naming used in Supabase students_* tables
+      const flashUrl = t.flashcard_html_url || t.flashcards_url || '';
+
       // Cloud URL only — open full-screen portal
-      if (t.flashcard_html_url && t.flashcard_html_url.startsWith('http')) {
+      if (flashUrl && flashUrl.startsWith('http')) {
         openContentPortal(
-          t.flashcard_html_url,
+          flashUrl,
           'CARDS',
           'cp-badge-cards',
           `Flashcards — ${t.topic_name}`
@@ -3438,7 +3448,7 @@
       const eMsg    = document.getElementById('cpErrorMsg');
       if (loading) loading.classList.add('hidden');
       if (eTitle)  eTitle.textContent = 'Flashcards Not Available';
-      if (eMsg)    eMsg.textContent   = 'No flashcard file has been linked to this topic yet. Ask your teacher to upload the flashcard HTML to Supabase and set the flashcard_html_url.';
+      if (eMsg)    eMsg.textContent   = 'No flashcard file has been linked to this topic yet. Ask your teacher to upload the flashcard HTML to Supabase and set the flashcards_url.';
       if (errEl)   errEl.classList.add('visible');
     }
 
