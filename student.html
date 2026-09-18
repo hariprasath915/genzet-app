@@ -3058,15 +3058,14 @@
        FETCH TOPIC COUNTS (for stats & chips)
        ══════════════════════════════════════════════════════════════════ */
     async function loadCounts() {
-      if (!app.client) return;
+      if (!jwt) return;  // must be logged in to call backend
       let total = 0;
-      // Table names: student_science, student_maths, student_social (singular prefix)
       for (const subj of ['maths', 'science', 'social']) {
         try {
-          const { count } = await app.client
-            .from(`student_${subj}`)
-            .select('*', { count: 'exact', head: true });
-          const n = count ?? 0;
+          const res = await fetch(BACKEND_URL + '/sync/student-topics/' + subj + '/count', {
+            headers: { Authorization: 'Bearer ' + (jwt || '') }
+          });
+          const n = res.ok ? (await res.json()).count : 0;
           total += n;
           const chip = document.getElementById(`${subj}Chip`);
           if (chip) chip.textContent = `${n} Topic${n !== 1 ? 's' : ''}`;
@@ -3102,22 +3101,22 @@
       if (grid) grid.innerHTML = '';
       if (loader) loader.style.display = 'flex';
 
-      if (!app.client) {
-        if (loader) loader.style.display = 'none';
-        renderEmpty('noClient');
-        return;
-      }
+      // No Supabase client guard needed — topics come from BACKEND_URL now
 
       try {
-        // Table names: student_science, student_maths, student_social (singular prefix)
-        const { data, error } = await app.client
-          .from(`student_${subject}`)
-          .select('*')
-          .order('id', { ascending: true });
+        // Use BACKEND_URL API (service-role key) to bypass Supabase RLS
+        const res = await fetch(BACKEND_URL + '/sync/student-topics/' + subject, {
+          headers: { Authorization: 'Bearer ' + (jwt || '') }
+        });
 
         if (loader) loader.style.display = 'none';
 
-        if (error) throw error;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'HTTP ' + res.status }));
+          throw new Error(err.detail || 'HTTP ' + res.status);
+        }
+        const data = await res.json();
+
         if (!data || data.length === 0) {
           renderEmpty('noTopics', subject);
           return;
@@ -4334,7 +4333,7 @@
             const u = document.getElementById('cfgUrl').value.trim();
             const k = document.getElementById('cfgKey').value.trim();
             const tc = window.supabase.createClient(u, k);
-            const { error } = await tc.from('student_science').select('id').limit(1);
+            const { error } = await tc.from('students_science').select('id').limit(1);
             if (error) throw error;
             if (fb) {
               fb.style.color = 'var(--brand-green-bright)';
