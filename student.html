@@ -2895,7 +2895,7 @@
         <button class="sap-retry-btn" id="cpRetryBtn">↩ Go Back</button>
       </div>
       <iframe id="cpIframe"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-presentation"
         allow="fullscreen; autoplay"
       ></iframe>
     </div>
@@ -2942,13 +2942,18 @@
     const userRaw = localStorage.getItem(USER_KEY);
     const userMeta = userRaw ? JSON.parse(userRaw) : {};
 
-    // Auth header for Supabase Storage fetch() calls.
-    // • jwt     — the student's own JWT (from haezet auth). Satisfies RLS on
-    //             authenticated buckets and carries the user's identity.
-    // • Fallback to DEFAULT_SUPA_ANON so public-bucket URLs still get a valid
-    //   anon token (Supabase returns HTTP 400 / CORS error if the header is
-    //   missing entirely, even for public buckets with no RLS).
-    const _storageAuthHeader = { Authorization: 'Bearer ' + (jwt || DEFAULT_SUPA_ANON) };
+    // ── Supabase Storage fetch: NO Authorization header needed ───────────────
+    // Analysis of index.html confirms the quiz/flashcard/theory buckets are
+    // PUBLIC. index.html's Theory mode and Assessment viewer both call:
+    //   fetch(url)  or  fetch(url, { cache: 'no-store' })
+    // with zero auth headers — and they work perfectly.
+    //
+    // Adding ANY Authorization header to a public-bucket URL causes Supabase
+    // Storage to validate the token; if the token is unexpected it returns
+    // HTTP 400 WITHOUT Access-Control-Allow-Origin, so the browser sees a
+    // "CORS error / Failed to fetch" instead of the real error.
+    //
+    // Rule: match index.html exactly — no auth header for Storage fetches.
 
     // Redirect to login if not authenticated
     if (!jwt) { location.href = '/index.html'; }
@@ -3055,10 +3060,11 @@
     async function loadCounts() {
       if (!app.client) return;
       let total = 0;
+      // Table names: student_science, student_maths, student_social (singular prefix)
       for (const subj of ['maths', 'science', 'social']) {
         try {
           const { count } = await app.client
-            .from(`students_${subj}`)
+            .from(`student_${subj}`)
             .select('*', { count: 'exact', head: true });
           const n = count ?? 0;
           total += n;
@@ -3103,8 +3109,9 @@
       }
 
       try {
+        // Table names: student_science, student_maths, student_social (singular prefix)
         const { data, error } = await app.client
-          .from(`students_${subject}`)
+          .from(`student_${subject}`)
           .select('*')
           .order('id', { ascending: true });
 
@@ -3179,7 +3186,7 @@
       } else {
         icon = '📦';
         title = `No Topics Yet`;
-        msg = `The <strong>${subject}_learn</strong> table is empty. Add topics via your Supabase Dashboard or run the <code>supabase_setup.sql</code> seed script.`;
+        msg = `The <strong>student_${subject}</strong> table is empty. Add topics via your Supabase Dashboard — insert rows with columns: topic_name, thumbnail_url, quiz_html_url, flashcard_html_url, animation_mp4_url.`;
       }
 
       grid.innerHTML = `
@@ -3255,10 +3262,8 @@
 
       try {
         // Step 1 — fetch bypasses Content-Type:text/plain & X-Frame-Options:DENY
-        // RC#1 FIX: send Authorization header so Supabase Storage RLS passes.
-        // Without it, private/authenticated buckets return HTTP 400 + no CORS
-        // headers — the browser sees a TypeError: Failed to fetch, not a 400.
-        const res = await fetch(url, { headers: _storageAuthHeader });
+        // Buckets are PUBLIC — no Authorization header needed (matches index.html).
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let html = await res.text();
 
@@ -3328,10 +3333,11 @@
       sound('open');
 
       try {
-        // RC#1 FIX: send Authorization header — Supabase Storage rejects
-        // unauthenticated requests with HTTP 400 + no CORS headers on private
-        // buckets, which the browser surfaces as TypeError: Failed to fetch.
-        const res = await fetch(url, { headers: _storageAuthHeader });
+        // Buckets are PUBLIC — no Authorization header needed (matches index.html).
+        // Adding a token to a public-bucket URL causes Supabase to return an
+        // auth error WITHOUT CORS headers — browser sees "CORS error" not the
+        // real status. index.html's Theory/Assessment fetch uses no header: same here.
+        const res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         let html = await res.text();
         // Inject <base> so relative asset paths resolve correctly
@@ -3343,24 +3349,14 @@
           html = inject + html;
         }
         if (iframe) {
-          iframe.removeAttribute('src');
-          // RC#2 FIX: set onload BEFORE srcdoc. In many browsers srcdoc
-          // parsing starts synchronously — if onload is wired after srcdoc the
-          // event fires before the handler is attached and the spinner never
-          // hides, making working content look like a permanent load failure.
+          // Set onload BEFORE srcdoc — srcdoc parsing starts synchronously in
+          // Chromium; if onload is wired after, the event fires before the handler
+          // is attached and the spinner never hides.
           iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
           iframe.srcdoc = html;  // set last so onload is always caught
         }
       } catch (err) {
-        console.warn('[contentPortal] fetch failed, trying iframe.src:', err);
-        try {
-          if (iframe) {
-            iframe.removeAttribute('srcdoc');
-            iframe.src = url;
-            iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
-            return;
-          }
-        } catch (_) {}
+        console.error('[contentPortal]', err);
         if (loading) loading.classList.add('hidden');
         if (errEl) {
           const eTitle = document.getElementById('cpErrorTitle');
@@ -4047,10 +4043,8 @@
         const loading     = document.getElementById('sapLoading');
         const errEl       = document.getElementById('sapError');
         try {
-          // RC#1 FIX: add Authorization header to all Supabase Storage fetches.
-          // Without it, private-bucket URLs return HTTP 400 with no CORS headers
-          // so the browser only sees TypeError: Failed to fetch (not a 400).
-          const res  = await fetch(url, { cache: 'no-store', headers: _storageAuthHeader });
+          // Buckets are PUBLIC — no Authorization header (matches index.html).
+          const res  = await fetch(url, { cache: 'no-store' });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           let html = await res.text();
           const base = '<base href="' + url + '" target="_blank">';
@@ -4340,7 +4334,7 @@
             const u = document.getElementById('cfgUrl').value.trim();
             const k = document.getElementById('cfgKey').value.trim();
             const tc = window.supabase.createClient(u, k);
-            const { error } = await tc.from('students_science').select('id').limit(1);
+            const { error } = await tc.from('student_science').select('id').limit(1);
             if (error) throw error;
             if (fb) {
               fb.style.color = 'var(--brand-green-bright)';
