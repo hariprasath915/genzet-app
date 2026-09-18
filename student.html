@@ -2813,6 +2813,7 @@
       </div>
 
       <div class="topic-banner-card">
+        <img id="bannerImg" class="topic-banner-img" src="" alt="Topic thumbnail" />
         <div class="topic-banner-text">
           <h2 id="bannerTitle">—</h2>
           <p id="bannerSubject">—</p>
@@ -3141,20 +3142,24 @@
       }
 
       topics.forEach((t, i) => {
+        const fallback = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80';
         const card = document.createElement('div');
         card.className = 'topic-card';
-        // Normalise field names: Supabase table may use either naming convention
-        const _quizUrl      = t.quiz_html_url      || t.quiz_url       || '';
-        const _animUrl      = t.animation_mp4_url  || t.animation_url  || '';
-        const _flashUrl     = t.flashcard_html_url || t.flashcards_url || '';
         card.innerHTML = `
+          <div class="topic-thumb-wrapper">
+            <img class="topic-thumb"
+              src="${t.thumbnail_url || fallback}"
+              alt="${t.topic_name}"
+              onerror="this.src='${fallback}'"
+            />
+            <div class="topic-number-badge"># ${i + 1}</div>
+          </div>
           <div class="topic-card-body">
-            <div class="topic-number-badge-inline"># ${i + 1}</div>
             <div class="topic-card-name">${t.topic_name}</div>
             <div class="topic-modes-row">
-              ${_quizUrl  ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>'  : ''}
-              ${_animUrl  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
-              ${_flashUrl ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
+              ${t.quiz_html_url       ? '<span class="mode-chip chip-quiz">🎯 Quiz</span>' : ''}
+              ${t.animation_mp4_url  ? '<span class="mode-chip chip-video">🎬 Video</span>' : ''}
+              ${t.flashcard_html_url ? '<span class="mode-chip chip-cards">🃏 Cards</span>' : ''}
             </div>
             <button class="topic-select-btn">Open Topic →</button>
           </div>
@@ -3198,10 +3203,13 @@
     function selectTopic(t) {
       app.topic = t;
       sound('nav');
+      const fallback = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80';
+      const bImg = document.getElementById('bannerImg');
       const bTitle = document.getElementById('bannerTitle');
-      const bSub   = document.getElementById('bannerSubject');
+      const bSub = document.getElementById('bannerSubject');
+      if (bImg) bImg.src = t.thumbnail_url || fallback;
       if (bTitle) bTitle.textContent = t.topic_name;
-      if (bSub)   bSub.textContent   = `${app.subject.charAt(0).toUpperCase() + app.subject.slice(1)} • 3 Learning Modes`;
+      if (bSub) bSub.textContent = `${app.subject.charAt(0).toUpperCase() + app.subject.slice(1)} • 3 Learning Modes`;
       showScreen('screenLearn');
     }
 
@@ -3376,7 +3384,7 @@
       const t = app.topic;
       if (!t) return;
 
-      // Cloud URL only — open full-screen portal
+      // If a quiz HTML URL exists → open full-screen portal (same as index.html Theory mode)
       if (t.quiz_html_url && t.quiz_html_url.startsWith('http')) {
         openContentPortal(
           t.quiz_html_url,
@@ -3387,16 +3395,96 @@
         return;
       }
 
-      // No cloud URL — show informational message (no local fallback)
-      openContentPortal('', 'QUIZ', '', `Quiz — ${t.topic_name}`);
-      const loading = document.getElementById('cpLoading');
-      const errEl   = document.getElementById('cpError');
-      const eTitle  = document.getElementById('cpErrorTitle');
-      const eMsg    = document.getElementById('cpErrorMsg');
-      if (loading) loading.classList.add('hidden');
-      if (eTitle)  eTitle.textContent = 'Quiz Not Available';
-      if (eMsg)    eMsg.textContent   = 'No quiz file has been linked to this topic yet. Ask your teacher to upload the quiz HTML to Supabase and set the quiz_html_url.';
-      if (errEl)   errEl.classList.add('visible');
+      // No URL → open built-in quiz inside the modal
+      openModal(`Quiz — ${t.topic_name}`, 'badge-quiz', 'QUIZ');
+      const area = document.getElementById('modalContent');
+      if (!area) return;
+
+      /* Built-in quiz */
+      const Qs = [
+        {
+          q: `Which statement best describes the core idea of "${t.topic_name}"?`,
+          opts: ['It is a foundational concept built on systematic evidence', 'It relies purely on memorization of facts', 'It is unrelated to real-world applications', 'It only applies in theoretical settings'],
+          ans: 0
+        },
+        {
+          q: `When studying "${t.topic_name}", what is the most effective strategy?`,
+          opts: ['Rote memorization', 'Understanding relationships between key concepts', 'Skipping difficult sections', 'Reading once and moving on'],
+          ans: 1
+        },
+        {
+          q: `Applying knowledge from "${t.topic_name}" requires:`,
+          opts: ['Critical thinking & analytical reasoning', 'Guessing randomly', 'Ignoring prior knowledge', 'None of the above'],
+          ans: 0
+        }
+      ];
+
+      let qi = 0, score = 0, timer = 15, interval = null;
+      const view = document.createElement('div');
+      view.className = 'quiz-view';
+      area.appendChild(view);
+
+      function renderQ() {
+        clearInterval(interval);
+        if (qi >= Qs.length) { renderVictory(); return; }
+        timer = 15;
+        const q = Qs[qi];
+        view.innerHTML = `
+          <div class="quiz-top-bar">
+            <div class="quiz-timer" id="qt">⏱ ${timer}s</div>
+            <div class="quiz-score">Q ${qi + 1}/${Qs.length} &nbsp;|&nbsp; Score: <strong>${score}</strong></div>
+          </div>
+          <div class="quiz-q-box">${q.q}</div>
+          <div class="quiz-grid">
+            ${q.opts.map((o, i) => `
+              <button class="quiz-opt-btn q-opt-${i+1}" data-i="${i}">
+                <div class="opt-letter">${['▲','◆','●','■'][i]}</div>
+                <span>${o}</span>
+              </button>
+            `).join('')}
+          </div>
+        `;
+        const qtEl = view.querySelector('#qt');
+        interval = setInterval(() => {
+          timer--;
+          if (qtEl) qtEl.textContent = `⏱ ${timer}s`;
+          if (timer <= 0) { clearInterval(interval); sound('wrong'); qi++; renderQ(); }
+        }, 1000);
+        view.querySelectorAll('.quiz-opt-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            clearInterval(interval);
+            const chosen = parseInt(btn.dataset.i);
+            if (chosen === q.ans) {
+              score += 1000 + timer * 40;
+              sound('correct');
+              btn.style.outline = '4px solid #10B981';
+            } else {
+              sound('wrong');
+              btn.style.opacity = '0.4';
+            }
+            setTimeout(() => { qi++; renderQ(); }, 750);
+          });
+        });
+      }
+
+      function renderVictory() {
+        if (window.confetti) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        sound('correct');
+        view.innerHTML = `
+          <div class="quiz-victory">
+            <div style="font-size:64px">🏆</div>
+            <h2 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:900;color:#FFFFFF;">Quiz Complete!</h2>
+            <p style="font-size:1.4rem;color:var(--brand-yellow);font-weight:900;">Score: ${score} pts 🔥</p>
+            <p style="color:var(--text-muted);max-width:380px;font-weight:600;">Awesome job! Check Animation or Flashcards to master the topic completely.</p>
+            <button class="learn-cta-btn" id="retryBtn" style="margin-top:14px;padding:12px 36px;font-size:16px;">↺ Play Again</button>
+          </div>
+        `;
+        view.querySelector('#retryBtn').addEventListener('click', () => {
+          qi = 0; score = 0; renderQ();
+        });
+      }
+
+      renderQ();
     }
 
     /* ══════════════════════════════════════════════════════════════════
@@ -3408,8 +3496,7 @@
       openModal(`Animation — ${t.topic_name}`, 'badge-video', 'VIDEO');
       const area = document.getElementById('modalContent');
       if (!area) return;
-      // Support both column name conventions used across Supabase tables
-      const url = t.animation_mp4_url || t.animation_url || '';
+      const url = t.animation_mp4_url;
       if (!url) {
         area.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">No Video Available</div><div class="empty-state-msg">Upload an MP4 animation URL to this topic's <strong>animation_mp4_url</strong> field in Supabase.</div></div>`;
         return;
@@ -3424,15 +3511,10 @@
       const t = app.topic;
       if (!t) return;
 
-      // Support both column name conventions:
-      //   flashcard_html_url  — new naming used in student.html
-      //   flashcards_url      — original naming used in Supabase students_* tables
-      const flashUrl = t.flashcard_html_url || t.flashcards_url || '';
-
-      // Cloud URL only — open full-screen portal
-      if (flashUrl && flashUrl.startsWith('http')) {
+      // If a flashcard HTML URL exists → open full-screen portal
+      if (t.flashcard_html_url && t.flashcard_html_url.startsWith('http')) {
         openContentPortal(
-          flashUrl,
+          t.flashcard_html_url,
           'CARDS',
           'cp-badge-cards',
           `Flashcards — ${t.topic_name}`
@@ -3440,16 +3522,20 @@
         return;
       }
 
-      // No cloud URL — show informational message (no local fallback)
-      openContentPortal('', 'CARDS', 'cp-badge-cards', `Flashcards — ${t.topic_name}`);
-      const loading = document.getElementById('cpLoading');
-      const errEl   = document.getElementById('cpError');
-      const eTitle  = document.getElementById('cpErrorTitle');
-      const eMsg    = document.getElementById('cpErrorMsg');
-      if (loading) loading.classList.add('hidden');
-      if (eTitle)  eTitle.textContent = 'Flashcards Not Available';
-      if (eMsg)    eMsg.textContent   = 'No flashcard file has been linked to this topic yet. Ask your teacher to upload the flashcard HTML to Supabase and set the flashcards_url.';
-      if (errEl)   errEl.classList.add('visible');
+      /* No URL — show message inside modal */
+      openModal(`Flashcards — ${t.topic_name}`, 'badge-flash', 'CARDS');
+      const area = document.getElementById('modalContent');
+      if (!area) return;
+      area.innerHTML = `
+        <div class="empty-state" style="height:100%">
+          <div class="empty-state-icon">🃏</div>
+          <div class="empty-state-title">Flashcard URL Not Set</div>
+          <div class="empty-state-msg">
+            Upload your flashcard HTML file to the <code>flashcards</code> Supabase Storage bucket
+            and set the public URL in the <strong>flashcard_html_url</strong> column for this topic.
+          </div>
+        </div>
+      `;
     }
 
     /* ══════════════════════════════════════════════════════════════════
