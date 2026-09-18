@@ -1911,7 +1911,8 @@
       background: #11052C;
       z-index: 10;
     }
-    #cpLoading.hidden { display: none; }
+    #cpLoading.hidden { display: none; pointer-events: none; }
+    #cpLoading { pointer-events: auto; }
     #cpError {
       position: absolute;
       inset: 0;
@@ -2895,8 +2896,8 @@
         <button class="sap-retry-btn" id="cpRetryBtn">↩ Go Back</button>
       </div>
       <iframe id="cpIframe"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
-        allow="fullscreen; autoplay"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation allow-pointer-lock"
+        allow="fullscreen; autoplay; pointer-lock"
       ></iframe>
     </div>
   </div>
@@ -3351,7 +3352,28 @@
           // Set onload BEFORE srcdoc — srcdoc parsing starts synchronously in
           // Chromium; if onload is wired after, the event fires before the handler
           // is attached and the spinner never hides.
-          iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
+          iframe.onload = () => {
+            // rAF ensures iframe is fully painted before overlay is removed
+            // This prevents #cpLoading from blocking pointer-events on flashcard cards
+            requestAnimationFrame(() => { if (loading) loading.classList.add('hidden'); });
+            // Send student context into the quiz/flashcard iframe
+            // The iframe HTML can listen: window.addEventListener('message', e => {
+            //   if (e.data.type === 'STUDENT_CONTEXT') { /* use e.data */ }
+            // })
+            try {
+              const raw  = localStorage.getItem('haezet_user') || '{}';
+              const user = JSON.parse(raw);
+              const t    = app.topic || {};
+              iframe.contentWindow.postMessage({
+                type:         'STUDENT_CONTEXT',
+                studentName:  user.name  || user.email || 'Student',
+                studentRoll:  user.roll  || '',
+                studentEmail: user.email || '',
+                topicName:    t.topic_name || '',
+                subject:      app.subject  || '',
+              }, '*');
+            } catch(_) {}
+          };
           iframe.srcdoc = html;  // set last so onload is always caught
         }
       } catch (err) {
