@@ -3417,22 +3417,30 @@
         return;
       }
 
-      // No URL → open built-in quiz inside the modal
-      openModal(`Quiz — ${t.topic_name}`, 'badge-quiz', 'QUIZ');
       const area = document.getElementById('modalContent');
+      openModal(`Quiz — ${t.topic_name}`, 'badge-quiz', 'QUIZ');
       if (!area) return;
 
-      /* Built-in quiz */
       const Qs = [
         {
-          q: `Which statement best describes the core idea of "${t.topic_name}"?`,
-          opts: ['It is a foundational concept built on systematic evidence', 'It relies purely on memorization of facts', 'It is unrelated to real-world applications', 'It only applies in theoretical settings'],
+          q: `What is the main concept of "${t.topic_name}"?`,
+          opts: ['Understanding the core idea', 'Memorising formulas', 'Skipping the topic', 'None of the above'],
           ans: 0
         },
         {
-          q: `When studying "${t.topic_name}", what is the most effective strategy?`,
-          opts: ['Rote memorization', 'Understanding relationships between key concepts', 'Skipping difficult sections', 'Reading once and moving on'],
-          ans: 1
+          q: `Which skill does "${t.topic_name}" primarily develop?`,
+          opts: ['Problem solving', 'Rote learning', 'Avoidance', 'None of the above'],
+          ans: 0
+        },
+        {
+          q: `"${t.topic_name}" is best understood through:`,
+          opts: ['Practice & application', 'Reading once', 'Guessing', 'None of the above'],
+          ans: 0
+        },
+        {
+          q: `A key takeaway from "${t.topic_name}" is:`,
+          opts: ['Concepts build on each other', 'Topics are isolated', 'Details don\'t matter', 'None of the above'],
+          ans: 0
         },
         {
           q: `Applying knowledge from "${t.topic_name}" requires:`,
@@ -3629,6 +3637,13 @@
       if (!confirm('Sign out of Haezet Student? You will be taken back to the login page.')) return;
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      // BUG FIX: Clear onboarding + role flags on logout.
+      // Without this, haezet_onboarding_done stays 'true' in localStorage,
+      // so the next login skips role detection and sends the student to
+      // index.html (teacher dashboard) instead of student.html.
+      localStorage.removeItem('haezet_onboarding_done');
+      localStorage.removeItem('haezet_role');
+      localStorage.removeItem('haezet_authenticated');
       location.href = '/index.html';
     }
 
@@ -4073,12 +4088,21 @@
           if (!html.includes('<base')) html = base + html;
           if (sapIframe) {
             sapIframe.removeAttribute('src');
-            // RC#1 FIX: add Authorization header for Supabase Storage
-            // (assessment URL is also stored in Supabase — same auth requirement)
-            // Note: _sapLoadContent is called after JWT auth is verified, so
-            // jwt is always set here.
-            // srcdoc ordering is already correct in this path (onload after srcdoc
-            // is acceptable for larger HTML; we fix the ordering here for safety).
+
+            // ── Inject studentRowId into the HTML before loading ────────────────
+            // Because we use srcdoc (not iframe.src), window.location.search is
+            // always empty inside the iframe.  Instead, we prepend a tiny script
+            // that sets window.__STUDENT_ROW_ID__ so the quiz HTML can read it.
+            // trigonometry.html uses window.__STUDENT_ROW_ID__ if the URL param
+            // is absent.  This is safe — it runs before any quiz script.
+            const rowIdToInject = _testStudentRecordId || '';
+            const injectedScript = `<script>window.__STUDENT_ROW_ID__='${rowIdToInject}';<\/script>`;
+            html = html.replace(/(<head[^>]*>)/i, '$1' + injectedScript);
+            if (!html.includes('__STUDENT_ROW_ID__')) {
+              html = injectedScript + html;
+            }
+            // ── End injection ───────────────────────────────────────────────────
+
             sapIframe.onload = function() {
               if (loading) loading.classList.add('hidden');
             };
@@ -4177,13 +4201,22 @@
       // ── postMessage listener: capture score from assessment iframe ─
       window.addEventListener('message', function(evt) {
         if (!evt.data || typeof evt.data !== 'object') return;
-        const { type, score, total, percentage } = evt.data;
-        if (type !== 'ASSESSMENT_RESULT') return;
+        const { type, score, total, percentage, percent, studentRowId } = evt.data;
+        // Accept both 'QUIZ_SCORE' (fired by trigonometry.html and all q_animation HTMLs)
+        // AND the legacy 'ASSESSMENT_RESULT' type for backward compatibility.
+        if (type !== 'ASSESSMENT_RESULT' && type !== 'QUIZ_SCORE') return;
         if (score === undefined && score === null) return;
 
         let numScore = 0, numTotal = 0, numPct = 0;
 
-        if (typeof score === 'number' && typeof total === 'number' && total > 0) {
+        // QUIZ_SCORE sends score (int) + total (int) + percent (int)
+        if (type === 'QUIZ_SCORE') {
+          numScore = typeof score === 'number' ? score : parseInt(score, 10) || 0;
+          numTotal = typeof total === 'number' ? total : parseInt(total, 10) || 1;
+          numPct   = typeof percent === 'number' ? percent
+                   : typeof percentage === 'number' ? percentage
+                   : Math.round((numScore / numTotal) * 100);
+        } else if (typeof score === 'number' && typeof total === 'number' && total > 0) {
           numScore = score;
           numTotal = total;
           numPct   = (typeof percentage === 'number') ? percentage : Math.round((score / total) * 10000) / 100;
