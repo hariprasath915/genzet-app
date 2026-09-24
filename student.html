@@ -4237,12 +4237,39 @@
 
         console.log('[REG] Assessment result received:', { numScore, numTotal, numPct });
 
-        if (_testStudentRecordId && _sapCurrentSession) {
-          const pin  = _sapCurrentSession.pin || (pinInput ? pinInput.value.trim() : '');
+        if (!_testStudentRecordId) {
+          console.warn('[REG] No _testStudentRecordId — cannot save score. Was the student registered?');
+          return;
+        }
+
+        // ── STEP 1: Always update test_students.result immediately ──────────
+        // This is the GUARANTEED path — it only needs the test_students table
+        // (which always exists) and is why the Supabase dashboard shows the score.
+        const resultStr = numTotal > 0
+          ? `${numScore}/${numTotal} (${Math.round(numPct)}%)`
+          : String(score);
+
+        fetch(BACKEND_URL + '/sync/test-students/' + _testStudentRecordId + '/result', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: resultStr })
+        })
+        .then(r => {
+          if (r.ok) console.log('[REG] ✅ Score saved to test_students.result:', resultStr);
+          else console.warn('[REG] ⚠ PATCH result failed:', r.status);
+        })
+        .catch(e => console.warn('[REG] ⚠ PATCH error:', e.message));
+
+        // ── STEP 2: Best-effort detailed insert into quiz_results ────────────
+        // This requires the quiz_results table to exist in Supabase.
+        // If the table doesn't exist yet, this fails silently — score is
+        // already saved in STEP 1 so nothing is lost.
+        if (_sapCurrentSession) {
+          const pin    = _sapCurrentSession.pin || (pinInput ? pinInput.value.trim() : '');
           const nameEl = document.getElementById('regNameInput');
           const rollEl = document.getElementById('regRollInput');
-          const sName = (nameEl ? nameEl.value.trim() : '') || 'Unknown';
-          const sRoll = (rollEl ? rollEl.value.trim() : '') || '-';
+          const sName  = (nameEl ? nameEl.value.trim() : '') || 'Unknown';
+          const sRoll  = (rollEl ? rollEl.value.trim() : '') || '-';
 
           fetch(BACKEND_URL + '/sync/quiz-results', {
             method: 'POST',
@@ -4257,17 +4284,12 @@
               total_questions: numTotal > 0 ? numTotal : 1,
               percentage:      numPct,
             })
-          }).then(r => {
-            if (r.ok) r.json().then(d => console.log('[REG] Quiz result saved:', d.result));
-            else console.warn('[REG] Quiz result save failed:', r.status);
-          }).catch(e => console.warn('[REG] Quiz result error:', e.message));
-        } else if (_testStudentRecordId) {
-          const resultStr = numTotal > 0 ? `${numScore}/${numTotal} (${numPct.toFixed(2)}%)` : String(score);
-          fetch(BACKEND_URL + '/sync/test-students/' + _testStudentRecordId + '/result', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ result: resultStr })
-          }).catch(e => console.warn('[REG] Score PATCH error:', e.message));
+          })
+          .then(r => {
+            if (r.ok) r.json().then(d => console.log('[REG] ✅ Quiz result detail saved:', d.result));
+            else console.warn('[REG] ℹ quiz-results insert skipped (table may not exist yet):', r.status);
+          })
+          .catch(e => console.warn('[REG] ℹ quiz-results not available:', e.message));
         }
       }, false);
 
