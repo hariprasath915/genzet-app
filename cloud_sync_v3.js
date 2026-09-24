@@ -304,7 +304,7 @@
     const r = await _api('GET', '/sync/all');
     if (r.ok) {
       _hydrateItems(r.data.items    || []);
-      _hydrateCourses(r.data.subjects || []);
+      _hydrateCourses(r.data.subjects || [], r.data.file_mode || []);
       _hydrateVault(r.data.vault    || []);
       // Fetch public Supabase config for Realtime (fire-and-forget, no auth needed)
       _fetchPublicConfig();
@@ -390,15 +390,24 @@
     }
   }
 
-  function _hydrateCourses(subjects) {
+  function _hydrateCourses(subjects, fileModeRecords) {
     /**
      * subjects from /sync/all is already in engineeringCourses shape:
-     * [{ id, name, description, cos: [{ id, coNum, description, topics: [...] }], units: [...] }]
-     * Topics now include: type, pptUrl, pptStoragePath, fileName
+     * [{ id, name, description, cos: [...], units: [], file_mode_records: [...] }]
      *
-     * NOTE: do NOT early-return when subjects is empty — we must still call render
-     * functions so File Mode shows its empty-state rather than a blank white panel.
+     * fileModeRecords: flat array of file_mode rows from the new table.
+     * We attach them to each subject as s.file_mode_records[].
      */
+    // Build file_mode lookup by subject_id
+    const fmBySubject = {};
+    (fileModeRecords || []).forEach(rec => {
+      const sid = rec.subject_id;
+      if (sid) {
+        if (!fmBySubject[sid]) fmBySubject[sid] = [];
+        fmBySubject[sid].push(rec);
+      }
+    });
+
     // Normalise each topic so the frontend always has the fields it expects
     subjects.forEach(s => {
       // Normalise topics inside COs
@@ -416,16 +425,15 @@
           t.explanation   = t.explanation   || (t.type === 'ppt_upload' ? 'Uploaded PPT file' : '');
         })
       );
-      // Ensure units array exists (new File Mode hierarchy)
+      // Attach file_mode records (new) — replaces the old units[] array
+      s.file_mode_records = fmBySubject[s.id] || (s.file_mode_records || []);
+      // Keep units as empty array for backward safety (old code may check s.units)
       if (!Array.isArray(s.units)) s.units = [];
-      s.units.forEach(u => {
-        if (!Array.isArray(u.lesson_ids)) u.lesson_ids = [];
-      });
     });
     if (typeof engineeringCourses !== 'undefined') {
       engineeringCourses = subjects;
     }
-    // Hydrate in-memory units store for the new File Mode
+    // Hydrate in-memory File Mode state
     if (typeof window._fileMode !== 'undefined') {
       window._fileMode.hydrateUnits(subjects);
     }
@@ -1382,73 +1390,90 @@
     },
   };
 
-  // ── FILE MODE — Subject Units & Unit Lessons sync helpers ────────────────
+  // ════════════════════════════════════════════════════════════════════════
+  // FILE MODE — file_mode table sync helpers
   // These are called by the new File Mode JS in index.html.
+  // ════════════════════════════════════════════════════════════════════════
 
   /**
-   * Create a Unit or Lesson container inside a Subject Folder.
-   * @param {string} subjectId
-   * @param {string} unitType  'unit' | 'lesson'
-   * @param {number} unitNumber  e.g. 1, 2, 3
-   * @returns {Promise<object|null>}  the created unit row, or null on failure
+   * Create a new file_mode record.
+   * @param {string} subjectId  - engineering_subjects.id (may be null)
+   * @param {string} subjectName - display name
+   * @param {string} unit        - unit display name (e.g. "Unit - 1")
+   * @param {number} unitNumber  - e.g. 1, 2, 3
+   * @param {string} unitType    - 'unit' | 'lesson'
+   * @param {string[]} topics    - array of topic strings
+   * @param {string} contents    - AI-generated HTML
+   * @param {string} prompt      - prompt text
+   * @param {string} title       - display title
+   * @returns {Promise<object|null>} the created record, or null on failure
    */
-  window.syncCreateUnit = async function syncCreateUnit(subjectId, unitType, unitNumber) {
-    const name = (unitType === 'lesson' ? 'Lesson' : 'Unit') + ' - ' + unitNumber;
-    const res = await _api('POST', '/sync/units', {
-      subject_id:  subjectId,
-      unit_type:   unitType,
-      unit_number: unitNumber,
-      name,
-      sort_order:  unitNumber - 1,
+  window.syncFileModeCreate = async function syncFileModeCreate(
+    subjectId, subjectName, unit, unitNumber, unitType, topics, contents, prompt, title
+  ) {
+    const res = await _api('POST', '/sync/file-mode', {
+      subject_id:  subjectId  || null,
+      subject:     subjectName || '',
+      unit:        unit        || '',
+      unit_number: unitNumber  || 1,
+      unit_type:   unitType    || 'unit',
+      topics:      Array.isArray(topics) ? topics : [],
+      contents:    contents    || '',
+      prompt:      prompt      || '',
+      title:       title       || 'Untitled',
+      sort_order:  unitNumber  ? unitNumber - 1 : 0,
     });
-    if (res.ok && res.data && res.data.unit) {
-      console.log('[SYNC] ✅ Unit created:', res.data.unit);
-      return res.data.unit;
+    if (res.ok && res.data && res.data.record) {
+      console.log('[SYNC] ✅ file_mode created:', res.data.record.id);
+      return res.data.record;
     }
-    console.warn('[SYNC] syncCreateUnit failed:', res.error);
+    console.warn('[SYNC] syncFileModeCreate failed:', res.error);
     return null;
   };
 
   /**
-   * Delete a Unit/Lesson container (cascades unit_lessons).
-   * @param {string} unitId
+   * Update an existing file_mode record (partial patch).
+   * @param {string} recordId
+   * @param {object} patch  - { topics?, contents?, title?, prompt?, sort_order? }
+   * @returns {Promise<object|null>} updated record, or null on failure
+   */
+  window.syncFileModeUpdate = async function syncFileModeUpdate(recordId, patch) {
+    const res = await _api('PUT', '/sync/file-mode/' + encodeURIComponent(recordId), patch);
+    if (res.ok && res.data && res.data.record) {
+      console.log('[SYNC] ✅ file_mode updated:', recordId);
+      return res.data.record;
+    }
+    console.warn('[SYNC] syncFileModeUpdate failed:', res.error);
+    return null;
+  };
+
+  /**
+   * Soft-delete a file_mode record.
+   * @param {string} recordId
    * @returns {Promise<boolean>}
    */
-  window.syncDeleteUnit = async function syncDeleteUnit(unitId) {
-    const res = await _api('DELETE', '/sync/units/' + encodeURIComponent(unitId));
+  window.syncFileModeDelete = async function syncFileModeDelete(recordId) {
+    const res = await _api('DELETE', '/sync/file-mode/' + encodeURIComponent(recordId));
     if (res.ok) {
-      console.log('[SYNC] 🗑 Unit deleted:', unitId);
+      console.log('[SYNC] 🗑 file_mode deleted:', recordId);
       return true;
     }
-    console.warn('[SYNC] syncDeleteUnit failed:', res.error);
+    console.warn('[SYNC] syncFileModeDelete failed:', res.error);
     return false;
   };
 
   /**
-   * Save (replace) all lesson IDs linked to a unit.
-   * @param {string} unitId
-   * @param {string[]} lessonIds
-   * @returns {Promise<boolean>}
+   * List all file_mode records for a subject (or all for the user).
+   * @param {string} [subjectId]  - optional filter
+   * @returns {Promise<object[]>}  array of records, or [] on failure
    */
-  window.syncSaveUnitLessons = async function syncSaveUnitLessons(unitId, lessonIds) {
-    const res = await _api('POST', '/sync/unit-lessons', { unit_id: unitId, lesson_ids: lessonIds });
-    if (res.ok) {
-      console.log('[SYNC] ✅ Unit lessons saved: unit=' + unitId + ' count=' + lessonIds.length);
-      return true;
-    }
-    console.warn('[SYNC] syncSaveUnitLessons failed:', res.error);
-    return false;
-  };
-
-  /**
-   * Get all lesson IDs saved to a unit.
-   * @param {string} unitId
-   * @returns {Promise<string[]>}
-   */
-  window.syncGetUnitLessons = async function syncGetUnitLessons(unitId) {
-    const res = await _api('GET', '/sync/unit-lessons/' + encodeURIComponent(unitId));
-    if (res.ok && res.data) return res.data.lesson_ids || [];
-    console.warn('[SYNC] syncGetUnitLessons failed:', res.error);
+  window.syncFileModeList = async function syncFileModeList(subjectId) {
+    const path = subjectId
+      ? '/sync/file-mode/subject/' + encodeURIComponent(subjectId)
+      : '/sync/file-mode';
+    const res = await _api('GET', path);
+    if (res.ok && res.data) return res.data.records || [];
+    console.warn('[SYNC] syncFileModeList failed:', res.error);
     return [];
   };
 
