@@ -16504,7 +16504,28 @@ function amShowSuccess() {
           }, 3000);
         }
 
-        // ── Find subject and unit names for toast ─────────────────
+        
+        // ── Also update file_mode record contents (AI content saved to unit) ──────
+        if (html && typeof window.syncUpdateFileMode === 'function' && Array.isArray(window._fileModeData)) {
+          var fmSubj = engineeringCourses.find(function(s) { return s.id === _sifSubjectId; });
+          var fmUnit = fmSubj && Array.isArray(fmSubj.units)
+            ? fmSubj.units.find(function(u) { return u.id === _sifUnitId; })
+            : null;
+          var fmSubjName = fmSubj ? fmSubj.name : '';
+          var fmUnitName = fmUnit ? fmUnit.name : '';
+          var fmRec = window._fileModeData.find(function(r) {
+            return r.subject === fmSubjName && (r.unit === fmUnitName || !r.unit);
+          });
+          if (fmRec) {
+            var patch = { contents: html };
+            if (!fmRec.unit && fmUnitName) patch.unit = fmUnitName;
+            try { await window.syncUpdateFileMode(fmRec.id, patch); } catch(fmErr) { console.warn('[SIF] file_mode update failed:', fmErr.message); }
+          } else if (fmSubjName) {
+            try { await window.syncCreateFileMode(fmSubjName, fmUnitName, [], html); } catch(fmErr) { console.warn('[SIF] file_mode create failed:', fmErr.message); }
+          }
+        }
+
+        // ── Find subject and unit names for toast ─────────────────// ── Find subject and unit names for toast ─────────────────
         var subj2 = engineeringCourses.find(function(s) { return s.id === _sifSubjectId; });
         var unit2 = subj2 && Array.isArray(subj2.units)
           ? subj2.units.find(function(u) { return u.id === _sifUnitId; })
@@ -16786,11 +16807,16 @@ function amShowSuccess() {
     let _fmCurrentUnitId    = null;   // unit opened in View 3
     let _fmUnitLessonContext = null;  // {unitId} — set when "Add Topics" starts
 
-    // Expose hydrateUnits so cloud_sync_v3 can call it after /sync/all
+    // Expose hydrateUnits and hydrateFileMode so cloud_sync_v3 can call them after /sync/all
     window._fileMode = {
       hydrateUnits(subjects) {
         // Units are already embedded on each subject object as s.units[]
         // Just re-render if File Mode is currently visible
+        if (typeof fmRenderSubjectsGrid === 'function') fmRenderSubjectsGrid();
+      },
+      hydrateFileMode(rows) {
+        // Called by cloud_sync_v3._hydrateFileMode() after /sync/all or targeted refresh.
+        // window._fileModeData is already set by cloud_sync_v3 before this is called.
         if (typeof fmRenderSubjectsGrid === 'function') fmRenderSubjectsGrid();
       }
     };
@@ -16890,6 +16916,12 @@ function amShowSuccess() {
         catch (e) { console.warn('[FM] syncCreateSubject error:', e.message); }
       }
 
+      // Also create a record in the new file_mode table
+      if (typeof window.syncCreateFileMode === 'function') {
+        try { await window.syncCreateFileMode(name, '', [], ''); }
+        catch (e) { console.warn('[FM] syncCreateFileMode error:', e.message); }
+      }
+
       const newSubj = {
         id: cloudId || ('s_' + Date.now()),
         name, code: '', icon: '📁', color: '#6366f1',
@@ -16906,13 +16938,24 @@ function amShowSuccess() {
 
     async function fmDeleteSubject(id) {
       if (!confirm('Delete this subject folder and all its units?')) return;
+      const subjToDelete = engineeringCourses.find(s => s.id === id);
       engineeringCourses = engineeringCourses.filter(s => s.id !== id);
 
+      // Delete from engineering_subjects (primary table)
       let deleted = false;
       if (typeof window.syncDeleteSubject === 'function') {
         try { deleted = await window.syncDeleteSubject(id); } catch (e) {}
       }
       if (!deleted) await saveECourses();
+
+      // Also delete all file_mode records for this subject by name match
+      if (subjToDelete && typeof window.syncDeleteFileMode === 'function' && Array.isArray(window._fileModeData)) {
+        const matching = window._fileModeData.filter(r => r.subject === subjToDelete.name);
+        for (const rec of matching) {
+          try { await window.syncDeleteFileMode(rec.id); }
+          catch (e) { console.warn('[FM] syncDeleteFileMode error:', e.message); }
+        }
+      }
 
       fmRenderSubjectsGrid();
       notify('🗑️ Subject deleted');
