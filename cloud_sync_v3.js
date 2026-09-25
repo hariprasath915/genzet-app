@@ -306,6 +306,7 @@
       _hydrateItems(r.data.items    || []);
       _hydrateCourses(r.data.subjects || []);
       _hydrateVault(r.data.vault    || []);
+      _hydrateFileMode(r.data.file_mode || []);  // v6.1: new consolidated file_mode table
       // Fetch public Supabase config for Realtime (fire-and-forget, no auth needed)
       _fetchPublicConfig();
       return true;
@@ -453,6 +454,129 @@
     }
     // Remove legacy localStorage copy
     try { localStorage.removeItem('genzet_vault'); } catch (_) {}
+  }
+
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FILE MODE HYDRATION  —  populates window._fileModeData on login
+  // ════════════════════════════════════════════════════════════════════════
+  function _hydrateFileMode(rows) {
+    /**
+     * rows from /sync/all → file_mode:
+     * [{ id, user_id, user_email, user_name, subject, unit, topics, contents, created_at, updated_at }]
+     *
+     * topics is a JSONB array from Postgres — already parsed by supabase-js as JS array.
+     * Store in window._fileModeData so any File-section function can read it.
+     */
+    window._fileModeData = Array.isArray(rows) ? rows : [];
+
+    // Normalise: ensure topics is always a JS array
+    window._fileModeData.forEach(r => {
+      if (!Array.isArray(r.topics)) {
+        try { r.topics = JSON.parse(r.topics || '[]'); } catch (_) { r.topics = []; }
+      }
+    });
+
+    console.log(`[FILE_MODE] Hydrated ${window._fileModeData.length} records from cloud.`);
+
+    // Tell the File section to re-render if it is currently visible
+    if (typeof window._fileMode !== 'undefined' && typeof window._fileMode.hydrateFileMode === 'function') {
+      window._fileMode.hydrateFileMode(window._fileModeData);
+    }
+    // Re-render subjects grid — it now reads from engineeringCourses (unchanged)
+    if (typeof fmRenderSubjectsGrid === 'function') fmRenderSubjectsGrid();
+  }
+
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FILE MODE API HELPERS  (called by index.html File section)
+  // ════════════════════════════════════════════════════════════════════════
+
+  async function _createFileMode(subject, unit, topics, contents) {
+    /**
+     * Creates a new file_mode record.
+     * subject  — string, e.g. "Mathematics"
+     * unit     — string, e.g. "Unit - 1"
+     * topics   — string[], e.g. ["Newton's Laws", "Friction"]
+     * contents — string (HTML), the AI-generated content for this unit (can be empty)
+     * Returns the created row object or null on failure.
+     */
+    const r = await _api('POST', '/sync/file-mode', {
+      subject:  subject  || '',
+      unit:     unit     || '',
+      topics:   Array.isArray(topics) ? topics : [],
+      contents: contents || '',
+    });
+    if (r.ok && r.data && r.data.file_mode) {
+      const created = r.data.file_mode;
+      // Ensure topics is a JS array
+      if (!Array.isArray(created.topics)) {
+        try { created.topics = JSON.parse(created.topics || '[]'); } catch (_) { created.topics = []; }
+      }
+      // Append to local cache so UI updates immediately without a full reload
+      if (!Array.isArray(window._fileModeData)) window._fileModeData = [];
+      window._fileModeData.unshift(created);
+      console.log(`[FILE_MODE] Created: subject=${subject} unit=${unit}`);
+      return created;
+    }
+    console.warn('[FILE_MODE] Create failed:', r.status, r.data);
+    return null;
+  }
+
+  async function _updateFileMode(id, patch) {
+    /**
+     * Updates an existing file_mode record.
+     * id    — UUID of the record
+     * patch — { subject?, unit?, topics?, contents? }  (only changed fields)
+     * Returns the updated row or null on failure.
+     */
+    const r = await _api('PUT', `/sync/file-mode/${encodeURIComponent(id)}`, patch);
+    if (r.ok && r.data && r.data.file_mode) {
+      const updated = r.data.file_mode;
+      if (!Array.isArray(updated.topics)) {
+        try { updated.topics = JSON.parse(updated.topics || '[]'); } catch (_) { updated.topics = []; }
+      }
+      // Update local cache
+      if (Array.isArray(window._fileModeData)) {
+        const idx = window._fileModeData.findIndex(r => r.id === id);
+        if (idx >= 0) window._fileModeData[idx] = updated;
+      }
+      console.log(`[FILE_MODE] Updated: id=${id} fields=${Object.keys(patch).join(',')}`);
+      return updated;
+    }
+    console.warn('[FILE_MODE] Update failed:', r.status, r.data);
+    return null;
+  }
+
+  async function _deleteFileMode(id) {
+    /**
+     * Hard-deletes a file_mode record.
+     * Returns true on success, false on failure.
+     */
+    const r = await _api('DELETE', `/sync/file-mode/${encodeURIComponent(id)}`);
+    if (r.ok) {
+      // Remove from local cache immediately
+      if (Array.isArray(window._fileModeData)) {
+        window._fileModeData = window._fileModeData.filter(r => r.id !== id);
+      }
+      console.log(`[FILE_MODE] Deleted: id=${id}`);
+      return true;
+    }
+    console.warn('[FILE_MODE] Delete failed:', r.status, r.data);
+    return false;
+  }
+
+  async function _getFileModeRecords() {
+    /**
+     * Fetch all file_mode records for the current user (targeted refresh).
+     * Returns the array of rows or [] on failure.
+     */
+    const r = await _api('GET', '/sync/file-mode');
+    if (r.ok && r.data && Array.isArray(r.data.file_mode)) {
+      _hydrateFileMode(r.data.file_mode);
+      return r.data.file_mode;
+    }
+    return window._fileModeData || [];
   }
 
 
@@ -1088,6 +1212,14 @@
   window.syncDeleteVaultEntry     = _deleteVaultEntry; // (id) → result
   window.syncPushVaultToCloud     = _legacySaveVault;  // legacy: push full array
   window.syncPullVaultFromCloud   = _legacyLoadVault;  // legacy: pull full array
+
+  // ── File Mode (new consolidated subject/unit/topics/contents table) ───────
+  window.syncCreateFileMode  = _createFileMode;   // (subject, unit, topics[], contents) → row|null
+  window.syncUpdateFileMode  = _updateFileMode;   // (id, patch) → row|null
+  window.syncDeleteFileMode  = _deleteFileMode;   // (id) → bool
+  window.syncGetFileMode     = _getFileModeRecords; // () → rows[]
+  // Expose the raw data cache for read-only access by File section components
+  if (!window._fileModeData) window._fileModeData = [];
 
   // ── IDB stubs (safe no-ops) ───────────────────────────────────────────────
   window.initDB         = async () => null;
